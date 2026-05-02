@@ -27,6 +27,11 @@ export const en: MessageTree = {
     chainParams: 'Chain parameters',
     toolbarAria: 'Dashboard views and Rayls resources',
     chainParamsTitle: 'Chain ID, RPC, and public network parameters',
+    openMenu: 'Open menu',
+    closeMenu: 'Close menu',
+    drawerAria: 'Navigation menu',
+    sectionDashboard: 'Dashboard',
+    sectionLinks: 'Useful links',
   },
   branding: {
     appName: 'Public network monitoring',

@@ -1,3 +1,5 @@
 export { DashboardHeader } from './DashboardHeader'
+export { NavDrawer } from './NavDrawer'
+export { NavDrawerProvider, useNavDrawer } from './NavDrawerContext'
 export { PageHero } from './PageHero'
 export { RefreshCadenceBar } from './RefreshCadenceBar'
