@@ -1,0 +1,4 @@
+/* Point d’entrée unique des styles applicatifs */
+@import './tokens.css';
+@import './base.css';
+@import './pages.css';

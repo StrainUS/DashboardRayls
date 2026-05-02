@@ -1,0 +1,17 @@
+[
+  {
+    "title": "Référence chaîne publique (docs Rayls)",
+    "href": "https://docs.rayls.com/docs/public-chain-reference",
+    "publishedAt": "Doc"
+  },
+  {
+    "title": "Blog Rayls",
+    "href": "https://www.rayls.com/blog",
+    "publishedAt": "Communiqué"
+  },
+  {
+    "title": "Bridge / seeding (documenté)",
+    "href": "https://seeding.rayls.com/",
+    "publishedAt": "Service"
+  }
+]

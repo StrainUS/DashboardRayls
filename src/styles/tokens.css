@@ -1,0 +1,94 @@
+/**
+ * Design tokens — interface institutionnelle sombre : surfaces calibrées,
+ * contrastes WCAG-friendly, une seule famille d’ombres et d’accents.
+ */
+:root {
+  --rayls-violet: #7c6cf0;
+  --rayls-purple: #8b7cff;
+  --rayls-cyan: #5ec8e8;
+  --rayls-mist: #c4c9d4;
+
+  --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+  --font-display: 'Plus Jakarta Sans', var(--font-sans);
+
+  --bg: #0a0b0e;
+  --bg-deep: #060708;
+  --bg-elevated: #101218;
+  --surface: #14161d;
+  --surface-raised: #1a1d26;
+  --surface-hover: #22262f;
+  --border: rgba(255, 255, 255, 0.065);
+  --border-subtle: rgba(255, 255, 255, 0.038);
+  --border-accent: rgba(94, 200, 232, 0.28);
+  --text: #ececf1;
+  --muted: #9b9ba8;
+  --dim: #6b6b78;
+  --accent: #7ec8eb;
+  --accent-strong: #9db0f4;
+  --accent-on-dark: #0a0c10;
+  --ok: #3ecf9a;
+  --warn: #e8b84d;
+  --err: #f08080;
+  --mono: 'IBM Plex Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+
+  /* Zones d’information (bordures discrètes — pas de « arc-en-ciel ») */
+  --zone-live-border: rgba(62, 207, 154, 0.38);
+  --zone-live-glow: rgba(62, 207, 154, 0.06);
+  --zone-ref-border: rgba(126, 200, 235, 0.32);
+  --zone-ref-glow: rgba(126, 200, 235, 0.05);
+  --zone-news-border: rgba(155, 153, 184, 0.28);
+  --zone-news-glow: rgba(155, 153, 184, 0.045);
+
+  --panel-bg: linear-gradient(
+    165deg,
+    rgba(22, 24, 32, 0.97) 0%,
+    rgba(14, 16, 22, 0.99) 100%
+  );
+  --panel-bg-flat: #15171e;
+  --panel-border: rgba(255, 255, 255, 0.055);
+  --panel-inset-highlight: inset 0 1px 0 rgba(255, 255, 255, 0.045);
+  --panel-shadow:
+    var(--panel-inset-highlight),
+    0 1px 0 rgba(0, 0, 0, 0.45),
+    0 16px 48px rgba(0, 0, 0, 0.42);
+  --inset-fill: rgba(0, 0, 0, 0.22);
+
+  --dash-max-width: 1180px;
+  --dash-radius-sm: 8px;
+  --dash-radius-md: 12px;
+  --dash-radius-lg: 14px;
+  --dash-radius-xl: 18px;
+  --dash-space-xs: 4px;
+  --dash-space-sm: 8px;
+  --dash-space-md: 12px;
+  --dash-space-lg: 16px;
+  --dash-space-xl: 24px;
+  --dash-header-blur: 20px;
+  --dash-transition-fast: 0.14s ease;
+  --dash-transition-ui: 0.2s ease;
+  --dash-sticky-stack-height: clamp(8.5rem, 24vw, 10.5rem);
+
+  font-family: var(--font-sans);
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--text);
+  background: var(--bg);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+::selection {
+  background: rgba(126, 200, 235, 0.22);
+  color: var(--text);
+}
+
+html {
+  scroll-behavior: smooth;
+  scroll-padding-top: var(--dash-sticky-stack-height);
+}
+
+@media (max-width: 640px) {
+  :root {
+    --dash-sticky-stack-height: clamp(10rem, 42vw, 13rem);
+  }
+}
