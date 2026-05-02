@@ -1745,6 +1745,16 @@
   flex-shrink: 0;
 }
 
+.dash-reseau-coord-hint {
+  margin: 0;
+  padding: 8px 16px 10px;
+  font-size: 11px;
+  line-height: 1.45;
+  color: var(--text-label);
+  border-bottom: 1px solid var(--glass-tile-border);
+  background: linear-gradient(90deg, rgba(45, 212, 191, 0.08) 0%, rgba(56, 189, 248, 0.05) 100%);
+}
+
 .dash-reseau-live {
   display: flex;
   flex-direction: column;

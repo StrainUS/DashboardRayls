@@ -221,6 +221,12 @@ export const en: MessageTree = {
     syncProgress: 'in progress · {{from}} → {{to}}',
     wsSuffix: ' · WS',
     wsConnecting: ' · WS…',
+    coordBackground:
+      'Background tab: RPC sampling paused until you return here (fewer requests).',
+    coordFollower:
+      'Multiple tabs open: HTTP batches and WebSocket are driven by another tab — you still receive live updates (BroadcastChannel).',
+    coordLeader:
+      'Multiple tabs open: this tab drives HTTP batches and WebSocket; other tabs follow without duplicate polling.',
   },
   contracts: {
     title: 'Mainnet',

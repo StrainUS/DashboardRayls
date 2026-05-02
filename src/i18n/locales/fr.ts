@@ -233,6 +233,12 @@ export const fr: MessageTree = {
     syncProgress: 'en cours · {{from}} → {{to}}',
     wsSuffix: ' · WS',
     wsConnecting: ' · WS…',
+    coordBackground:
+      'Onglet en arrière-plan : mesures RPC suspendues jusqu’à votre retour ici (économie requêtes).',
+    coordFollower:
+      'Plusieurs onglets ouverts : les lots HTTP et le WebSocket sont pilotés par un autre onglet — vous recevez les mises à jour en direct (BroadcastChannel).',
+    coordLeader:
+      'Plusieurs onglets ouverts : cet onglet pilote les lots HTTP et le WebSocket ; les autres suivent sans requêtes dupliquées.',
   },
   contracts: {
     title: 'Contrats mainnet',

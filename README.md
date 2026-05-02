@@ -43,7 +43,7 @@ Même application que localement : RPC, marché, chaîne, référentiel. Les ass
 
 | Zone | Contenu |
 |------|---------|
-| **Réseau** | Batch JSON-RPC étendu (latence, bloc, gas, syncing, fee history, `totalSupply` USDr & RLS documentés) ; WebSocket `newHeads` si activé |
+| **Réseau** | Batch JSON-RPC étendu (latence, bloc, gas, syncing, fee history, `totalSupply` USDr & RLS documentés) ; WebSocket `newHeads` si activé ; **coordination multi-onglets** (BroadcastChannel : un seul onglet pilote HTTP + WS), **Page Visibility** (pause en arrière-plan), **IndexedDB** (reprise du dernier snapshot OK au chargement) |
 | **Spot** | Courbes, spot CoinGecko ; option **MEXC** (`VITE_MEXC_SPOT_WS`) pour USD plus réactif |
 | **Chaîne** | Contrats mainnet officiel, explorateur |
 | **Référentiel** | Supplies `api.rayls.com`, liens documentés, métadonnées CoinGecko |

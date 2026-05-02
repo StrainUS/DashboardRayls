@@ -1,7 +1,11 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { RPC_DEADLINE_CHECK_MS, RPC_POLL_INTERVAL_MS } from '../../constants/dashboard'
+import { useRaylsRpcCoordination } from '../../hooks/useRaylsRpcCoordination'
 import { useI18n } from '../../i18n'
 import { localeTag } from '../../i18n/translate'
+import { idbReadRpcSnap, idbWriteRpcSnap } from '../../lib/rpcSnapshotIdb'
+import type { RpcSnapWire } from '../../lib/rpcSnapshotWire'
+import { snapshotToWire, wireToSnapshot, type RpcLiveSnapshot } from '../../lib/rpcSnapshotWire'
 import {
   RAYLS_MAINNET,
   RAYLS_MAINNET_PROTOCOL,
@@ -10,11 +14,7 @@ import {
   raylsMainnetRpcHttpUrl,
 } from '../../raylsConfig'
 import { weiToGweiDisplay } from '../../raylsRpc'
-import {
-  raylsRpcTelemetryBatch,
-  type ParsedLatestBlock,
-  type RaylsSyncingState,
-} from '../../raylsRpcTelemetry'
+import { raylsRpcTelemetryBatch, type RaylsSyncingState } from '../../raylsRpcTelemetry'
 import { subscribeRaylsNewHeads, type RaylsWsStatus } from '../../raylsRpcWs'
 import { LatencyChartCanvas } from './LatencyChartCanvas'
 
@@ -73,25 +73,7 @@ function statsFromHistory(samples: number[]): { min: number; avg: number; max: n
   return { min, max, avg: sum / samples.length }
 }
 
-type RpcStatus = 'idle' | 'loading' | 'ok' | 'error'
-
-type Snapshot = {
-  status: RpcStatus
-  latencyMs: number | null
-  chainIdHex: string | null
-  chainIdDecimal: number | null
-  blockNumber: bigint | null
-  gasPriceWei: bigint | null
-  error: string | null
-  updatedAt: number | null
-  syncing: RaylsSyncingState
-  clientVersion: string | null
-  netVersion: string | null
-  latestBlock: ParsedLatestBlock | null
-  feeNextBase: bigint | null
-  usdrTotalSupplyWei: bigint | null
-  rlsTotalSupplyWei: bigint | null
-}
+type Snapshot = RpcLiveSnapshot
 
 const empty: Snapshot = {
   status: 'idle',
@@ -128,6 +110,63 @@ export function RpcLiveBlock() {
   const blockPaceRef = useRef<{ n: bigint; ts: number } | null>(null)
   const [interBlockSec, setInterBlockSec] = useState<number | null>(null)
   const [latencySamples, setLatencySamples] = useState<{ t: number; ms: number }[]>([])
+  const [tabVisible, setTabVisible] = useState(() =>
+    typeof document !== 'undefined' ? !document.hidden : true,
+  )
+
+  const applyRemoteWire = useCallback((wire: RpcSnapWire) => {
+    try {
+      const next = wireToSnapshot(wire)
+      let merged = false
+      setSnap((prev) => {
+        if (prev.updatedAt != null && next.updatedAt != null && next.updatedAt < prev.updatedAt) {
+          return prev
+        }
+        merged = true
+        return next
+      })
+      if (merged && next.latencyMs != null) {
+        setLatencySamples((prev) => {
+          const n = [...prev, { t: Date.now(), ms: next.latencyMs! }]
+          return n.length > LAT_HISTORY_MAX ? n.slice(-LAT_HISTORY_MAX) : n
+        })
+      }
+      if (merged && next.latestBlock) {
+        const lb = next.latestBlock
+        const prevBp = blockPaceRef.current
+        if (prevBp && lb.number === prevBp.n + 1n && lb.timestampUnix > prevBp.ts) {
+          setInterBlockSec(lb.timestampUnix - prevBp.ts)
+        }
+        blockPaceRef.current = { n: lb.number, ts: lb.timestampUnix }
+      }
+    } catch {
+      /* message ignoré */
+    }
+  }, [])
+
+  const { ctx: coordCtx, publishSnap } = useRaylsRpcCoordination(mainnetHttpUrl, applyRemoteWire)
+
+  useEffect(() => {
+    const onVis = () => setTabVisible(!document.hidden)
+    document.addEventListener('visibilitychange', onVis)
+    return () => document.removeEventListener('visibilitychange', onVis)
+  }, [])
+
+  useEffect(() => {
+    let cancelled = false
+    void (async () => {
+      const w = await idbReadRpcSnap(mainnetHttpUrl)
+      if (cancelled || !w || w.status !== 'ok') return
+      try {
+        applyRemoteWire(w)
+      } catch {
+        /* ignore */
+      }
+    })()
+    return () => {
+      cancelled = true
+    }
+  }, [mainnetHttpUrl, applyRemoteWire])
 
   const copyRpcUrl = useCallback(async () => {
     try {
@@ -165,7 +204,7 @@ export function RpcLiveBlock() {
         return next.length > LAT_HISTORY_MAX ? next.slice(-LAT_HISTORY_MAX) : next
       })
 
-      setSnap({
+      const okSnap: Snapshot = {
         status: 'ok',
         latencyMs: batch.latencyMs,
         chainIdHex: batch.chainIdHex,
@@ -181,7 +220,11 @@ export function RpcLiveBlock() {
         feeNextBase: batch.feeNextBase,
         usdrTotalSupplyWei: batch.usdrTotalSupplyWei,
         rlsTotalSupplyWei: batch.rlsTotalSupplyWei,
-      })
+      }
+      setSnap(okSnap)
+      const wire = snapshotToWire(okSnap)
+      void idbWriteRpcSnap(mainnetHttpUrl, wire)
+      publishSnap(wire)
     } catch (e) {
       if (seq !== refreshSeq.current) return
       let msg = e instanceof Error ? e.message : String(e)
@@ -192,16 +235,26 @@ export function RpcLiveBlock() {
       ) {
         msg = `${msg}\n\n${t('rpc.githubPagesCorsHint')}`
       }
-      setSnap({
+      const errSnap: Snapshot = {
         ...empty,
         status: 'error',
         error: msg,
         updatedAt: Date.now(),
-      })
+      }
+      setSnap(errSnap)
+      publishSnap(snapshotToWire(errSnap))
     }
-  }, [t, mainnetHttpUrl])
+  }, [t, mainnetHttpUrl, publishSnap])
 
   useEffect(() => {
+    if (!coordCtx.shouldPollHttp) {
+      if (rpcIntervalRef.current) {
+        window.clearInterval(rpcIntervalRef.current)
+        rpcIntervalRef.current = 0
+      }
+      return
+    }
+
     if (rpcIntervalRef.current) return
     const t0 = Date.now()
     const d = t0 + RPC_POLL_INTERVAL_MS
@@ -225,10 +278,20 @@ export function RpcLiveBlock() {
       window.clearInterval(rpcIntervalRef.current)
       rpcIntervalRef.current = 0
     }
-  }, [refresh])
+  }, [refresh, coordCtx.shouldPollHttp])
 
   useEffect(() => {
-    if (!RAYLS_MAINNET_WS_URL) return
+    if (!RAYLS_MAINNET_WS_URL) {
+      queueMicrotask(() => setWsStatus('off'))
+      return
+    }
+    if (!coordCtx.shouldAttachWs) {
+      queueMicrotask(() => {
+        setRealtimePush(null)
+        setWsStatus('off')
+      })
+      return
+    }
     return subscribeRaylsNewHeads(
       ({ blockNumber }) => {
         const seq = ++wsHeadSeq.current
@@ -238,7 +301,7 @@ export function RpcLiveBlock() {
       },
       setWsStatus,
     )
-  }, [])
+  }, [coordCtx.shouldAttachWs])
 
   useEffect(() => {
     const eth = window.ethereum
@@ -285,6 +348,17 @@ export function RpcLiveBlock() {
         ? t('rpc.wsConnecting')
         : ''
 
+  const coordHint = useMemo(() => {
+    if (!tabVisible) return t('rpc.coordBackground')
+    if (coordCtx.channelSupported && !coordCtx.isLeader && coordCtx.peerCount > 1) {
+      return t('rpc.coordFollower')
+    }
+    if (coordCtx.channelSupported && coordCtx.isLeader && coordCtx.peerCount > 1) {
+      return t('rpc.coordLeader')
+    }
+    return null
+  }, [tabVisible, coordCtx.channelSupported, coordCtx.isLeader, coordCtx.peerCount, t])
+
   return (
     <section className="dash-reseau-board" aria-labelledby="rpc-heading">
       <h2 id="rpc-heading" className="visually-hidden">
@@ -299,7 +373,12 @@ export function RpcLiveBlock() {
             {wsPill}
           </span>
           <span className="dash-reseau-control__tick mono">
-            {t('rpc.nextBatch')} <RpcNextBatchCountdown deadlineMs={rpcDeadline} localeTag={loc} />
+            {t('rpc.nextBatch')}{' '}
+            {coordCtx.shouldPollHttp ? (
+              <RpcNextBatchCountdown deadlineMs={rpcDeadline} localeTag={loc} />
+            ) : (
+              <strong>—</strong>
+            )}
           </span>
         </div>
         <button
@@ -317,6 +396,12 @@ export function RpcLiveBlock() {
           {snap.status === 'loading' ? t('rpc.measuring') : t('rpc.measureNow')}
         </button>
       </div>
+
+      {coordHint ? (
+        <p className="dash-reseau-coord-hint" role="status">
+          {coordHint}
+        </p>
+      ) : null}
 
       <div className="dash-reseau-live" aria-label={t('rpc.liveStateAria')}>
         <p className="dash-reseau-live__eyebrow">{t('rpc.liveEyebrow')}</p>
