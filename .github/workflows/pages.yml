@@ -8,6 +8,7 @@ on:
   workflow_run:
     workflows:
       - "Deploy RPC CORS proxy"
+      - "Deploy CoinGecko CORS proxy"
     types:
       - completed
     branches:

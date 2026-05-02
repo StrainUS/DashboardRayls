@@ -1,0 +1,5 @@
+# Proxy GET vers CoinGecko API v3 + CORS pour navigateurs sur *.github.io
+name = "rayls-dashboard-coingecko-proxy"
+main = "src/index.js"
+compatibility_date = "2024-11-01"
+workers_dev = true

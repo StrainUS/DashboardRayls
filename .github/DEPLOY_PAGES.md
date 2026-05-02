@@ -16,9 +16,10 @@ Exemple pour ce repo : **`https://strainus.github.io/DashboardRayls/`**
 
 ## 0. Ordre recommandé (première installation)
 
-1. Secrets Cloudflare + workflow **Deploy RPC CORS proxy** (une fois) — crée **`VITE_RAYLS_RPC_HTTP_URL`**.
-2. À la fin de ce workflow, **Pages** se relance **automatiquement** ; sinon lancez **Pages** manuellement ou poussez sur `main`.
-3. Activer **Pages** (*Source : GitHub Actions*) si ce n’est pas déjà fait.
+1. Secrets Cloudflare + workflow **Deploy RPC CORS proxy** (une fois) — **`VITE_RAYLS_RPC_HTTP_URL`**.
+2. Secret CoinGecko (demo ou pro) + workflow **Deploy CoinGecko CORS proxy** (une fois) — **`VITE_COINGECKO_API_ROOT`**.
+3. À la fin de ces workflows, **Pages** se relance **automatiquement** si configuré ; sinon lancez **Pages** ou poussez sur `main`.
+4. Activer **Pages** (*Source : GitHub Actions*) si ce n’est pas déjà fait.
 
 ## 1. Activer Pages sur le dépôt (obligatoire)
 
@@ -59,12 +60,12 @@ Détails : [`workers/rpc-cors-proxy/README.md`](../workers/rpc-cors-proxy/README
 
 ### CoinGecko / onglet Spot sur `*.github.io`
 
-En production il n’y a **pas** de proxy Vite : les appels directs à l’API publique depuis le navigateur échouent souvent (prévol CORS / quotas). Le workflow **Pages** peut injecter :
+Sans relais, les appels directs depuis le navigateur échouent souvent (CORS / `OPTIONS` / quotas). **Recommandé** : même principe que le RPC — un Worker Cloudflare dédié.
 
-1. **Secret** `VITE_COINGECKO_DEMO_API_KEY` — même clé gratuite [CoinGecko Demo API](https://www.coingecko.com/en/api) qu’en local dans `.env` (elle sera présente dans le bundle JS ; pour limiter l’exposition, préférez un proxy).
-2. **Variable** `VITE_COINGECKO_API_ROOT` — URL de votre backend qui relaie `/api/v3` CoinGecko (recommandé si vous ne voulez pas publier de clé).
+1. Secret **clé Demo** : `COINGECKO_DEMO_API_KEY` ou réutilisez **`VITE_COINGECKO_DEMO_API_KEY`** (déjà utilisé ailleurs). Optionnel : **`COINGECKO_PRO_API_KEY`** (plan Pro).
+2. Actions → **[Deploy CoinGecko CORS proxy](workflows/deploy-coingecko-proxy.yml)** → *Run workflow* : déploie [`workers/coingecko-cors-proxy/`](../workers/coingecko-cors-proxy/) et enregistre **`VITE_COINGECKO_API_ROOT`** (URL du Worker). **Pages** se relance ensuite si configuré.
 
-Après ajout : relancer le workflow **Pages** (ou pousser sur `main`).
+Alternative (moins propre) : secret **`VITE_COINGECKO_DEMO_API_KEY`** seul — la clé est embarquée dans le JS du build **Pages** (voir workflow).
 
 ### Favicon (Safari / cache)
 
