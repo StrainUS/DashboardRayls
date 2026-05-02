@@ -16,6 +16,17 @@ function cgDemoKey(): string {
 }
 
 /**
+ * Aucune clé demo/pro ni `VITE_COINGECKO_API_ROOT` : quotas publics très serrés depuis le navigateur.
+ * Sert à espacer davantage les appels lourds et à temporiser les retries 429.
+ */
+export function coingeckoUsesPublicQuota(): boolean {
+  if (trimEnv('VITE_COINGECKO_API_ROOT')) return false
+  if (cgProKey()) return false
+  if (cgDemoKey()) return false
+  return true
+}
+
+/**
  * Base API v3 :
  * - `VITE_COINGECKO_API_ROOT` : proxy / backend perso (recommandé en prod pour cacher la clé).
  * - Sinon Pro : `https://pro-api.coingecko.com/api/v3` si `VITE_COINGECKO_PRO_API_KEY` (hors dev proxy).
@@ -116,11 +127,11 @@ async function cgFetch(path: string): Promise<Response> {
   let res = await cgFetchRaw(url, headers)
 
   if (res.status === 429) {
-    let waitSec = 3
+    let waitSec = coingeckoUsesPublicQuota() ? 8 : 3
     const ra = res.headers.get('retry-after')
     if (ra) {
       const n = parseInt(ra, 10)
-      if (Number.isFinite(n) && n > 0) waitSec = Math.min(60, n)
+      if (Number.isFinite(n) && n > 0) waitSec = Math.min(60, Math.max(waitSec, n))
     }
     await new Promise((r) => setTimeout(r, waitSec * 1000))
     await cgThrottle()
@@ -308,7 +319,11 @@ const CHART_FRESH_MS = 8 * 60 * 1000
 let lastMarketChartNetworkAt = 0
 const envChartNetGap = Number(import.meta.env.VITE_CG_CHART_MIN_GAP_MS)
 const MARKET_CHART_NETWORK_MIN_GAP_MS =
-  Number.isFinite(envChartNetGap) && envChartNetGap >= 3_000 ? envChartNetGap : 6_000
+  Number.isFinite(envChartNetGap) && envChartNetGap >= 3_000
+    ? envChartNetGap
+    : coingeckoUsesPublicQuota()
+      ? 18_000
+      : 6_000
 
 async function waitMarketChartNetworkGap(): Promise<void> {
   const w = Math.max(0, MARKET_CHART_NETWORK_MIN_GAP_MS - (Date.now() - lastMarketChartNetworkAt))
@@ -323,7 +338,11 @@ async function waitMarketChartNetworkGap(): Promise<void> {
  */
 const envOhlcExtraGap = Number(import.meta.env.VITE_CG_OHLC_EXTRA_GAP_MS)
 const OHLC_EXTRA_GAP_MS =
-  Number.isFinite(envOhlcExtraGap) && envOhlcExtraGap >= 0 ? envOhlcExtraGap : 4500
+  Number.isFinite(envOhlcExtraGap) && envOhlcExtraGap >= 0
+    ? envOhlcExtraGap
+    : coingeckoUsesPublicQuota()
+      ? 10_000
+      : 4_500
 
 /** Seconde tentative OHLC après 429 (en plus des 2 essais internes à `cgFetch`). */
 const OHLC_429_COOLDOWN_MS = 14_000
@@ -352,7 +371,18 @@ async function fetchCgMarketChartNetwork(q: MarketChartDaysQuery, vs: ChartVsCur
     q === 'max'
       ? `/coins/${RAYLS_COINGECKO_ID}/market_chart?vs_currency=${vs}&days=max`
       : `/coins/${RAYLS_COINGECKO_ID}/market_chart?vs_currency=${vs}&days=${Math.max(1, Math.min(366, Math.round(q)))}`
-  const res = await cgFetch(path)
+  let res = await cgFetch(path)
+  if (res.status === 429) {
+    let stale = cacheGetStale<[number, number][]>(key)
+    if (!stale && q !== 'max') {
+      stale = cacheGetStale<[number, number][]>(chartCacheKeyForQuery('max', vs))
+    }
+    if (stale) return stale
+    const pauseMs = coingeckoUsesPublicQuota() ? 14_000 : 7_000
+    await new Promise((r) => setTimeout(r, pauseMs))
+    await cgThrottle()
+    res = await cgFetch(path)
+  }
   if (res.status === 429) {
     let stale = cacheGetStale<[number, number][]>(key)
     if (!stale && q !== 'max') {
@@ -568,10 +598,17 @@ let simpleQuoteInflight: Promise<SimpleQuote> | null = null
 
 async function fetchSimpleQuoteNetwork(): Promise<SimpleQuote> {
   const path = `/simple/price?ids=${RAYLS_COINGECKO_ID}&vs_currencies=usd,eur&include_24hr_change=true`
-  const res = await cgFetch(path)
+  let res = await cgFetch(path)
   if (res.status === 429) {
-    const stale = cacheGetStale<SimpleQuote>('simple')
-    if (stale) return stale
+    const staleFirst = cacheGetStale<SimpleQuote>('simple')
+    if (staleFirst) return staleFirst
+    await new Promise((r) => setTimeout(r, coingeckoUsesPublicQuota() ? 11_000 : 5_000))
+    await cgThrottle()
+    res = await cgFetch(path)
+  }
+  if (res.status === 429) {
+    const staleRetry = cacheGetStale<SimpleQuote>('simple')
+    if (staleRetry) return staleRetry
     throw new Error(
       'CoinGecko : limite de débit (429). Ajoutez VITE_COINGECKO_DEMO_API_KEY (voir .env.example) ou un proxy VITE_COINGECKO_API_ROOT.',
     )

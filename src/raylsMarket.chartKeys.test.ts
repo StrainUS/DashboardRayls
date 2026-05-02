@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import {
+  coingeckoUsesPublicQuota,
   marketChartDaysQueryForTimeframe,
   marketChartLoadedKey,
   marketOhlcLoadedKey,
@@ -7,6 +8,10 @@ import {
 } from './raylsMarket'
 
 describe('CoinGecko chart coalescing (429 / quota)', () => {
+  it('expose coingeckoUsesPublicQuota', () => {
+    expect(typeof coingeckoUsesPublicQuota).toBe('function')
+  })
+
   it('utilise max pour 30 j, 90 j et 1 an', () => {
     expect(marketChartDaysQueryForTimeframe('30d')).toBe('max')
     expect(marketChartDaysQueryForTimeframe('90d')).toBe('max')

@@ -358,13 +358,9 @@ export const fr: MessageTree = {
     mexcReconnect: 'MEXC reconnexion',
     mexcErr: 'MEXC indisponible',
     titleMexcWs: 'État du flux WebSocket MEXC (spot public)',
-    cg429Title: 'CoinGecko · quota dépassé (429)',
-    cg429Text:
-      'L’app s’appuie sur le cache quand il est encore utilisable. Sans clé API, les appels sont déjà espacés (~10 s).',
-    cg429Local:
-      'Local : VITE_COINGECKO_DEMO_API_KEY dans .env — le proxy Vite envoie la clé, elle n’est pas dans le JS du navigateur.',
-    cg429Prod:
-      'Production : VITE_COINGECKO_API_ROOT (recommandé) ou clé pro — .env.example.',
+    cg429Title: 'CoinGecko · quota (429)',
+    cg429Compact:
+      'L’API publique limite les rafraîchissements sans clé. Le RPC et la surveillance réseau dans cet outil en sont indépendants. Pour le marché : clé demo dans `.env` (`VITE_COINGECKO_DEMO_API_KEY`, proxy Vite en local) ou `VITE_COINGECKO_API_ROOT` en production — voir `.env.example`.',
     histErr: 'Historique CoinGecko : {{msg}} — repli sur le buffer live si présent. Vérifiez une clé demo (VITE_COINGECKO_DEMO_API_KEY) ou un proxy (VITE_COINGECKO_API_ROOT).',
     ohlcErr: 'Bougies (OHLC) : {{msg}}',
     liveErr: 'Rafraîchissement spot : {{msg}}',

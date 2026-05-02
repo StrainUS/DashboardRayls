@@ -32,7 +32,7 @@ import {
 } from '../../lib/mexcSpotStream'
 import { mergeCgQuoteWithMexc, mexcTickToQuote, quoteShallowEqual } from '../../lib/marketQuoteMerge'
 import { useI18n } from '../../i18n'
-import { RATE_LIMIT_RGX } from '../../lib/coinGeckoRateLimit'
+import { isCoinGeckoRateLimitMessage, RATE_LIMIT_RGX } from '../../lib/coinGeckoRateLimit'
 import { CoinGecko429Callout } from './CoinGecko429Callout'
 import type { Locale } from '../../i18n/types'
 import { localeTag } from '../../i18n/translate'
@@ -651,7 +651,8 @@ export function MarketPanel() {
           if (cancelled || req !== histReqId.current) return
           setHistSeries([])
           setHistLoadedKey(null)
-          setHistErr(e instanceof Error ? e.message : String(e))
+          const msg = e instanceof Error ? e.message : String(e)
+          setHistErr(isCoinGeckoRateLimitMessage(msg) ? null : msg)
         })
         .finally(() => {
           if (!cancelled && req === histReqId.current) setHistLoading(false)
@@ -683,7 +684,8 @@ export function MarketPanel() {
           if (cancelled || req !== ohlcReqId.current) return
           setOhlcSeries([])
           setOhlcLoadedKey(null)
-          setOhlcErr(e instanceof Error ? e.message : String(e))
+          const msg = e instanceof Error ? e.message : String(e)
+          setOhlcErr(isCoinGeckoRateLimitMessage(msg) ? null : msg)
         })
         .finally(() => {
           if (!cancelled && req === ohlcReqId.current) setOhlcLoading(false)
@@ -712,6 +714,7 @@ export function MarketPanel() {
             }
           }
           setLiveErr(null)
+          setErr((prev) => (prev === MARKET_ERR_CG429 ? null : prev))
         } catch {
           /* ignore */
         }
@@ -756,6 +759,7 @@ export function MarketPanel() {
             }
           }
           setLiveErr(null)
+          setErr((prev) => (prev === MARKET_ERR_CG429 ? null : prev))
         } catch (e) {
           if (cancelled || seq !== liveSeq.current) return
           const m = e instanceof Error ? e.message : String(e)
@@ -906,10 +910,13 @@ export function MarketPanel() {
 
         {(err || (chartStyle === 'line' && histErr) || (chartStyle === 'candles' && ohlcErr) || liveErr) && (
           <div className="chart-stack__alerts">
-            {err === MARKET_ERR_CG429 ? (
+            {err === MARKET_ERR_CG429 && quote == null ? (
               <CoinGecko429Callout />
             ) : (
-              err && <div className="dash-alert dash-alert--warn dash-alert--inline">{err}</div>
+              err &&
+              err !== MARKET_ERR_CG429 && (
+                <div className="dash-alert dash-alert--warn dash-alert--inline">{err}</div>
+              )
             )}
             {chartStyle === 'line' && histErrDisplay && (
               <div className="dash-alert dash-alert--warn dash-alert--inline" role="status">
