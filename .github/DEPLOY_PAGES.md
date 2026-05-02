@@ -8,14 +8,26 @@ Exemple pour ce repo : **`https://strainus.github.io/DashboardRayls/`**
 
 > La racine **`https://strainus.github.io/`** (sans `/DashboardRayls/`) affiche souvent une **404** tant qu’il n’existe pas de site *user/org* dédié (repo `username.github.io`). C’est **normal**.
 
-## 1. Activer Pages sur le dépôt
+## 1. Activer Pages sur le dépôt (obligatoire)
+
+Tant qu’aucun site Pages n’existe pour le repo, le job **deploy** du workflow échoue avec :
+
+`Creating Pages deployment failed` / `Ensure GitHub Pages has been enabled` (HTTP 404 côté API).
+
+### Option A — Interface
 
 1. GitHub → dépôt **DashboardRayls** → **Settings**
-2. **Pages** (menu gauche)
-3. **Build and deployment** → **Source** : choisir **GitHub Actions** (pas « Deploy from a branch »)
-4. Enregistrer si besoin
+2. **Pages** → **Build and deployment** → **Source** : **GitHub Actions**
 
-Sans cette étape, aucun déploiement n’est publié → 404 sur `/DashboardRayls/`.
+### Option B — CLI (compte avec droits admin sur le repo)
+
+```bash
+gh api -X POST repos/StrainUS/DashboardRayls/pages -f build_type=workflow
+```
+
+Puis relancer le workflow **Pages** (*Actions* → run raté → *Re-run failed jobs*, ou nouveau push sur `main`).
+
+Sans cette étape, le build peut être vert mais **aucun site** n’est publié → 404 sur `/DashboardRayls/`.
 
 ## 2. Vérifier le workflow
 
