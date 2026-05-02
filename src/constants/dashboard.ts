@@ -13,10 +13,10 @@ export const LIVE_SPOT_INTERVAL_MS =
 export const LIVE_SPOT_START_DELAY_MS = 600
 
 /**
- * Rétention max du buffer spot en mémoire (doit couvrir le timeframe le plus long : 1 an).
+ * Rétention max du buffer spot (fenêtre la plus longue : 30 j + marge pour filtres / horloge).
  * Les points plus anciens sont écartés ; plafond de points en complément (voir merge côté UI).
  */
-export const LIVE_BUFFER_MAX_MS = 366 * 24 * 60 * 60 * 1000
+export const LIVE_BUFFER_MAX_MS = 40 * 24 * 60 * 60 * 1000
 
 export const LIVE_BUFFER_MAX_POINTS = 35_000
 

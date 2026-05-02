@@ -401,15 +401,7 @@ export const fr: MessageTree = {
       },
       '30d': {
         label: '30 j',
-        hint: 'Historique 30 j (CoinGecko).',
-      },
-      '90d': {
-        label: '90 j',
-        hint: 'Historique 90 j (CoinGecko).',
-      },
-      '1y': {
-        label: '1 an',
-        hint: 'Historique ~1 an (CoinGecko), plafonné par l’API.',
+        hint: 'Historique 30 j (API `days=30`) + spot live.',
       },
     },
   },

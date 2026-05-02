@@ -150,13 +150,11 @@ export type TimeframeId =
   | '24h'
   | '7d'
   | '30d'
-  | '90d'
-  | '1y'
 
 /**
- * Chaque timeframe affiche une fenêtre filtrée côté client sur l’historique CoinGecko `market_chart`.
- * Les fenêtres ≥ 30 j partagent une seule requête `days=max` ; les courtes partagent le même `days` entier quand c’est possible (moins de 429).
- * Le spot et le dernier point de courbe sont rafraîchis via `simple/price` (défaut ~10 s sans clé ; voir `VITE_LIVE_SPOT_MS`).
+ * Fenêtres spot : du court (minutes/heures) au 30 j. Chaque TF partage un `days` market_chart entier
+ * avec les autres TF qui ont la même profondeur (ex. 1 min … 24 h → 1 jour) pour limiter les appels API.
+ * Spot et dernier point : `simple/price` (temps réel, voir `VITE_LIVE_SPOT_MS`).
  */
 export const TIMEFRAMES: { id: TimeframeId; label: string; hint: string }[] = [
   {
@@ -182,9 +180,7 @@ export const TIMEFRAMES: { id: TimeframeId; label: string; hint: string }[] = [
   { id: '1h', label: '1 h', hint: 'Fenêtre ~1 h sur `market_chart` + dernier point `simple/price`.' },
   { id: '24h', label: '24 h', hint: 'Journée glissante sur market_chart + live.' },
   { id: '7d', label: '7 j', hint: 'Historique 7 j (CoinGecko) ; spot actualisé en continu.' },
-  { id: '30d', label: '30 j', hint: 'Historique 30 j (CoinGecko).' },
-  { id: '90d', label: '90 j', hint: 'Historique 90 j (CoinGecko).' },
-  { id: '1y', label: '1 an', hint: 'Historique ~1 an (CoinGecko), plafonné par l’API.' },
+  { id: '30d', label: '30 j', hint: 'Historique 30 j (`days=30`), filtré côté client ; spot live.' },
 ]
 
 /** Accès O(1) aux métadonnées de timeframe (évite des `.find` répétés dans le rendu). */
@@ -218,10 +214,6 @@ export function timeframeLiveDisplayWindowMs(tf: TimeframeId): number {
       return 7 * 24 * 60 * 60 * 1000
     case '30d':
       return 30 * 24 * 60 * 60 * 1000
-    case '90d':
-      return 90 * 24 * 60 * 60 * 1000
-    case '1y':
-      return 365 * 24 * 60 * 60 * 1000
     default:
       return 2 * 60 * 60 * 1000
   }
@@ -237,19 +229,14 @@ export function marketChartDaysForTimeframe(tf: TimeframeId): number {
 /** Paramètre `days` de l’URL `market_chart` (entier ou `max` selon la doc CoinGecko). */
 export type MarketChartDaysQuery = number | 'max'
 
-/**
- * Requête `market_chart` : `max` dès ≥ 30 j d’historique (30 j / 90 j / 1 an partagent la même réponse filtrée côté UI).
- * Évite trois appels distincts (`days=30`, `90`, `max`) qui saturaient le quota public (429).
- */
+/** Paramètre `days` pour `market_chart` : aligné sur la fenêtre (ex. 30 j → 30, pas `max`, charge API réduite). */
 export function marketChartDaysQueryForTimeframe(tf: TimeframeId): MarketChartDaysQuery {
-  const d = marketChartDaysForTimeframe(tf)
-  if (d >= 30) return 'max'
-  return d
+  return marketChartDaysForTimeframe(tf)
 }
 
 /**
- * Marge sous la borne gauche d’affichage : les points CoinGecko >90 j sont quotidiens (~00:00 UTC) ;
- * entre 2 et 90 j, souvent horaires — évite d’exclure toute la série avec `t >= cut` quand `cut` tombe entre deux bougies.
+ * Marge sous la borne gauche d’affichage : au-delà de ~2 j, granularité souvent horaire côté API ;
+ * évite d’exclure toute la série quand `cut` tombe entre deux points.
  */
 export function chartWindowFilterSlackMs(tf: TimeframeId): number {
   const MS_PER_DAY = 24 * 60 * 60 * 1000
@@ -260,8 +247,7 @@ export function chartWindowFilterSlackMs(tf: TimeframeId): number {
 }
 
 /**
- * Identifiant de la série `market_chart` côté UI : uniquement le paramètre réseau (`days` ou `max`) et la devise.
- * Plusieurs timeframes partagent la même clé (ex. 1 min … 24 h → `1`, 30 j / 90 j / 1 an → `max`) pour ne pas refetch au changement de fenêtre.
+ * Identifiant de la série `market_chart` côté UI : `days` réseau + devise (ex. 1 min … 24 h → `1:usd`, 30 j → `30:usd`).
  */
 export function marketChartLoadedKey(tf: TimeframeId, vs: ChartVsCurrency): string {
   const q = marketChartDaysQueryForTimeframe(tf)
@@ -273,15 +259,11 @@ const OHLC_ALLOWED_DAYS = [1, 7, 14, 30, 90, 180, 365] as const
 
 export type OhlcDays = (typeof OHLC_ALLOWED_DAYS)[number]
 
-/**
- * Jours OHLC CoinGecko : premier palier autorisé qui couvre la fenêtre d’affichage.
- * Pour ≥ 30 j, on demande toujours `365` : même charge utile pour 30 j / 90 j / 1 an → moins de 429.
- */
+/** Jours OHLC CoinGecko : plus petit palier autorisé qui couvre la fenêtre (30 j → `30`, pas 365). */
 export function ohlcDaysForTimeframe(tf: TimeframeId): OhlcDays {
   const w = timeframeLiveDisplayWindowMs(tf)
   const day = 24 * 60 * 60 * 1000
   const needed = Math.max(1, Math.ceil(w / day))
-  if (needed >= 30) return 365
   for (const d of OHLC_ALLOWED_DAYS) {
     if (d >= needed) return d
   }
@@ -307,8 +289,8 @@ export function mergeOhlcWithLiveSpot(candles: OhlcCandle[], livePrice: number |
   return next
 }
 
-/** Cache `market_chart` : fenêtre longue pour limiter les 429 (les changements de `days` sont coûteux). */
-const CHART_FRESH_MS = 8 * 60 * 1000
+/** Cache `market_chart` : TTL court pour garder les courbes proches du temps réel tout en limitant les 429. */
+const CHART_FRESH_MS = 5 * 60 * 1000
 
 /**
  * Espace minimal entre le **début** de deux appels réseau lourds `market_chart` / `ohlc`.

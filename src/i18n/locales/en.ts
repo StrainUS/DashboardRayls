@@ -400,15 +400,7 @@ export const en: MessageTree = {
       },
       '30d': {
         label: '30 d',
-        hint: '30 d CoinGecko history.',
-      },
-      '90d': {
-        label: '90 d',
-        hint: '90 d CoinGecko history.',
-      },
-      '1y': {
-        label: '1 y',
-        hint: '~1 y CoinGecko history (API-capped).',
+        hint: '30 d history (`days=30`) + live spot.',
       },
     },
   },
