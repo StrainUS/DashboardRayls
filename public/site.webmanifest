@@ -3,9 +3,15 @@
   "short_name": "Rayls",
   "icons": [
     {
-      "src": "rayls-logo-official.png",
+      "src": "favicon-32.png",
       "type": "image/png",
-      "sizes": "358x358",
+      "sizes": "32x32",
+      "purpose": "any"
+    },
+    {
+      "src": "apple-touch-icon.png",
+      "type": "image/png",
+      "sizes": "180x180",
       "purpose": "any"
     }
   ],
