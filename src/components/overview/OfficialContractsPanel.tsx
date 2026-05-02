@@ -15,10 +15,13 @@ export function OfficialContractsPanel() {
 
   return (
     <section className="dash-panel dash-panel--contracts" aria-labelledby="contracts-heading">
-      <div className="dash-panel-head dash-panel-head--tight">
-        <h2 id="contracts-heading" className="dash-panel-title">
-          {t('contracts.title')}
-        </h2>
+      <div className="dash-panel-head dash-panel-head--tight dash-panel-head--stack">
+        <div className="dash-panel-head__text">
+          <h2 id="contracts-heading" className="dash-panel-title">
+            {t('contracts.title')}
+          </h2>
+          <p className="dash-chaine-contracts-lede">{t('chaine.contractsIntro')}</p>
+        </div>
         <a
           className="dash-panel-meta-link"
           href={RAYLS_OFFICIAL.circulatingSupplyApi}

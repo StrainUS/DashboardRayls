@@ -16,8 +16,9 @@ const ReferentielPage = lazy(() =>
 function RouteFallback() {
   const { t } = useI18n()
   return (
-    <div className="dash-route-fallback" aria-busy="true" aria-live="polite">
-      {t('common.loadingRoute')}
+    <div className="dash-route-fallback dash-route-fallback--loading" aria-busy="true" aria-live="polite">
+      <span className="dash-route-fallback__spinner" aria-hidden />
+      <p className="dash-route-fallback__text">{t('common.loadingRoute')}</p>
     </div>
   )
 }

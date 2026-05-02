@@ -25,8 +25,8 @@ export class RouteErrorBoundary extends Component<Props, State> {
     if (this.state.hasError) {
       return (
         <div className="dash-route-fallback dash-route-fallback--error" role="alert">
-          <p>{this.props.message}</p>
-          <button type="button" className="dash-btn" onClick={() => window.location.reload()}>
+          <p className="dash-route-fallback__text">{this.props.message}</p>
+          <button type="button" className="dash-btn dash-btn--primary" onClick={() => window.location.reload()}>
             {this.props.reloadLabel}
           </button>
         </div>

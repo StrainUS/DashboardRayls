@@ -63,13 +63,14 @@ export const en: MessageTree = {
   },
   overview: {
     title: 'Overview',
-    navHeading: 'Where to go',
-    navLede: 'Four views: RPC operations, market, on-chain references, then the document repository.',
-    cadenceHeading: 'Data refresh cadence',
-    cadenceLede: 'Browser-side intervals (not network latency to the RPC or exchanges).',
-    newsHeading: 'News & channels',
-    newsLede: 'Featured links and refresh of the JSON feed configured for this deployment.',
-    deployTitle: 'This deployment',
+    navHeading: 'Quick access',
+    navLede:
+      'Four workspaces: RPC monitoring, market charts, on-chain addresses, then the document repository.',
+    cadenceHeading: 'Refresh cadence',
+    cadenceLede: 'Intervals configured in the browser (not network latency to the RPC or exchanges).',
+    newsHeading: 'News and channels',
+    newsLede: 'Featured links and reload of the JSON feed configured for this deployment.',
+    deployTitle: 'Deployment configuration',
     deployLede: 'Inferred from build-time variables — no secrets shown.',
     cadence: {
       rpcMainnet: 'Mainnet RPC',
@@ -150,6 +151,10 @@ export const en: MessageTree = {
     lead: 'Documented mainnet contracts and tokens — explorer and network reference links.',
     scopeAria: 'Page scope',
     mainnet: 'Mainnet',
+    pageIntro:
+      'This view lists public contract addresses from Rayls documentation. Each link opens Blockscout so you can verify bytecode and on-chain activity.',
+    contractsIntro:
+      'The entries below match official references (USDr, RLS, bridge). Aggregated supply figures are also published on api.rayls.com.',
   },
   referentiel: {
     title: 'Rayls reference',

@@ -1,6 +1,6 @@
 import { RaylsOfficialSourcesStrip } from '../components/official'
 import { PageHero, RefreshCadenceBar } from '../components/layout'
-import { RaylsNewsPanel } from '../components/overview'
+import { OverviewNavTiles, RaylsNewsPanel } from '../components/overview'
 import { getDeploymentConfigHints } from '../lib/buildConfigHints'
 import { useI18n } from '../i18n'
 import { mexcSpotStreamEnabled } from '../lib/mexcSpotStream'
@@ -66,6 +66,19 @@ export function OverviewPage() {
           </div>
         }
       />
+
+      <section
+        className="dash-overview__block dash-overview__block--surface dash-overview__block--nav"
+        aria-labelledby="overview-nav-heading"
+      >
+        <div className="dash-overview__block-head">
+          <h2 id="overview-nav-heading" className="dash-overview__h2">
+            {t('overview.navHeading')}
+          </h2>
+          <p className="dash-overview__block-lede">{t('overview.navLede')}</p>
+        </div>
+        <OverviewNavTiles />
+      </section>
 
       <section
         className="dash-overview__block dash-overview__block--surface"

@@ -25,6 +25,8 @@ body {
   overflow-x: hidden;
   color-scheme: dark;
   text-rendering: optimizeLegibility;
+  scrollbar-color: var(--dash-scrollbar-thumb) var(--dash-scrollbar-track);
+  scrollbar-width: thin;
 }
 
 @supports (overflow: clip) {
@@ -43,6 +45,27 @@ body {
 :is(img, video) {
   max-width: 100%;
   height: auto;
+}
+
+*::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+*::-webkit-scrollbar-track {
+  background: var(--dash-scrollbar-track);
+}
+
+*::-webkit-scrollbar-thumb {
+  background: var(--dash-scrollbar-thumb);
+  border-radius: 999px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background: rgba(186, 230, 253, 0.42);
+  background-clip: padding-box;
 }
 
 @media (prefers-reduced-motion: reduce) {

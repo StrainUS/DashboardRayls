@@ -47,7 +47,7 @@ Même application que localement : RPC, marché, chaîne, référentiel. Les ass
 | **Spot** | Courbes, spot CoinGecko ; option **MEXC** (`VITE_MEXC_SPOT_WS`) pour USD plus réactif |
 | **Chaîne** | Contrats mainnet officiel, explorateur |
 | **Référentiel** | Supplies `api.rayls.com`, liens documentés, métadonnées CoinGecko |
-| **Accueil** | Navigation, cadences de rafraîchissement, actualités (`public/rayls-feed.json` ou URL), résumé de déploiement |
+| **Accueil** | Accès rapide vers les vues, cadences, actualités (`public/rayls-feed.json` ou URL), configuration de déploiement, sources |
 
 ---
 

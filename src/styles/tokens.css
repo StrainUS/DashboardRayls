@@ -250,6 +250,12 @@
   --dash-header-blur: 24px;
   --dash-transition-fast: 0.14s ease;
   --dash-transition-ui: 0.2s ease;
+  /** Anneau de focus partagé (WCAG) */
+  --dash-focus-ring: 2px solid var(--accent-strong);
+  --dash-focus-offset: 2px;
+  /** Défilement (Firefox) */
+  --dash-scrollbar-thumb: rgba(148, 163, 184, 0.35);
+  --dash-scrollbar-track: rgba(15, 17, 24, 0.6);
   /** Espacement vertical sections (PageHero → corps) — toutes routes produit */
   --dash-page-section-gap: clamp(1.15rem, 2.4vw, 1.75rem);
   /* Hauteur sticky : une ligne (mobile / tablette menu seul). */
