@@ -1,0 +1,8 @@
+# Proxy JSON-RPC minimal pour navigateurs hébergés sur des origines non autorisées par le RPC Rayls (ex. *.github.io).
+# Déploiement : npm i -g wrangler && wrangler login && wrangler deploy
+name = "rayls-dashboard-rpc-proxy"
+main = "src/index.js"
+compatibility_date = "2024-11-01"
+
+[vars]
+TARGET_RPC_URL = "https://mainnet-rpc.rayls.com"

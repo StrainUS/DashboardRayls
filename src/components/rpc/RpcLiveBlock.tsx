@@ -2,7 +2,13 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { RPC_DEADLINE_CHECK_MS, RPC_POLL_INTERVAL_MS } from '../../constants/dashboard'
 import { useI18n } from '../../i18n'
 import { localeTag } from '../../i18n/translate'
-import { RAYLS_MAINNET, RAYLS_MAINNET_PROTOCOL, RAYLS_MAINNET_WS_URL, hexToBigInt } from '../../raylsConfig'
+import {
+  RAYLS_MAINNET,
+  RAYLS_MAINNET_PROTOCOL,
+  RAYLS_MAINNET_WS_URL,
+  hexToBigInt,
+  raylsMainnetRpcHttpUrl,
+} from '../../raylsConfig'
 import { weiToGweiDisplay } from '../../raylsRpc'
 import {
   raylsRpcTelemetryBatch,
@@ -141,7 +147,7 @@ export function RpcLiveBlock() {
       return s
     })
     try {
-      const batch = await raylsRpcTelemetryBatch(RAYLS_MAINNET.rpcUrl, RAYLS_MAINNET_PROTOCOL)
+      const batch = await raylsRpcTelemetryBatch(raylsMainnetRpcHttpUrl(), RAYLS_MAINNET_PROTOCOL)
       if (seq !== refreshSeq.current) return
       const chainIdDec = Number(hexToBigInt(batch.chainIdHex))
       const blockNum = batch.latestBlock?.number ?? hexToBigInt(batch.blockHex)
@@ -177,7 +183,14 @@ export function RpcLiveBlock() {
       })
     } catch (e) {
       if (seq !== refreshSeq.current) return
-      const msg = e instanceof Error ? e.message : String(e)
+      let msg = e instanceof Error ? e.message : String(e)
+      if (
+        typeof window !== 'undefined' &&
+        window.location.hostname.endsWith('github.io') &&
+        /failed to fetch|networkerror|load failed|réseau|cors/i.test(msg)
+      ) {
+        msg = `${msg}\n\n${t('rpc.githubPagesCorsHint')}`
+      }
       setSnap({
         ...empty,
         status: 'error',
@@ -185,7 +198,7 @@ export function RpcLiveBlock() {
         updatedAt: Date.now(),
       })
     }
-  }, [])
+  }, [t])
 
   useEffect(() => {
     if (rpcIntervalRef.current) return

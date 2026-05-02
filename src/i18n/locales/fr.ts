@@ -198,6 +198,8 @@ export const fr: MessageTree = {
     totalSupply: 'totalSupply (eth_call)',
     rpcError: 'Erreur RPC',
     rpcErrorSub: 'Si CORS bloque le navigateur, servez l’app derrière un proxy same-origin.',
+    githubPagesCorsHint:
+      'Hébergement *.github.io : le nœud public Rayls n’autorise pas encore CORS pour ce domaine depuis le navigateur. Déployez le proxy décrit dans workers/rpc-cors-proxy/, puis ajoutez l’URL en variable de dépôt VITE_RAYLS_RPC_HTTP_URL (workflow Pages) — ou utilisez npm run dev en local.',
     syncUnknown: 'inconnu',
     syncSynced: 'synchronisé',
     syncProgress: 'en cours · {{from}} → {{to}}',

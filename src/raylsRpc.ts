@@ -1,5 +1,5 @@
 import { fetchWithTimeout } from './lib/fetchUtil'
-import { RAYLS_MAINNET } from './raylsConfig'
+import { raylsMainnetRpcHttpUrl } from './raylsConfig'
 
 export async function raylsRpcBatch(): Promise<{
   chainIdHex: string
@@ -14,7 +14,7 @@ export async function raylsRpcBatch(): Promise<{
     { jsonrpc: '2.0' as const, id: 3, method: 'eth_gasPrice', params: [] },
   ]
   const t0 = performance.now()
-  const res = await fetchWithTimeout(RAYLS_MAINNET.rpcUrl, {
+  const res = await fetchWithTimeout(raylsMainnetRpcHttpUrl(), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body),
@@ -52,7 +52,7 @@ export async function raylsRpcGasPriceOnly(): Promise<{
 }> {
   const body = [{ jsonrpc: '2.0' as const, id: 1, method: 'eth_gasPrice', params: [] }]
   const t0 = performance.now()
-  const res = await fetchWithTimeout(RAYLS_MAINNET.rpcUrl, {
+  const res = await fetchWithTimeout(raylsMainnetRpcHttpUrl(), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body),

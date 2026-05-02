@@ -29,6 +29,14 @@ Puis relancer le workflow **Pages** (*Actions* → run raté → *Re-run failed 
 
 Sans cette étape, le build peut être vert mais **aucun site** n’est publié → 404 sur `/DashboardRayls/`.
 
+### RPC Réseau (latence, bloc, gas) sur github.io
+
+Le RPC public Rayls n’autorise pas les POST navigateur depuis `*.github.io` (CORS). Sans configuration, l’onglet **Réseau** reste vide ou en erreur.
+
+1. Déployer le proxy : [`workers/rpc-cors-proxy/README.md`](../workers/rpc-cors-proxy/README.md) (`npx wrangler deploy`).
+2. GitHub → **Settings** → **Secrets and variables** → **Actions** → **Variables** : créer **`VITE_RAYLS_RPC_HTTP_URL`** = URL HTTPS du worker.
+3. Relancer le workflow **Pages** (ou pousser un commit) pour rebundler avec la variable.
+
 ## 2. Vérifier le workflow
 
 1. Onglet **Actions**

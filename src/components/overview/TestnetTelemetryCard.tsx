@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { TESTNET_TELEMETRY_POLL_MS } from '../../constants/dashboard'
 import { useI18n } from '../../i18n'
-import { RAYLS_TESTNET, hexToBigInt } from '../../raylsConfig'
+import { RAYLS_TESTNET, hexToBigInt, raylsTestnetRpcHttpUrl } from '../../raylsConfig'
 import { raylsRpcTelemetryBatch, type RaylsSyncingState } from '../../raylsRpcTelemetry'
 import { weiToGweiDisplay } from '../../raylsRpc'
 
@@ -44,7 +44,7 @@ export function TestnetTelemetryCard() {
   const refresh = useCallback(async () => {
     const seq = ++seqRef.current
     try {
-      const batch = await raylsRpcTelemetryBatch(RAYLS_TESTNET.rpcUrl)
+      const batch = await raylsRpcTelemetryBatch(raylsTestnetRpcHttpUrl())
       if (seq !== seqRef.current) return
       setSnap({
         chainIdDec: Number(hexToBigInt(batch.chainIdHex)),
@@ -58,13 +58,21 @@ export function TestnetTelemetryCard() {
       })
     } catch (e) {
       if (seq !== seqRef.current) return
+      let err = e instanceof Error ? e.message : String(e)
+      if (
+        typeof window !== 'undefined' &&
+        window.location.hostname.endsWith('github.io') &&
+        /failed to fetch|networkerror|load failed|réseau|cors/i.test(err)
+      ) {
+        err = `${err}\n\n${t('rpc.githubPagesCorsHint')}`
+      }
       setSnap({
         ...empty,
-        err: e instanceof Error ? e.message : String(e),
+        err,
         at: Date.now(),
       })
     }
-  }, [])
+  }, [t])
 
   useEffect(() => {
     queueMicrotask(() => {

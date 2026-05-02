@@ -37,6 +37,8 @@ jobs:
       - name: Build pour GitHub Pages
         env:
           VITE_BASE_PATH: /${{ github.event.repository.name }}/
+          VITE_RAYLS_RPC_HTTP_URL: ${{ vars.VITE_RAYLS_RPC_HTTP_URL }}
+          VITE_RAYLS_TESTNET_RPC_HTTP_URL: ${{ vars.VITE_RAYLS_TESTNET_RPC_HTTP_URL }}
         run: npm run build
 
       - name: SPA fallback (404)

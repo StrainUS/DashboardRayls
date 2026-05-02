@@ -1,3 +1,5 @@
+import { isSafeHttpOrHttpsUrl } from './lib/safeUrl'
+
 function envStr(key: string): string {
   return String((import.meta.env as Record<string, string | undefined>)[key] ?? '').trim()
 }
@@ -28,6 +30,37 @@ export const RAYLS_TESTNET = {
   explorerUrl: 'https://testnet-explorer.rayls.com/',
   faucetUrl: 'https://devnet-dapp.rayls.com/',
 } as const
+
+/**
+ * URL utilisée pour les POST JSON-RPC **depuis le navigateur**.
+ * `mainnet-rpc.rayls.com` renvoie `Access-Control-Allow-Origin` pour localhost (dev),
+ * pas pour `*.github.io` — sur GitHub Pages, définir `VITE_RAYLS_RPC_HTTP_URL` vers un proxy
+ * HTTPS qui relaie vers le RPC (voir `workers/rpc-cors-proxy/`).
+ * L’URL **affichée** dans l’UI reste `RAYLS_MAINNET.rpcUrl` (référence doc).
+ */
+export function raylsMainnetRpcHttpUrl(): string {
+  const o = envStr('VITE_RAYLS_RPC_HTTP_URL')
+  if (o) {
+    if (!isSafeHttpOrHttpsUrl(o)) {
+      console.warn('[Rayls Monitor] VITE_RAYLS_RPC_HTTP_URL ignorée (URL https invalide ou non autorisée).')
+      return RAYLS_MAINNET.rpcUrl
+    }
+    return o.replace(/\/$/, '')
+  }
+  return RAYLS_MAINNET.rpcUrl
+}
+
+export function raylsTestnetRpcHttpUrl(): string {
+  const o = envStr('VITE_RAYLS_TESTNET_RPC_HTTP_URL')
+  if (o) {
+    if (!isSafeHttpOrHttpsUrl(o)) {
+      console.warn('[Rayls Monitor] VITE_RAYLS_TESTNET_RPC_HTTP_URL ignorée (URL https invalide).')
+      return RAYLS_TESTNET.rpcUrl
+    }
+    return o.replace(/\/$/, '')
+  }
+  return RAYLS_TESTNET.rpcUrl
+}
 
 /**
  * Adresses documentées sur la chaîne publique Rayls (gas token USDr, RLS).

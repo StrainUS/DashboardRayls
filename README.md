@@ -15,6 +15,8 @@ Tableau de bord **React + Vite** pour suivre la **santé du RPC** Rayls mainnet,
 
 > **404 « There isn't a GitHub Pages site here »** sur `strainus.github.io` **sans** `/DashboardRayls/` : c’est la **racine** du domaine ; le dashboard est uniquement sous **`/DashboardRayls/`**. Si même l’URL complète est en 404 : *Settings → Pages → Source : **GitHub Actions***, puis vérifiez que le workflow **Pages** est vert dans *Actions*. Guide détaillé : [`.github/DEPLOY_PAGES.md`](./.github/DEPLOY_PAGES.md).
 
+> **Onglet Réseau vide / erreur RPC** sur `*.github.io` : le RPC public Rayls n’expose pas les en-têtes CORS pour ce domaine. Déployez le proxy [`workers/rpc-cors-proxy/`](./workers/rpc-cors-proxy/) puis définissez la variable de dépôt **`VITE_RAYLS_RPC_HTTP_URL`** (voir [`.github/DEPLOY_PAGES.md`](./.github/DEPLOY_PAGES.md)). En local, `npm run dev` reste sans proxy RPC.
+
 Même application que localement : RPC, marché, chaîne, référentiel. Les assets dans `public/` (dont `rayls-feed.json`) et le favicon sont résolus avec **`import.meta.env.BASE_URL`** (ex. `/DashboardRayls/rayls-feed.json`), pas à la racine du domaine.  
 **Activation une fois :** *Settings → Pages → Build and deployment → Source : GitHub Actions*. Le workflow [`.github/workflows/pages.yml`](./.github/workflows/pages.yml) exécute lint, tests, validation du flux et `npm audit`, puis build avec `VITE_BASE_PATH=/<nom-du-dépôt>/`, copie `public/.nojekyll` et dépose `404.html` pour le routage SPA.
 
