@@ -63,75 +63,83 @@ export function DashboardHeader() {
           aria-label={t('nav.toolbarAria')}
         >
           <div className="site-header__nav-rail">
-            <div className="site-header__lang" role="group" aria-label={t('lang.switch')}>
-              <span className="site-header__lang-label" id="lang-label">
-                {t('lang.switch')}
-              </span>
-              <button
-                type="button"
-                className={`site-header__lang-btn${locale === 'fr' ? ' site-header__lang-btn--active' : ''}`}
-                aria-pressed={locale === 'fr'}
-                aria-labelledby="lang-label"
-                onClick={() => setLang('fr')}
-              >
-                {t('lang.fr')}
-              </button>
-              <button
-                type="button"
-                className={`site-header__lang-btn${locale === 'en' ? ' site-header__lang-btn--active' : ''}`}
-                aria-pressed={locale === 'en'}
-                aria-labelledby="lang-label"
-                onClick={() => setLang('en')}
-              >
-                {t('lang.en')}
-              </button>
+            <div className="site-header__nav-group site-header__nav-group--primary">
+              <div className="site-header__lang" role="group" aria-label={t('lang.switch')}>
+                <span className="site-header__lang-label" id="lang-label">
+                  {t('lang.switch')}
+                </span>
+                <button
+                  type="button"
+                  className={`site-header__lang-btn${locale === 'fr' ? ' site-header__lang-btn--active' : ''}`}
+                  aria-pressed={locale === 'fr'}
+                  aria-labelledby="lang-label"
+                  onClick={() => setLang('fr')}
+                >
+                  {t('lang.fr')}
+                </button>
+                <button
+                  type="button"
+                  className={`site-header__lang-btn${locale === 'en' ? ' site-header__lang-btn--active' : ''}`}
+                  aria-pressed={locale === 'en'}
+                  aria-labelledby="lang-label"
+                  onClick={() => setLang('en')}
+                >
+                  {t('lang.en')}
+                </button>
+              </div>
+              <div className="site-header__nav-pages">
+                {APP_PAGES.map(({ path, href }) => (
+                  <NavLink
+                    key={path}
+                    to={href}
+                    className={appNavClass}
+                    end={path === 'overview'}
+                    onMouseEnter={() => prefetchDashboardRoute(href)}
+                    onFocus={() => prefetchDashboardRoute(href)}
+                  >
+                    {t(navLabelKey(path))}
+                  </NavLink>
+                ))}
+              </div>
             </div>
-            {APP_PAGES.map(({ path, href }) => (
-              <NavLink
-                key={path}
-                to={href}
-                className={appNavClass}
-                end={path === 'overview'}
-                onMouseEnter={() => prefetchDashboardRoute(href)}
-                onFocus={() => prefetchDashboardRoute(href)}
-              >
-                {t(navLabelKey(path))}
-              </NavLink>
-            ))}
             <span className="site-header__nav-rail-split" aria-hidden />
-            <a
-              className="site-pill-link site-pill-link--external"
-              href={RAYLS_OFFICIAL.site}
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              {t('nav.site')}
-            </a>
-            <a
-              className="site-pill-link site-pill-link--external"
-              href={RAYLS_OFFICIAL.docs}
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              {t('nav.docs')}
-            </a>
-            <a
-              className="site-pill-link site-pill-link--external"
-              href={RAYLS_MAINNET.explorerUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              {t('nav.explorer')}
-            </a>
-            <a
-              className="site-pill-link site-pill-link--external"
-              href={RAYLS_MAINNET.docsUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              title={t('nav.chainParamsTitle')}
-            >
-              {t('nav.chainParams')}
-            </a>
+            <div className="site-header__nav-group site-header__nav-group--secondary">
+              <div className="site-header__nav-ext">
+                <a
+                  className="site-pill-link site-pill-link--external"
+                  href={RAYLS_OFFICIAL.site}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  {t('nav.site')}
+                </a>
+                <a
+                  className="site-pill-link site-pill-link--external"
+                  href={RAYLS_OFFICIAL.docs}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  {t('nav.docs')}
+                </a>
+                <a
+                  className="site-pill-link site-pill-link--external"
+                  href={RAYLS_MAINNET.explorerUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  {t('nav.explorer')}
+                </a>
+                <a
+                  className="site-pill-link site-pill-link--external"
+                  href={RAYLS_MAINNET.docsUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  title={t('nav.chainParamsTitle')}
+                >
+                  {t('nav.chainParams')}
+                </a>
+              </div>
+            </div>
           </div>
         </nav>
       </div>
