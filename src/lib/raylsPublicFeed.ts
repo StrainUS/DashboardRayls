@@ -17,7 +17,8 @@ export function resolveFeedFetchUrl(config: string): string | null {
   if (!t) return null
   if (isSafeHttpOrHttpsUrl(t)) return t
   if (isSafeRootRelativePublicPath(t)) {
-    return `${window.location.origin}${t}`
+    /** Même logique que les assets `public/` : préfixe `import.meta.env.BASE_URL` (ex. GitHub Pages). */
+    return sameOriginPublicAbsoluteUrl(t)
   }
   return null
 }

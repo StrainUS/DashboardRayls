@@ -13,8 +13,8 @@ Tableau de bord **React + Vite** pour suivre la **santé du RPC** Rayls mainnet,
 
 **URL :** [https://strainus.github.io/DashboardRayls/](https://strainus.github.io/DashboardRayls/)
 
-Même application que localement : RPC, marché, chaîne, référentiel, flux JSON sous le `base` du dépôt.  
-**Activation une fois :** *Settings → Pages → Build and deployment → Source : GitHub Actions*. Le workflow [`.github/workflows/pages.yml`](./.github/workflows/pages.yml) build avec `VITE_BASE_PATH=/<nom-du-dépôt>/` et dépose `404.html` pour le routage SPA.
+Même application que localement : RPC, marché, chaîne, référentiel. Les assets dans `public/` (dont `rayls-feed.json`) et le favicon sont résolus avec **`import.meta.env.BASE_URL`** (ex. `/DashboardRayls/rayls-feed.json`), pas à la racine du domaine.  
+**Activation une fois :** *Settings → Pages → Build and deployment → Source : GitHub Actions*. Le workflow [`.github/workflows/pages.yml`](./.github/workflows/pages.yml) exécute lint, tests, validation du flux et `npm audit`, puis build avec `VITE_BASE_PATH=/<nom-du-dépôt>/`, copie `public/.nojekyll` et dépose `404.html` pour le routage SPA.
 
 > Comme pour tout hébergement **statique**, il n’y a pas de proxy Vite : pour des quotas CoinGecko confortables en prod, prévoir `VITE_COINGECKO_API_ROOT` (build) vers votre proxy ou clé côté serveur — voir [Variables d’environnement](#variables-denvironnement).
 
