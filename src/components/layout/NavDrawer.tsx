@@ -1,13 +1,17 @@
 import { useEffect, useRef } from 'react'
-import { NavLink } from 'react-router-dom'
+import { Link, NavLink } from 'react-router-dom'
 import { prefetchDashboardRoute } from '../../app/prefetchRoutes'
-import { APP_PAGES, APP_PAGE_LABEL_KEYS } from '../../constants/appRoutes'
+import { BRANDING } from '../../constants/branding'
+import { APP_PAGES, APP_PAGE_LABEL_KEYS, type AppPagePath } from '../../constants/appRoutes'
 import { useI18n, type Locale } from '../../i18n'
 import { RAYLS_MAINNET, RAYLS_OFFICIAL } from '../../raylsConfig'
 import { useNavDrawer } from './NavDrawerContext'
 
-function appNavClass({ isActive }: { isActive: boolean }) {
-  return `nav-drawer__link${isActive ? ' nav-drawer__link--active' : ''}`
+type NavDrawerLinkKey = AppPagePath | 'legal'
+
+function appNavClass(path: NavDrawerLinkKey) {
+  return ({ isActive }: { isActive: boolean }) =>
+    `nav-drawer__link nav-drawer__link--${path}${isActive ? ' nav-drawer__link--active' : ''}`
 }
 
 export function NavDrawer() {
@@ -53,7 +57,22 @@ export function NavDrawer() {
         inert={!open}
       >
         <div className="nav-drawer__head">
-          <span className="nav-drawer__brand">{t('branding.appNameShort')}</span>
+          <Link
+            to="/"
+            className="nav-drawer__brand-row"
+            aria-label={t('branding.homeAria', { short: t('branding.appNameShort') })}
+            onClick={() => closeDrawer()}
+          >
+            <img
+              className="nav-drawer__brand-logo"
+              src={BRANDING.officialLogoSrc}
+              width={80}
+              height={32}
+              alt=""
+              decoding="async"
+            />
+            <span className="nav-drawer__brand">{t('branding.appNameShort')}</span>
+          </Link>
           <button
             ref={closeBtnRef}
             type="button"
@@ -71,7 +90,7 @@ export function NavDrawer() {
               <li key={path}>
                 <NavLink
                   to={href}
-                  className={appNavClass}
+                  className={appNavClass(path)}
                   end={path === 'overview'}
                   onMouseEnter={() => prefetchDashboardRoute(href)}
                   onFocus={() => prefetchDashboardRoute(href)}
@@ -132,7 +151,7 @@ export function NavDrawer() {
             <li>
               <NavLink
                 to="/legal"
-                className={appNavClass}
+                className={appNavClass('legal')}
                 onClick={() => closeDrawer()}
               >
                 {t('nav.legal')}

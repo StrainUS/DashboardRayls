@@ -26,6 +26,24 @@ const AXIS_LABEL_GAP = 10
 const Y_TICKS = 5
 const AXIS_FONT = '11px "IBM Plex Mono", ui-monospace, SF Mono, Menlo, monospace'
 
+/** Grille / axes — teintes alignées sur --halo-neon-live et le spectre institutionnel (cyan → indigo). */
+const LAT_GRID_Y = 'rgba(56, 189, 248, 0.085)'
+const LAT_GRID_X = 'rgba(129, 140, 248, 0.06)'
+const LAT_LABEL_Y = 'rgba(186, 230, 253, 0.9)'
+const LAT_LABEL_TIME = 'rgba(165, 243, 252, 0.82)'
+const LAT_EMPTY = 'rgba(148, 163, 184, 0.62)'
+/** Remplissage sous la ligne : menthe / cyan en bas, cyan clair en haut (néon dosé). */
+const LAT_FILL_BOTTOM = 'rgba(45, 212, 191, 0.05)'
+const LAT_FILL_MID = 'rgba(56, 189, 248, 0.08)'
+const LAT_FILL_TOP = 'rgba(125, 211, 252, 0.11)'
+/** Contour : halo large puis trait cœur (effet néon pro, sans shadowBlur coûteux). */
+const LAT_LINE_GLOW = 'rgba(34, 211, 238, 0.28)'
+const LAT_LINE_GLOW_W = 3.25
+const LAT_LINE_CORE = 'rgba(224, 242, 254, 0.96)'
+const LAT_LINE_CORE_W = 1.65
+const LAT_DOT_FILL = 'rgba(207, 250, 254, 0.98)'
+const LAT_DOT_RING = 'rgba(45, 212, 191, 0.55)'
+
 /** Fenêtre Y minimale (~ms) pour éviter le « zoom » nerveux quand la série varie peu. */
 const Y_MIN_HALF_SPAN_MS = 28
 /** 1 = latences brutes reliées par segments droits ; >1 = moyenne glissante (adoucit le tracé). */
@@ -222,7 +240,7 @@ function LatencyChartCanvasInner({
         yAxisRef.current = null
         ctx.textAlign = 'center'
         ctx.textBaseline = 'middle'
-        ctx.fillStyle = 'rgba(161, 161, 170, 0.65)'
+        ctx.fillStyle = LAT_EMPTY
         ctx.font = '12px system-ui, sans-serif'
         ctx.fillText(emptyRef.current, w / 2, h / 2)
         return
@@ -288,7 +306,7 @@ function LatencyChartCanvasInner({
       const nx = (t: number) => chartL + ((t - tMin) / tSpan) * cw
       const ny = (ms: number) => chartT + (1 - (ms - lo) / ySpan) * ch
 
-      ctx.strokeStyle = 'rgba(255, 255, 255, 0.08)'
+      ctx.strokeStyle = LAT_GRID_Y
       ctx.lineWidth = 1
       for (let i = 0; i <= Y_TICKS; i++) {
         const v = lo + (i / Y_TICKS) * (hi - lo)
@@ -297,7 +315,7 @@ function LatencyChartCanvasInner({
         ctx.moveTo(chartL, y)
         ctx.lineTo(chartR, y)
         ctx.stroke()
-        ctx.fillStyle = 'rgba(203, 213, 225, 0.88)'
+        ctx.fillStyle = LAT_LABEL_Y
         ctx.font = AXIS_FONT
         ctx.textAlign = 'right'
         ctx.textBaseline = 'middle'
@@ -308,12 +326,12 @@ function LatencyChartCanvasInner({
       ctx.textAlign = 'center'
       ctx.textBaseline = 'top'
       ctx.font = '10px "IBM Plex Mono", ui-monospace, Menlo, monospace'
-      ctx.fillStyle = 'rgba(186, 198, 214, 0.82)'
+      ctx.fillStyle = LAT_LABEL_TIME
       for (let tx = Math.ceil(tMin / step) * step; tx <= tMax + step * 0.01; tx += step) {
         if (tx < tMin) continue
         const x = nx(tx)
         if (x < chartL - 2 || x > chartR + 2) continue
-        ctx.strokeStyle = 'rgba(255, 255, 255, 0.06)'
+        ctx.strokeStyle = LAT_GRID_X
         ctx.beginPath()
         ctx.moveTo(x, chartT)
         ctx.lineTo(x, chartB)
@@ -329,8 +347,9 @@ function LatencyChartCanvasInner({
 
       if (ptsDisp.length >= 2) {
         const grad = ctx.createLinearGradient(0, chartB, 0, chartT)
-        grad.addColorStop(0, 'rgba(56, 100, 180, 0.04)')
-        grad.addColorStop(1, 'rgba(125, 211, 252, 0.06)')
+        grad.addColorStop(0, LAT_FILL_BOTTOM)
+        grad.addColorStop(0.45, LAT_FILL_MID)
+        grad.addColorStop(1, LAT_FILL_TOP)
         ctx.fillStyle = grad
         ctx.beginPath()
         fillUnderLinear(ctx, ptsDisp, nx, ny, chartB)
@@ -338,19 +357,32 @@ function LatencyChartCanvasInner({
         ctx.fill()
       }
 
-      ctx.strokeStyle = 'rgba(147, 200, 255, 0.95)'
-      ctx.lineWidth = 1.75
-      ctx.lineJoin = 'miter'
-      ctx.lineCap = 'butt'
+      ctx.lineJoin = 'round'
+      ctx.lineCap = 'round'
+      if (ptsDisp.length >= 2) {
+        ctx.strokeStyle = LAT_LINE_GLOW
+        ctx.lineWidth = LAT_LINE_GLOW_W
+        ctx.beginPath()
+        traceLinearLine(ctx, ptsDisp, nx, ny)
+        ctx.stroke()
+      }
+      ctx.strokeStyle = LAT_LINE_CORE
+      ctx.lineWidth = LAT_LINE_CORE_W
       ctx.beginPath()
       traceLinearLine(ctx, ptsDisp, nx, ny)
       ctx.stroke()
 
       if (ptsDisp.length === 1) {
         const p = ptsDisp[0]!
-        ctx.fillStyle = 'rgba(147, 200, 255, 0.9)'
+        const cx = nx(p.t)
+        const cy = ny(p.ms)
+        ctx.fillStyle = LAT_DOT_RING
         ctx.beginPath()
-        ctx.arc(nx(p.t), ny(p.ms), 3, 0, Math.PI * 2)
+        ctx.arc(cx, cy, 4.5, 0, Math.PI * 2)
+        ctx.fill()
+        ctx.fillStyle = LAT_DOT_FILL
+        ctx.beginPath()
+        ctx.arc(cx, cy, 2.75, 0, Math.PI * 2)
         ctx.fill()
       }
     }
