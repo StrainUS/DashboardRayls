@@ -69,7 +69,7 @@ Alternative (moins propre) : secret **`VITE_COINGECKO_DEMO_API_KEY`** seul — l
 
 ### Favicon (Safari / cache)
 
-Le logo marque (`rayls-logo-official.png`, fond transparent) sert à l’en-tête ; les favicons sont des dérivés `favicon-16/32.png` et `apple-touch-icon.png`. Si l’onglet montre encore une ancienne image : navigation privée ou supprimer les données du site pour `github.io`.
+Le logo marque (`rayls-logo-official.png`) sert à l’en-tête. Les favicons (`favicon.ico`, 16/32, `apple-touch-icon`) se régénèrent depuis ce même fichier : copier ton export PNG sur le Bureau vers `public/rayls-logo-official.png`, puis **`npm run favicons:from-logo`**, commit, push. Si l’onglet montre encore une ancienne image : navigation privée ou supprimer les données du site pour `github.io`.
 
 ## 2. Vérifier le workflow
 

@@ -263,116 +263,11 @@ export function marketChartLoadedKey(tf: TimeframeId, vs: ChartVsCurrency): stri
   return `${q === 'max' ? 'max' : String(q)}:${vs}`
 }
 
-/** Valeurs `days` acceptées par l’endpoint CoinGecko `ohlc`. */
-const OHLC_ALLOWED_DAYS = [1, 7, 14, 30, 90, 180, 365] as const
-
-export type OhlcDays = (typeof OHLC_ALLOWED_DAYS)[number]
-
-/** Jours OHLC CoinGecko : plus petit palier autorisé qui couvre la fenêtre (30 j → `30`, pas 365). */
-export function ohlcDaysForTimeframe(tf: TimeframeId): OhlcDays {
-  const w = timeframeLiveDisplayWindowMs(tf)
-  const day = 24 * 60 * 60 * 1000
-  const needed = Math.max(1, Math.ceil(w / day))
-  for (const d of OHLC_ALLOWED_DAYS) {
-    if (d >= needed) return d
-  }
-  return 365
-}
-
-/** Aligné sur le paramètre `days` OHLC réel (plusieurs TF → une seule requête réseau). */
-export function marketOhlcLoadedKey(tf: TimeframeId, vs: ChartVsCurrency): string {
-  return `${ohlcDaysForTimeframe(tf)}:${vs}`
-}
-
-/**
- * Granularité imposée par CoinGecko pour `/coins/{id}/ohlc` (non paramétrable).
- * Ex. `days=1` → pas 1 min mais ~30 min ; sinon l’UI « 1 min » + bougies laissait 3–4 bougies sur 2 h.
- * @see https://docs.coingecko.com/reference/coins-id-ohlc
- */
-export function coingeckoOhlcIntervalMs(days: OhlcDays): number {
-  if (days === 1) return 30 * 60 * 1000
-  if (days <= 90) return 4 * 60 * 60 * 1000
-  return 24 * 60 * 60 * 1000
-}
-
-/** Taille de bougie voulue côté UI pour le mode « Chandelier » (agrégation depuis la série ligne). */
-export function timeframeCandleBucketMs(tf: TimeframeId): number {
-  switch (tf) {
-    case '1m':
-      return 60_000
-    case '5m':
-      return 5 * 60_000
-    case '15m':
-      return 15 * 60_000
-    case '30m':
-      return 30 * 60_000
-    case '1h':
-      return 60 * 60_000
-    case '24h':
-      return 60 * 60_000
-    case '7d':
-      return 4 * 60 * 60_000
-    case '30d':
-      return 24 * 60 * 60_000
-    default:
-      return 60 * 60_000
-  }
-}
-
-/** Utiliser des bougies dérivées de `market_chart` + buffer live plutôt que `/ohlc` (trop grossier). */
-export function preferSyntheticCandles(tf: TimeframeId): boolean {
-  const bucket = timeframeCandleBucketMs(tf)
-  const days = ohlcDaysForTimeframe(tf)
-  return bucket < coingeckoOhlcIntervalMs(days)
-}
-
-export function marketSyntheticOhlcLoadedKey(tf: TimeframeId, vs: ChartVsCurrency): string {
-  return `synth:${tf}:${vs}`
-}
-
-/** Regroupe les points [t, prix] en bougies OHLC (t = début de bucket, aligné sur bucketMs). */
-export function lineSeriesToOhlcCandles(points: [number, number][], bucketMs: number): OhlcCandle[] {
-  if (points.length === 0 || bucketMs < 1) return []
-  const sorted = [...points].filter(
-    ([t, p]) => Number.isFinite(t) && Number.isFinite(p),
-  ) as [number, number][]
-  sorted.sort((a, b) => a[0] - b[0])
-  const buckets = new Map<number, { o: number; h: number; l: number; c: number }>()
-  for (const [t, p] of sorted) {
-    const k = Math.floor(t / bucketMs) * bucketMs
-    const ex = buckets.get(k)
-    if (!ex) {
-      buckets.set(k, { o: p, h: p, l: p, c: p })
-    } else {
-      ex.h = Math.max(ex.h, p)
-      ex.l = Math.min(ex.l, p)
-      ex.c = p
-    }
-  }
-  return [...buckets.entries()]
-    .sort((a, b) => a[0] - b[0])
-    .map(([t, v]) => ({ t, o: v.o, h: v.h, l: v.l, c: v.c }))
-}
-
-export type OhlcCandle = { t: number; o: number; h: number; l: number; c: number }
-
-/** Dernière bougie : clôture / extrêmes recalés sur le spot live (même logique que le dernier point ligne). */
-export function mergeOhlcWithLiveSpot(candles: OhlcCandle[], livePrice: number | null): OhlcCandle[] {
-  if (candles.length === 0 || livePrice == null || !Number.isFinite(livePrice)) return candles
-  const next = candles.slice()
-  const last = { ...next[next.length - 1]! }
-  last.c = livePrice
-  last.h = Math.max(last.h, livePrice)
-  last.l = Math.min(last.l, livePrice)
-  next[next.length - 1] = last
-  return next
-}
-
 /** Cache `market_chart` : TTL court pour garder les courbes proches du temps réel tout en limitant les 429. */
 const CHART_FRESH_MS = 5 * 60 * 1000
 
 /**
- * Espace minimal entre le **début** de deux appels réseau lourds `market_chart` / `ohlc`.
+ * Espace minimal entre le **début** de deux appels réseau lourds `market_chart`.
  * Les réponses encore « fraîches » (`CHART_FRESH_MS`) ne refont pas de requête — ce délai ne s’applique
  * qu’aux vrais allers-retour API. Défaut 6 s (équilibre 429 / réactivité quand on enchaîne les périodes).
  * Augmentez avec `VITE_CG_CHART_MIN_GAP_MS` si vous voyez des 429 (ex. 12000–20000).
@@ -391,22 +286,6 @@ async function waitMarketChartNetworkGap(): Promise<void> {
   if (w > 0) await new Promise((r) => setTimeout(r, w))
   lastMarketChartNetworkAt = Date.now()
 }
-
-/**
- * Délai après l’espacement « lourd » commun, **avant** `ohlc` uniquement.
- * L’endpoint OHLC arrive souvent juste après `market_chart` / `simple/price` → 429 sans clé.
- * `VITE_CG_OHLC_EXTRA_GAP_MS` (défaut 4500, min 0).
- */
-const envOhlcExtraGap = Number(import.meta.env.VITE_CG_OHLC_EXTRA_GAP_MS)
-const OHLC_EXTRA_GAP_MS =
-  Number.isFinite(envOhlcExtraGap) && envOhlcExtraGap >= 0
-    ? envOhlcExtraGap
-    : coingeckoUsesPublicQuota()
-      ? 10_000
-      : 4_500
-
-/** Seconde tentative OHLC après 429 (en plus des 2 essais internes à `cgFetch`). */
-const OHLC_429_COOLDOWN_MS = 14_000
 
 /** Devise de cotation pour `market_chart` (prix réels agrégés CoinGecko). */
 export type ChartVsCurrency = 'usd' | 'eur'
@@ -493,102 +372,6 @@ export async function fetchCgMarketChart(
       chartInflight.delete(inflightKey)
     })
     chartInflight.set(inflightKey, p)
-  }
-  return p
-}
-
-/** Cache `ohlc` : TTL plus long que `market_chart` (moins de rafales sur un quota serré). */
-const OHLC_FRESH_MS = 12 * 60 * 1000
-
-const ohlcInflight = new Map<string, Promise<OhlcCandle[]>>()
-
-function ohlcCacheKey(days: OhlcDays, vs: ChartVsCurrency): string {
-  return `ohlc:${days}:${vs}`
-}
-
-function parseCgOhlcJson(j: unknown): OhlcCandle[] {
-  if (!Array.isArray(j)) return []
-  const out: OhlcCandle[] = []
-  for (const row of j) {
-    if (!Array.isArray(row) || row.length < 5) continue
-    const [t0, o, h, l, c] = row
-    if (
-      typeof t0 !== 'number' ||
-      typeof o !== 'number' ||
-      typeof h !== 'number' ||
-      typeof l !== 'number' ||
-      typeof c !== 'number'
-    ) {
-      continue
-    }
-    const ms = t0 < 1e11 ? Math.round(t0 * 1000) : Math.round(t0)
-    out.push({ t: ms, o, h, l, c })
-  }
-  return out
-}
-
-/** Repli 429 : toute série OHLC en cache pour cette devise (du plus long au plus court). */
-function ohlcStaleAnyVs(vs: ChartVsCurrency): OhlcCandle[] | null {
-  for (let i = OHLC_ALLOWED_DAYS.length - 1; i >= 0; i--) {
-    const d = OHLC_ALLOWED_DAYS[i]!
-    const s = cacheGetStale<OhlcCandle[]>(ohlcCacheKey(d, vs))
-    if (s && s.length > 0) return s
-  }
-  return null
-}
-
-async function fetchCgOhlcNetwork(days: OhlcDays, vs: ChartVsCurrency): Promise<OhlcCandle[]> {
-  await waitMarketChartNetworkGap()
-  if (OHLC_EXTRA_GAP_MS > 0) {
-    await new Promise((r) => setTimeout(r, OHLC_EXTRA_GAP_MS))
-  }
-  const key = ohlcCacheKey(days, vs)
-  const path = `/coins/${RAYLS_COINGECKO_ID}/ohlc?vs_currency=${vs}&days=${days}`
-
-  let res = await cgFetch(path)
-  if (res.status === 429) {
-    let stale = cacheGetStale<OhlcCandle[]>(key)
-    if (!stale) stale = ohlcStaleAnyVs(vs)
-    if (stale) return stale
-    await new Promise((r) => setTimeout(r, OHLC_429_COOLDOWN_MS))
-    await cgThrottle()
-    res = await cgFetch(path)
-  }
-  if (res.status === 429) {
-    let stale = cacheGetStale<OhlcCandle[]>(key)
-    if (!stale) stale = ohlcStaleAnyVs(vs)
-    if (stale) return stale
-    throw new Error(
-      'CoinGecko ohlc : limite de débit (429). Créez `.env` avec VITE_COINGECKO_DEMO_API_KEY (dev : proxy Vite) ou VITE_COINGECKO_API_ROOT en prod — voir `.env.example`.',
-    )
-  }
-  if (!res.ok) throw new Error(`CoinGecko ohlc ${res.status}`)
-  const parsed = parseCgOhlcJson(await res.json())
-  parsed.sort((a, b) => a.t - b.t)
-  if (parsed.length === 0) {
-    throw new Error('CoinGecko ohlc : réponse sans bougies pour cette période.')
-  }
-  cacheSet(key, parsed)
-  return parsed
-}
-
-/**
- * Bougies OHLC agrégées (CoinGecko `/coins/{id}/ohlc`). Paramètre `days` restreint aux valeurs API.
- * Cache et espacement réseau alignés sur `market_chart`.
- */
-export async function fetchCgOhlc(days: OhlcDays, vs: ChartVsCurrency = 'usd'): Promise<OhlcCandle[]> {
-  const d = days
-  const inflightKey = `${d}:${vs}`
-  const key = ohlcCacheKey(d, vs)
-  const hit = cacheGetFresh<OhlcCandle[]>(key, OHLC_FRESH_MS)
-  if (hit) return hit
-
-  let p = ohlcInflight.get(inflightKey)
-  if (!p) {
-    p = fetchCgOhlcNetwork(d, vs).finally(() => {
-      ohlcInflight.delete(inflightKey)
-    })
-    ohlcInflight.set(inflightKey, p)
   }
   return p
 }

@@ -22,6 +22,7 @@
     "build:pages": "tsc -b && vite build --base /DashboardRayls/",
     "lint": "eslint .",
     "verify:feed": "node scripts/validate-rayls-feed.mjs",
+    "favicons:from-logo": "node scripts/gen-favicons-from-logo.mjs",
     "test": "vitest run",
     "ci": "npm run lint && npm run test && npm run verify:feed && npm run build",
     "audit:ci": "npm audit --audit-level=moderate",

@@ -9,8 +9,6 @@ interface ImportMetaEnv {
   readonly VITE_LIVE_SPOT_MS?: string
   readonly VITE_CG_QUOTE_MIN_GAP_MS?: string
   readonly VITE_CG_CHART_MIN_GAP_MS?: string
-  /** Pause avant appel OHLC (ms), après throttle chart ; défaut 4500. */
-  readonly VITE_CG_OHLC_EXTRA_GAP_MS?: string
   readonly VITE_RPC_POLL_MS?: string
   /** POST JSON-RPC navigateur — proxy CORS pour *.github.io (workflow Deploy RPC CORS proxy) */
   readonly VITE_RAYLS_RPC_HTTP_URL?: string

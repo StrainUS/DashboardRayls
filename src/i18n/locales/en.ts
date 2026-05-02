@@ -319,16 +319,8 @@ export const en: MessageTree = {
     pts: 'pts',
     chartAriaUsd: 'Price chart in US dollars',
     chartAriaEur: 'Price chart in euros',
-    chartAriaCandlesUsd: 'Candlestick chart (USD)',
-    chartAriaCandlesEur: 'Candlestick chart (EUR)',
-    chartStyleLabel: 'Display',
-    chartStyleAria: 'Chart type (line or candles)',
-    chartStyleLine: 'Line',
-    chartStyleCandles: 'Candles',
     chartProvenance:
       'Chart: CoinGecko aggregate (market_chart + simple/price), all windows — not a Rayls-issued price. USD strip: when MEXC is on, adds an exchange quote for responsiveness.',
-    chartProvenanceCandles:
-      'Candles: when the selected window is finer than CoinGecko OHLC (e.g. 1 min vs ~30 min from /ohlc), we bucket the same series as the line chart (market_chart + spot); otherwise CoinGecko /ohlc. Last candle aligned to spot. Not a Rayls-issued price.',
     loadingChart: 'Loading chart…',
     noData: 'No data — check network or CoinGecko quota.',
     waitingData: 'Waiting for data (history + spot ~{{sec}} s).',
@@ -361,7 +353,6 @@ export const en: MessageTree = {
       'The public API rate-limits refreshes without a key. RPC and network monitoring in this app do not depend on it. For market data: demo key in `.env` (`VITE_COINGECKO_DEMO_API_KEY`, Vite proxy locally) or `VITE_COINGECKO_API_ROOT` in production — see `.env.example`.',
     histErr:
       'CoinGecko history: {{msg}} — falling back to live buffer if present. Add a demo key (VITE_COINGECKO_DEMO_API_KEY) or proxy (VITE_COINGECKO_API_ROOT).',
-    ohlcErr: 'Candles (OHLC): {{msg}}',
     liveErr: 'Spot refresh: {{msg}}',
     titleMexcStream: 'MEXC spot stream (WebSocket, not affiliated) — {{iso}}',
     titleCgStream: 'CoinGecko simple/price — {{iso}} (age updates live)',

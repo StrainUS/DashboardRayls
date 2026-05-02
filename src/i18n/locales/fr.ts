@@ -321,16 +321,8 @@ export const fr: MessageTree = {
     pts: 'pts',
     chartAriaUsd: 'Courbe de prix en dollars',
     chartAriaEur: 'Courbe de prix en euros',
-    chartAriaCandlesUsd: 'Graphique en bougies (USD)',
-    chartAriaCandlesEur: 'Graphique en bougies (EUR)',
-    chartStyleLabel: 'Affichage',
-    chartStyleAria: 'Type de graphique (courbe ou bougies)',
-    chartStyleLine: 'Courbe',
-    chartStyleCandles: 'Bougies',
     chartProvenance:
       'Courbe : agrégat CoinGecko (market_chart + simple/price), toutes périodes — pas un cours émis par Rayls. Bandeau USD : si MEXC est actif, cotation bourse en complément (réactivité).',
-    chartProvenanceCandles:
-      'Bougies : si la période est plus fine que l’OHLC CoinGecko (ex. 1 min alors que /ohlc est ~30 min), agrégat à partir de la même série que la courbe (market_chart + spot) ; sinon endpoint /ohlc. Dernière bougie recalée sur le spot. Pas un cours émis par Rayls.',
     loadingChart: 'Chargement courbe…',
     noData: 'Pas de données — vérifiez le réseau ou le quota CoinGecko.',
     waitingData: 'En attente de données (historique + spot ~{{sec}} s).',
@@ -362,7 +354,6 @@ export const fr: MessageTree = {
     cg429Compact:
       'L’API publique limite les rafraîchissements sans clé. Le RPC et la surveillance réseau dans cet outil en sont indépendants. Pour le marché : clé demo dans `.env` (`VITE_COINGECKO_DEMO_API_KEY`, proxy Vite en local) ou `VITE_COINGECKO_API_ROOT` en production — voir `.env.example`.',
     histErr: 'Historique CoinGecko : {{msg}} — repli sur le buffer live si présent. Vérifiez une clé demo (VITE_COINGECKO_DEMO_API_KEY) ou un proxy (VITE_COINGECKO_API_ROOT).',
-    ohlcErr: 'Bougies (OHLC) : {{msg}}',
     liveErr: 'Rafraîchissement spot : {{msg}}',
     titleMexcStream: 'Flux spot MEXC (WebSocket, non affilié) — {{iso}}',
     titleCgStream: 'Réception CoinGecko simple/price — {{iso}} (âge mis à jour en direct)',

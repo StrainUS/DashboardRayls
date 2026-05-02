@@ -5,23 +5,14 @@ import {
   type MarketTrend,
   fetchCgSimpleQuote,
   fetchCgMarketChart,
-  fetchCgOhlc,
   chartWindowFilterSlackMs,
   marketChartDaysQueryForTimeframe,
   marketChartLoadedKey,
-  marketOhlcLoadedKey,
-  mergeOhlcWithLiveSpot,
-  ohlcDaysForTimeframe,
-  preferSyntheticCandles,
-  marketSyntheticOhlcLoadedKey,
-  lineSeriesToOhlcCandles,
-  timeframeCandleBucketMs,
   analyzeTrend,
   timeframeLiveDisplayWindowMs,
   TIMEFRAMES,
   type MarketSnapshot,
   type SimpleQuote,
-  type OhlcCandle,
 } from '../../raylsMarket'
 import {
   LIVE_BUFFER_MAX_MS,
@@ -40,10 +31,7 @@ import { isCoinGeckoRateLimitMessage, RATE_LIMIT_RGX } from '../../lib/coinGecko
 import { CoinGecko429Callout } from './CoinGecko429Callout'
 import type { Locale } from '../../i18n/types'
 import { localeTag } from '../../i18n/translate'
-import { CandleChartCanvas } from './CandleChartCanvas'
 import { PriceChartCanvas } from './PriceChartCanvas'
-
-export type MarketChartStyle = 'line' | 'candles'
 
 type TFn = (key: string, vars?: Record<string, string | number>) => string
 
@@ -213,7 +201,6 @@ function useChartRafClock(): number {
 type MarketSpotVizProps = {
   tf: TimeframeId
   chartCurrency: ChartVsCurrency
-  chartStyle: MarketChartStyle
   quote: SimpleQuote | null
   liveSeries: [number, number][]
   liveSeriesEur: [number, number][]
@@ -223,10 +210,6 @@ type MarketSpotVizProps = {
   histLoading: boolean
   err: string | null
   histErr: string | null
-  ohlcSeries: OhlcCandle[]
-  ohlcLoadedKey: string | null
-  ohlcLoading: boolean
-  ohlcErr: string | null
 }
 
 /**
@@ -235,7 +218,6 @@ type MarketSpotVizProps = {
 function MarketSpotViz({
   tf,
   chartCurrency,
-  chartStyle,
   quote,
   liveSeries,
   liveSeriesEur,
@@ -245,35 +227,14 @@ function MarketSpotViz({
   histLoading,
   err,
   histErr,
-  ohlcSeries,
-  ohlcLoadedKey,
-  ohlcLoading,
-  ohlcErr,
 }: MarketSpotVizProps) {
   const { t, locale } = useI18n()
   const loc = localeTag(locale)
   const chartNowMs = useChartRafClock()
   const chartKey = marketChartLoadedKey(tf, chartCurrency)
-  const prefersSynthOhlc = preferSyntheticCandles(tf)
-  const ohlcChartKey = prefersSynthOhlc
-    ? marketSyntheticOhlcLoadedKey(tf, chartCurrency)
-    : marketOhlcLoadedKey(tf, chartCurrency)
   /** Nouvelle période : ancienne série encore en mémoire ou fetch en cours — ne pas afficher « pas assez de points ». */
   const awaitingHistoryForTf =
-    chartStyle === 'line' &&
-    !histErr &&
-    (histLoading || (histLoadedKey !== chartKey && histSeries.length > 0))
-  const awaitingSyntheticCandles =
-    chartStyle === 'candles' &&
-    prefersSynthOhlc &&
-    !histErr &&
-    (histLoading || (histLoadedKey !== chartKey && histSeries.length > 0))
-  const awaitingApiOhlc =
-    chartStyle === 'candles' &&
-    !prefersSynthOhlc &&
-    !ohlcErr &&
-    (ohlcLoading || (ohlcLoadedKey !== ohlcChartKey && ohlcSeries.length > 0))
-  const awaitingOhlcForTf = awaitingSyntheticCandles || awaitingApiOhlc
+    !histErr && (histLoading || (histLoadedKey !== chartKey && histSeries.length > 0))
 
   const displayPrices = useMemo(() => {
     const w = timeframeLiveDisplayWindowMs(tf)
@@ -344,65 +305,6 @@ function MarketSpotViz({
     return merged
   }, [histSeries, histLoadedKey, liveSeries, liveSeriesEur, tf, quote, chartNowMs, chartCurrency, chartKey])
 
-  const displayCandles = useMemo(() => {
-    if (chartStyle !== 'candles') return []
-    const w = timeframeLiveDisplayWindowMs(tf)
-    const now = chartNowMs
-    const cut = now - w
-    const slack = chartWindowFilterSlackMs(tf)
-    const relaxedCut = cut - slack
-
-    const CG_CHART_ANCHOR_MAX_AGE_MS = 4 * 60_000
-    const cgAt = quote?.cgSpotAt
-    const cgAnchorFresh =
-      cgAt != null && chartNowMs - cgAt >= 0 && chartNowMs - cgAt < CG_CHART_ANCHOR_MAX_AGE_MS
-    const liveSpot =
-      chartCurrency === 'eur'
-        ? cgAnchorFresh && quote?.cgSpotEur != null && Number.isFinite(quote.cgSpotEur)
-          ? quote.cgSpotEur
-          : quote?.eur != null && Number.isFinite(quote.eur)
-            ? quote.eur
-            : null
-        : cgAnchorFresh && quote?.cgSpotUsd != null && Number.isFinite(quote.cgSpotUsd)
-          ? quote.cgSpotUsd
-          : quote != null && Number.isFinite(quote.usd)
-            ? quote.usd
-            : null
-
-    if (prefersSynthOhlc) {
-      const inWin = displayPrices.filter(([t0]) => t0 >= relaxedCut)
-      const pts = inWin.length >= 2 ? inWin : displayPrices
-      if (pts.length < 2) return []
-      const bucket = timeframeCandleBucketMs(tf)
-      const syn = lineSeriesToOhlcCandles(pts, bucket)
-      return mergeOhlcWithLiveSpot(syn, liveSpot)
-    }
-
-    let base: OhlcCandle[]
-    if (ohlcLoadedKey === ohlcChartKey && ohlcSeries.length > 0) {
-      const filtered = ohlcSeries.filter((c) => c.t >= relaxedCut)
-      base =
-        filtered.length >= 1
-          ? filtered
-          : ohlcSeries.slice(-Math.min(500, ohlcSeries.length))
-    } else {
-      return []
-    }
-
-    return mergeOhlcWithLiveSpot(base, liveSpot)
-  }, [
-    chartStyle,
-    ohlcSeries,
-    ohlcLoadedKey,
-    tf,
-    quote,
-    chartNowMs,
-    chartCurrency,
-    ohlcChartKey,
-    prefersSynthOhlc,
-    displayPrices,
-  ])
-
   const snapshotFetchedAt = quote?.fetchedAt ?? chartNowMs
 
   const displaySnap: MarketSnapshot | null =
@@ -415,22 +317,7 @@ function MarketSpotViz({
         }
       : null
 
-  const candleCloseSeries: [number, number][] =
-    displayCandles.length > 0 ? displayCandles.map((c) => [c.t, c.c]) : []
-
-  const analysis =
-    chartStyle === 'candles'
-      ? candleCloseSeries.length >= 2
-        ? analyzeTrend(candleCloseSeries)
-        : displayCandles.length === 1
-          ? analyzeTrend([
-              [displayCandles[0]!.t, displayCandles[0]!.o],
-              [displayCandles[0]!.t, displayCandles[0]!.c],
-            ])
-          : null
-      : displaySnap
-        ? analyzeTrend(displaySnap.prices)
-        : null
+  const analysis = displaySnap ? analyzeTrend(displaySnap.prices) : null
   const tfLabel = t(`market.tf.${tf}.label`)
   const liveBufLen = (chartCurrency === 'eur' ? liveSeriesEur : liveSeries).length
   const errBlocksChart = err != null && err !== MARKET_ERR_CG429
@@ -441,10 +328,7 @@ function MarketSpotViz({
     !histErr &&
     quote == null &&
     liveBufLen === 0
-  const showChartPlaceholderLoading =
-    chartStyle === 'line'
-      ? chartLoading || (displayPrices.length < 2 && awaitingHistoryForTf)
-      : ohlcLoading || (displayCandles.length < 1 && awaitingOhlcForTf)
+  const showChartPlaceholderLoading = chartLoading || (displayPrices.length < 2 && awaitingHistoryForTf)
   const windowLbl = liveWindowLabelTf(tf, t)
   const secSpot = Math.ceil(LIVE_SPOT_INTERVAL_MS / 1000)
 
@@ -497,8 +381,7 @@ function MarketSpotViz({
                 {analysis.changePct.toFixed(2)} % · {analysis.points} {t('market.pts')}
               </div>
             </>
-          ) : (awaitingHistoryForTf && displayPrices.length < 2) ||
-            (awaitingOhlcForTf && displayCandles.length < 1) ? (
+          ) : awaitingHistoryForTf && displayPrices.length < 2 ? (
             <div className="sub sub--strip">{t('market.trendLoading')}</div>
           ) : (
             <div className="sub sub--strip">—</div>
@@ -506,7 +389,7 @@ function MarketSpotViz({
         </div>
       </div>
       <div className="chart-wrap chart-wrap--tall chart-wrap--hero chart-wrap--in-stack">
-        {chartStyle === 'line' && displaySnap && displaySnap.prices.length > 1 ? (
+        {displaySnap && displaySnap.prices.length > 1 ? (
           <>
             <PriceChartCanvas
               key={`line-${tf}-${chartCurrency}`}
@@ -517,40 +400,19 @@ function MarketSpotViz({
             />
             <p className="chart-provenance">{t('market.chartProvenance')}</p>
           </>
-        ) : chartStyle === 'candles' && displayCandles.length >= 1 ? (
-          <>
-            <CandleChartCanvas
-              key={`candles-${tf}-${chartCurrency}`}
-              vsCurrency={chartCurrency}
-              candles={displayCandles}
-              localeTag={loc}
-              ariaLabel={
-                chartCurrency === 'eur' ? t('market.chartAriaCandlesEur') : t('market.chartAriaCandlesUsd')
-              }
-            />
-            <p className="chart-provenance">{t('market.chartProvenanceCandles')}</p>
-          </>
         ) : (
           <div className="chart-placeholder">
             {showChartPlaceholderLoading
               ? t('market.loadingChart')
-              : chartStyle === 'candles'
-                ? displayCandles.length < 1
-                  ? ohlcErr && (chartCurrency === 'eur' ? liveSeriesEur : liveSeries).length < 2
-                    ? t('market.noData')
-                    : (chartCurrency === 'eur' ? liveSeriesEur : liveSeries).length < 2 && !ohlcLoading
-                      ? t('market.waitingData', { sec: secSpot })
-                      : t('market.notEnoughWindow', { window: windowLbl })
-                  : t('market.notEnoughPts')
-                : displayPrices.length < 2
-                  ? histErr && (chartCurrency === 'eur' ? liveSeriesEur : liveSeries).length < 2
-                    ? t('market.noData')
-                    : (chartCurrency === 'eur' ? liveSeriesEur : liveSeries).length < 2 && !histLoading
-                      ? t('market.waitingData', { sec: secSpot })
-                      : t('market.notEnoughWindow', { window: windowLbl })
-                  : err && !quote
-                    ? '—'
-                    : t('market.notEnoughPts')}
+              : displayPrices.length < 2
+                ? histErr && (chartCurrency === 'eur' ? liveSeriesEur : liveSeries).length < 2
+                  ? t('market.noData')
+                  : (chartCurrency === 'eur' ? liveSeriesEur : liveSeries).length < 2 && !histLoading
+                    ? t('market.waitingData', { sec: secSpot })
+                    : t('market.notEnoughWindow', { window: windowLbl })
+                : err && !quote
+                  ? '—'
+                  : t('market.notEnoughPts')}
           </div>
         )}
       </div>
@@ -562,7 +424,6 @@ export function MarketPanel() {
   const { t, locale } = useI18n()
   const loc = localeTag(locale)
   const [tf, setTf] = useState<TimeframeId>('15m')
-  const [chartStyle, setChartStyle] = useState<MarketChartStyle>('line')
   const [chartCurrency, setChartCurrency] = useState<ChartVsCurrency>('usd')
   const [quote, setQuote] = useState<SimpleQuote | null>(null)
   const [err, setErr] = useState<string | null>(null)
@@ -574,10 +435,6 @@ export function MarketPanel() {
   const [histLoadedKey, setHistLoadedKey] = useState<string | null>(null)
   const [histLoading, setHistLoading] = useState(true)
   const [histErr, setHistErr] = useState<string | null>(null)
-  const [ohlcSeries, setOhlcSeries] = useState<OhlcCandle[]>([])
-  const [ohlcLoadedKey, setOhlcLoadedKey] = useState<string | null>(null)
-  const [ohlcLoading, setOhlcLoading] = useState(false)
-  const [ohlcErr, setOhlcErr] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const loadSeq = useRef(0)
   const liveSeq = useRef(0)
@@ -585,7 +442,6 @@ export function MarketPanel() {
   const liveBackoffMsRef = useRef(LIVE_SPOT_INTERVAL_MS)
   const chartCcyRef = useRef(chartCurrency)
   const histReqId = useRef(0)
-  const ohlcReqId = useRef(0)
   const mexcLiveRef = useRef(false)
   const [mexcStreamStatus, setMexcStreamStatus] = useState<MexcSpotStreamStatus>('idle')
 
@@ -657,9 +513,6 @@ export function MarketPanel() {
   }, [load])
 
   useEffect(() => {
-    const needsMarketChart =
-      chartStyle === 'line' || (chartStyle === 'candles' && preferSyntheticCandles(tf))
-    if (!needsMarketChart) return
     let cancelled = false
     const key = marketChartLoadedKey(tf, chartCurrency)
     const req = ++histReqId.current
@@ -688,50 +541,7 @@ export function MarketPanel() {
     return () => {
       cancelled = true
     }
-  }, [tf, chartCurrency, chartStyle])
-
-  useEffect(() => {
-    if (chartStyle !== 'candles') return
-    if (preferSyntheticCandles(tf)) {
-      const synthKey = marketSyntheticOhlcLoadedKey(tf, chartCurrency)
-      queueMicrotask(() => {
-        setOhlcLoading(false)
-        setOhlcErr(null)
-        setOhlcSeries([])
-        setOhlcLoadedKey(synthKey)
-      })
-      return
-    }
-    let cancelled = false
-    const days = ohlcDaysForTimeframe(tf)
-    const key = marketOhlcLoadedKey(tf, chartCurrency)
-    const req = ++ohlcReqId.current
-    queueMicrotask(() => {
-      if (cancelled) return
-      setOhlcLoading(true)
-      setOhlcErr(null)
-      void fetchCgOhlc(days, chartCurrency)
-        .then((rows) => {
-          if (cancelled || req !== ohlcReqId.current) return
-          setOhlcSeries(rows)
-          setOhlcLoadedKey(key)
-          setOhlcErr(null)
-        })
-        .catch((e) => {
-          if (cancelled || req !== ohlcReqId.current) return
-          setOhlcSeries([])
-          setOhlcLoadedKey(null)
-          const msg = e instanceof Error ? e.message : String(e)
-          setOhlcErr(isCoinGeckoRateLimitMessage(msg) ? null : msg)
-        })
-        .finally(() => {
-          if (!cancelled && req === ohlcReqId.current) setOhlcLoading(false)
-        })
-    })
-    return () => {
-      cancelled = true
-    }
-  }, [tf, chartCurrency, chartStyle])
+  }, [tf, chartCurrency])
 
   useEffect(() => {
     const flush = () => {
@@ -830,11 +640,6 @@ export function MarketPanel() {
     histErr != null && liveBufLenAlert >= 2 && RATE_LIMIT_RGX.test(histErr)
       ? t('market.histErr429LiveFallback')
       : histErr
-  const ohlcErrDisplay =
-    ohlcErr != null && liveBufLenAlert >= 2 && RATE_LIMIT_RGX.test(ohlcErr)
-      ? t('market.histErr429LiveFallback')
-      : ohlcErr
-
   return (
     <section className="dash-panel dash-panel--market" aria-labelledby="market-heading">
       <div className="chart-stack">
@@ -858,21 +663,6 @@ export function MarketPanel() {
                   {t(`market.tf.${row.id}.label`)}
                 </option>
               ))}
-            </select>
-          </div>
-          <div className="chart-toolbar__tf-wrap">
-            <label className="chart-toolbar__tf-lbl" htmlFor="chart-style-select">
-              {t('market.chartStyleLabel')}
-            </label>
-            <select
-              id="chart-style-select"
-              className="chart-tf-select"
-              aria-label={t('market.chartStyleAria')}
-              value={chartStyle}
-              onChange={(e) => setChartStyle(e.target.value as MarketChartStyle)}
-            >
-              <option value="line">{t('market.chartStyleLine')}</option>
-              <option value="candles">{t('market.chartStyleCandles')}</option>
             </select>
           </div>
           <span className="chart-toolbar__rule" aria-hidden />
@@ -945,7 +735,7 @@ export function MarketPanel() {
           )}
         </div>
 
-        {(err || (chartStyle === 'line' && histErr) || (chartStyle === 'candles' && ohlcErr) || liveErr) && (
+        {(err || histErr || liveErr) && (
           <div className="chart-stack__alerts">
             {err === MARKET_ERR_CG429 && quote == null ? (
               <CoinGecko429Callout />
@@ -955,18 +745,11 @@ export function MarketPanel() {
                 <div className="dash-alert dash-alert--warn dash-alert--inline">{err}</div>
               )
             )}
-            {chartStyle === 'line' && histErrDisplay && (
+            {histErrDisplay && (
               <div className="dash-alert dash-alert--warn dash-alert--inline" role="status">
                 {histErrDisplay !== histErr
                   ? histErrDisplay
                   : t('market.histErr', { msg: histErr! })}
-              </div>
-            )}
-            {chartStyle === 'candles' && ohlcErrDisplay && (
-              <div className="dash-alert dash-alert--warn dash-alert--inline" role="status">
-                {ohlcErrDisplay !== ohlcErr
-                  ? ohlcErrDisplay
-                  : t('market.ohlcErr', { msg: ohlcErr! })}
               </div>
             )}
             {liveErr && (
@@ -980,7 +763,6 @@ export function MarketPanel() {
         <MarketSpotViz
           tf={tf}
           chartCurrency={chartCurrency}
-          chartStyle={chartStyle}
           quote={quote}
           liveSeries={liveSeries}
           liveSeriesEur={liveSeriesEur}
@@ -990,10 +772,6 @@ export function MarketPanel() {
           histLoading={histLoading}
           err={err}
           histErr={histErr}
-          ohlcSeries={ohlcSeries}
-          ohlcLoadedKey={ohlcLoadedKey}
-          ohlcLoading={ohlcLoading}
-          ohlcErr={ohlcErr}
         />
       </div>
 
