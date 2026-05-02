@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
-import { type ChartVsCurrency, liveMarkerSentiment } from '../../raylsMarket'
+import { type ChartVsCurrency, type TimeframeId, liveMarkerSentiment } from '../../raylsMarket'
 import {
   CHART_AXIS_BOTTOM,
   CHART_AXIS_LEFT,
@@ -25,6 +25,7 @@ type Props = {
   className?: string
   /** Fenêtre timeframe (`timeframeLiveDisplayWindowMs`) : teinte du point live = même logique que le badge tendance. */
   liveSentimentNominalMs?: number
+  liveSentimentTimeframe?: TimeframeId
 }
 
 const MAX_DRAW_POINTS = 720
@@ -117,12 +118,14 @@ export function PriceChartCanvas({
   ariaLabel,
   className,
   liveSentimentNominalMs,
+  liveSentimentTimeframe,
 }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const pricesRef = useRef(prices)
   const vsRef = useRef(vsCurrency)
   const localeRef = useRef(localeTag)
   const liveNominalRef = useRef<number | undefined>(liveSentimentNominalMs)
+  const liveTfRef = useRef<TimeframeId | undefined>(liveSentimentTimeframe)
   /**
    * Fraction 0–1 sur la zone graphique (temps) : stable quand la fenêtre glisse en live ;
    * le prix affiché est réinterpolé à chaque frame à partir de la série courante.
@@ -266,7 +269,7 @@ export function PriceChartCanvas({
         const last = full[full.length - 1]!
         const lx = nxTime(last[0])
         const ly = ny(last[1])
-        const sentiment = liveMarkerSentiment(full, liveNominalRef.current)
+        const sentiment = liveMarkerSentiment(full, liveNominalRef.current, liveTfRef.current)
         drawLiveQuoteMarker(ctx, lx, ly, { nowMs: performance.now(), sentiment })
 
         const sf = scrubFracRef.current
@@ -354,6 +357,11 @@ export function PriceChartCanvas({
     liveNominalRef.current = liveSentimentNominalMs
     drawRef.current()
   }, [liveSentimentNominalMs])
+
+  useLayoutEffect(() => {
+    liveTfRef.current = liveSentimentTimeframe
+    drawRef.current()
+  }, [liveSentimentTimeframe])
 
   const onPointerMove = (e: React.PointerEvent<HTMLCanvasElement>) => {
     cancelAnimationFrame(pointerRafRef.current)

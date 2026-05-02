@@ -323,7 +323,9 @@ function MarketSpotViz({
         }
       : null
 
-  const analysis = displaySnap ? analyzeTrend(displaySnap.prices, timeframeLiveDisplayWindowMs(tf)) : null
+  const analysis = displaySnap
+    ? analyzeTrend(displaySnap.prices, timeframeLiveDisplayWindowMs(tf), tf)
+    : null
   const trendWindowLabel = liveWindowLabelTf(tf, t)
   const liveBufLen = (chartCurrency === 'eur' ? liveSeriesEur : liveSeries).length
   const errBlocksChart = err != null && err !== MARKET_ERR_CG429
@@ -404,6 +406,7 @@ function MarketSpotViz({
               prices={displaySnap.prices}
               localeTag={loc}
               liveSentimentNominalMs={timeframeLiveDisplayWindowMs(tf)}
+              liveSentimentTimeframe={tf}
               ariaLabel={chartCurrency === 'eur' ? t('market.chartAriaEur') : t('market.chartAriaUsd')}
             />
             <p className="chart-provenance">{t('market.chartProvenance')}</p>

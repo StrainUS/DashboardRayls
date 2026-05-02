@@ -108,7 +108,7 @@ export const en: MessageTree = {
     mexc: {
       label: 'Spot exchange (MEXC)',
       on: 'USD spot WebSocket enabled — verify connect-src (CSP) if you use one.',
-      off: 'Production: off unless VITE_MEXC_SPOT_WS=1. Dev: on by default (set VITE_MEXC_SPOT_WS=0 to disable).',
+      off: 'Disabled (VITE_MEXC_SPOT_WS=0). By default MEXC WebSocket is on (dev and prod) for near–real-time USD spot.',
     },
   },
   cadence: {
@@ -317,7 +317,8 @@ export const en: MessageTree = {
     priceUsd: 'Spot price (USD)',
     priceEur: 'Spot price (EUR)',
     trend: 'Trend ({{window}}) · {{ccy}}',
-    trendScope: 'End of window (live vs recent segment), matches the right side of the chart.',
+    trendScope:
+      '1 h view: first to last point on the chart. Other windows: recent segment (aligned with the end of the curve).',
     trendUp: 'Up',
     trendDown: 'Down',
     trendFlat: 'Flat',

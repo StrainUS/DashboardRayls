@@ -69,12 +69,16 @@ const SIMPLE_FRESH_MS = 120_000
 const COIN_FRESH_MS = 60 * 60 * 1000
 
 /**
- * Entre deux appels réseau `simple/price` en mode live. `VITE_CG_QUOTE_MIN_GAP_MS` (min 3 s, défaut 7 s).
- * Un défaut inférieur à `LIVE_SPOT_INTERVAL_MS` évite que le tick spot renvoie un cache sans nouveau `fetchedAt`.
+ * Entre deux appels réseau `simple/price` en mode live. `VITE_CG_QUOTE_MIN_GAP_MS` (min 3 s).
+ * Public sans clé : défaut 7 s ; avec clé / proxy : 5 s pour coller à un polling spot plus serré.
  */
 const envQuoteGap = Number(import.meta.env.VITE_CG_QUOTE_MIN_GAP_MS)
 const QUOTE_MIN_NETWORK_GAP_MS =
-  Number.isFinite(envQuoteGap) && envQuoteGap >= 3_000 ? envQuoteGap : 7_000
+  Number.isFinite(envQuoteGap) && envQuoteGap >= 3_000
+    ? envQuoteGap
+    : coingeckoUsesPublicQuota()
+      ? 7_000
+      : 5_000
 
 /** Espace les requêtes CoinGecko pour éviter les rafales au chargement (plusieurs endpoints). */
 let lastCgRequestDoneAt = 0
@@ -491,16 +495,17 @@ export async function fetchCgSimpleQuote(opts?: { refresh?: boolean }): Promise<
 }
 
 /**
- * Tendance « live » : variation sur la **fin** de la fenêtre affichée (alignée sur le dernier point /
- * spot), pas sur le tout premier point du graphique — évite un badge « baisse » alors que la courbe
- * monte à droite.
+ * Tendance : en général variation sur la **fin** de la fenêtre (momentum), pour coller au dernier
+ * mouvement ; exception **`1h`** : premier → dernier point **visibles** (la fenêtre nominal = 1 h,
+ * le % doit correspondre à la courbe entière).
  *
- * @param nominalWindowMs — `timeframeLiveDisplayWindowMs(tf)` : borne la profondeur du regard sur
- *   les longues périodes (ex. 30 j) pour rester réactif.
+ * @param nominalWindowMs — `timeframeLiveDisplayWindowMs(tf)`
+ * @param timeframeId — optionnel ; `1h` force l’ouverture sur le début de série affichée.
  */
 export function analyzeTrend(
   prices: [number, number][],
   nominalWindowMs?: number,
+  timeframeId?: TimeframeId,
 ): {
   trend: MarketTrend
   changePct: number
@@ -529,7 +534,7 @@ export function analyzeTrend(
 
   const close = sorted[n - 1]![1]
   let open: number
-  if (span < 90_000) {
+  if (span < 90_000 || timeframeId === '1h') {
     open = sorted[0]![1]
   } else {
     const nominal = nominalWindowMs != null && Number.isFinite(nominalWindowMs) ? nominalWindowMs : span
@@ -556,8 +561,9 @@ export function analyzeTrend(
 export function liveMarkerSentiment(
   prices: [number, number][],
   nominalWindowMs?: number,
+  timeframeId?: TimeframeId,
 ): 'bullish' | 'bearish' {
-  const r = analyzeTrend(prices, nominalWindowMs)
+  const r = analyzeTrend(prices, nominalWindowMs, timeframeId)
   if (r.trend === 'hausse') return 'bullish'
   if (r.trend === 'baisse') return 'bearish'
   if (prices.length < 2) return 'bullish'

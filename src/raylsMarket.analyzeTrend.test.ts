@@ -46,13 +46,27 @@ describe('analyzeTrend (momentum fin de fenêtre)', () => {
       [1.5 * H, 0.005_36],
       [2 * H, 0.005_41],
     ]
-    expect(liveMarkerSentiment(prices, 2 * H)).toBe('bullish')
+    expect(liveMarkerSentiment(prices, 2 * H, '30m')).toBe('bullish')
     const downTail: [number, number][] = [
       [0, 0.005_42],
       [0.5 * H, 0.005_28],
       [1.5 * H, 0.005_4],
       [2 * H, 0.005_3],
     ]
-    expect(liveMarkerSentiment(downTail, 2 * H)).toBe('bearish')
+    expect(liveMarkerSentiment(downTail, 2 * H, '30m')).toBe('bearish')
+  })
+
+  it('vue 1 h : % sur toute la série affichée (pas uniquement la fin)', () => {
+    const prices: [number, number][] = [
+      [0, 0.005_34],
+      [25 * 60_000, 0.005_28],
+      [40 * 60_000, 0.005_38],
+      [52 * 60_000, 0.005_453],
+    ]
+    const momentum = analyzeTrend(prices, H, '5m')
+    const oneH = analyzeTrend(prices, H, '1h')
+    const fullPct = ((0.005_453 - 0.005_34) / 0.005_34) * 100
+    expect(oneH.changePct).toBeCloseTo(fullPct, 1)
+    expect(Math.abs(oneH.changePct - momentum.changePct)).toBeGreaterThan(0.15)
   })
 })
