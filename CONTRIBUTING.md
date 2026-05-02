@@ -2,6 +2,8 @@
 
 Merci de votre intérêt pour ce tableau de bord.
 
+Le dépôt est sous **licence propriétaire** ; **StrainUS** en est le **seul titulaire des droits** ([LICENSE](./LICENSE)). Toute contribution acceptée est réputée cédée ou concédée selon les conditions fixées par StrainUS (accord écrit le cas échéant).
+
 ## Prérequis
 
 - Node.js **20+**

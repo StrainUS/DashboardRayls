@@ -18,4 +18,4 @@ Application **100 % frontale** (React / Vite) : pas de serveur applicatif ni de 
 
 ## Divulgation responsable
 
-Nous traitons les signalements en priorité et publions des correctifs ou mitigations dans la mesure du possible pour un projet open source sans garantie de SLA.
+Nous traitons les signalements en priorité et publions des correctifs ou mitigations dans la mesure du possible, sans garantie de SLA. Le dépôt est **propriétaire** (tous droits réservés à StrainUS) ; la divulgation responsable vise la sécurité des utilisateurs et de l’infrastructure, pas une licence d’usage du code.

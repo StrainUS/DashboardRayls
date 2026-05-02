@@ -1,7 +1,7 @@
 # Dashboard Rayls — moniteur réseau public
 
 [![CI](https://github.com/StrainUS/DashboardRayls/actions/workflows/ci.yml/badge.svg)](https://github.com/StrainUS/DashboardRayls/actions/workflows/ci.yml)
-[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](./LICENSE)
+[![License](https://img.shields.io/badge/Licence-Propriétaire%20StrainUS-333333.svg)](./LICENSE)
 [![Node.js](https://img.shields.io/badge/node-%3E%3D20-brightgreen)](https://nodejs.org/)
 
 > **EN** — Client-side operational dashboard for **Rayls** public mainnet/testnet RPC health, **CoinGecko** market aggregates, optional **MEXC** spot WebSocket (USD), and public **Rayls** API links. **Unofficial**, informational only; not endorsed by Rayls or exchanges.
@@ -129,4 +129,4 @@ Voir [**CONTRIBUTING.md**](./CONTRIBUTING.md) et [**SECURITY.md**](./SECURITY.md
 
 ## Licence
 
-[MIT](./LICENSE) — Copyright (c) 2026 StrainUS
+**Licence propriétaire — StrainUS** ([fichier LICENSE](./LICENSE)) : le code et la documentation sont la **propriété exclusive de StrainUS**. Aucune utilisation, reproduction ou distribution n’est autorisée sans **accord écrit préalable** de StrainUS. Ce dépôt **n’est pas** sous licence open source.

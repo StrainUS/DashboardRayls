@@ -12,6 +12,7 @@
     "url": "https://github.com/StrainUS/DashboardRayls/issues"
   },
   "homepage": "https://github.com/StrainUS/DashboardRayls#readme",
+  "license": "UNLICENSED",
   "engines": {
     "node": ">=20"
   },
