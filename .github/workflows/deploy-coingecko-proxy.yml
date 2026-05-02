@@ -99,6 +99,9 @@ jobs:
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          # Si le GITHUB_TOKEN reçoit 403 (*Resource not accessible by integration*), ajoutez le secret
+          # **ACTIONS_VARIABLES_TOKEN** (PAT classic **repo** ou PAT affiné avec *Variables* R/W sur ce dépôt),
+          # ou définissez la variable à la main / en local : gh variable set VITE_COINGECKO_API_ROOT -b "URL" --repo …
           GH_TOKEN: ${{ secrets.ACTIONS_VARIABLES_TOKEN || github.token }}
         run: |
           set -euo pipefail
@@ -114,11 +117,17 @@ jobs:
           echo "### Proxy CoinGecko" >> "$GITHUB_STEP_SUMMARY"
           echo "- **URL** : \`$WORKER_URL\`" >> "$GITHUB_STEP_SUMMARY"
 
-          if ! gh variable set VITE_COINGECKO_API_ROOT -b "$WORKER_URL" --repo "${{ github.repository }}" 2>/tmp/gh_var_err.txt; then
-            echo "::error::Échec \`gh variable set\` pour **VITE_COINGECKO_API_ROOT**."
-            cat /tmp/gh_var_err.txt || true
-            echo "::error::Vérifiez **Settings → Actions → General → Workflow permissions** → **Read and write**. Si le message indique un accès refusé malgré tout, ajoutez le secret **ACTIONS_VARIABLES_TOKEN** (PAT avec droits *Variables* sur ce dépôt ou scope **repo**) puis relancez ce workflow."
-            exit 1
+          if gh variable set VITE_COINGECKO_API_ROOT -b "$WORKER_URL" --repo "${{ github.repository }}" 2>/tmp/gh_var_err.txt; then
+            echo "Variable enregistrée : VITE_COINGECKO_API_ROOT=$WORKER_URL"
+            echo "- **VITE_COINGECKO_API_ROOT** enregistrée." >> "$GITHUB_STEP_SUMMARY"
+            exit 0
           fi
-          echo "Variable enregistrée : VITE_COINGECKO_API_ROOT=$WORKER_URL"
-          echo "- **VITE_COINGECKO_API_ROOT** enregistrée." >> "$GITHUB_STEP_SUMMARY"
+          echo "::error::Échec \`gh variable set\` pour **VITE_COINGECKO_API_ROOT**."
+          cat /tmp/gh_var_err.txt || true
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "### Si 403 : PAT ou commande locale" >> "$GITHUB_STEP_SUMMARY"
+          echo "Secret **ACTIONS_VARIABLES_TOKEN** (PAT **repo**), ou depuis votre machine connectée à GitHub :" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "    gh variable set VITE_COINGECKO_API_ROOT -b \"$WORKER_URL\" --repo ${{ github.repository }}" >> "$GITHUB_STEP_SUMMARY"
+          echo "::error::Après création de la variable, relancez le workflow **Pages**."
+          exit 1

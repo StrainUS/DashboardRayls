@@ -93,7 +93,7 @@ jobs:
           if ! gh variable set VITE_RAYLS_RPC_HTTP_URL -b "$WORKER_URL" --repo "${{ github.repository }}" 2>/tmp/gh_var_err.txt; then
             echo "::error::Échec \`gh variable set\` pour **VITE_RAYLS_RPC_HTTP_URL**."
             cat /tmp/gh_var_err.txt || true
-            echo "::error::Vérifiez **Workflow permissions** → **Read and write**, ou ajoutez **ACTIONS_VARIABLES_TOKEN** (PAT) puis relancez."
+            echo "::error::Ajoutez le secret **ACTIONS_VARIABLES_TOKEN** (PAT scope **repo**) ou définissez la variable à la main — voir deploy-coingecko-proxy.yml."
             exit 1
           fi
           echo "Variable enregistrée : VITE_RAYLS_RPC_HTTP_URL=$WORKER_URL"
