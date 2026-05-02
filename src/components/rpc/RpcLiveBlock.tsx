@@ -1,8 +1,15 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { RPC_DEADLINE_CHECK_MS, RPC_POLL_INTERVAL_MS } from '../../constants/dashboard'
+import {
+  RPC_DEADLINE_CHECK_MS,
+  RPC_POLL_BACKOFF_MAX_MS,
+  RPC_POLL_INTERVAL_MS,
+  RPC_SLO_BLOCK_STALE_SEC,
+  RPC_SLO_LATENCY_WARN_MS,
+} from '../../constants/dashboard'
 import { useRaylsRpcCoordination } from '../../hooks/useRaylsRpcCoordination'
 import { useI18n } from '../../i18n'
 import { localeTag } from '../../i18n/translate'
+import { buildRpcSnapshotExportJson } from '../../lib/rpcSnapshotExport'
 import { idbReadRpcSnap, idbWriteRpcSnap } from '../../lib/rpcSnapshotIdb'
 import type { RpcSnapWire } from '../../lib/rpcSnapshotWire'
 import { snapshotToWire, wireToSnapshot, type RpcLiveSnapshot } from '../../lib/rpcSnapshotWire'
@@ -60,6 +67,11 @@ function syncLabelRpc(s: RaylsSyncingState, t: TFn): string {
   return t('rpc.syncProgress', { from: shortHash(s.currentBlockHex), to: shortHash(s.highestBlockHex) })
 }
 
+function blockHeadAgeSec(snap: Snapshot): number | null {
+  if (snap.status !== 'ok' || !snap.latestBlock) return null
+  return Math.max(0, Date.now() / 1000 - snap.latestBlock.timestampUnix)
+}
+
 function statsFromHistory(samples: number[]): { min: number; avg: number; max: number } | null {
   if (samples.length === 0) return null
   let min = samples[0]!
@@ -101,6 +113,9 @@ export function RpcLiveBlock() {
   const [snap, setSnap] = useState<Snapshot>(empty)
   const [walletChain, setWalletChain] = useState<string | null>(null)
   const [rpcDeadline, setRpcDeadline] = useState(0)
+  const [effectivePollMs, setEffectivePollMs] = useState(RPC_POLL_INTERVAL_MS)
+  const effectivePollMsRef = useRef(RPC_POLL_INTERVAL_MS)
+  const [exportCopied, setExportCopied] = useState(false)
   const [wsStatus, setWsStatus] = useState<RaylsWsStatus>(() => (RAYLS_MAINNET_WS_URL ? 'connecting' : 'off'))
   const [realtimePush, setRealtimePush] = useState<RealtimePush | null>(null)
   const deadlineRef = useRef(0)
@@ -179,6 +194,10 @@ export function RpcLiveBlock() {
   }, [mainnetHttpUrl])
 
   const refresh = useCallback(async (userInitiated = false) => {
+    if (userInitiated) {
+      effectivePollMsRef.current = RPC_POLL_INTERVAL_MS
+      setEffectivePollMs(RPC_POLL_INTERVAL_MS)
+    }
     const seq = ++refreshSeq.current
     setSnap((s) => {
       if (userInitiated || s.status === 'idle') {
@@ -222,6 +241,8 @@ export function RpcLiveBlock() {
         rlsTotalSupplyWei: batch.rlsTotalSupplyWei,
       }
       setSnap(okSnap)
+      effectivePollMsRef.current = RPC_POLL_INTERVAL_MS
+      setEffectivePollMs(RPC_POLL_INTERVAL_MS)
       const wire = snapshotToWire(okSnap)
       void idbWriteRpcSnap(mainnetHttpUrl, wire)
       publishSnap(wire)
@@ -243,6 +264,17 @@ export function RpcLiveBlock() {
       }
       setSnap(errSnap)
       publishSnap(snapshotToWire(errSnap))
+
+      const base = RPC_POLL_INTERVAL_MS
+      const cap = RPC_POLL_BACKOFF_MAX_MS
+      const prev = effectivePollMsRef.current
+      const doubled = Math.min(cap, Math.max(base * 2, prev * 2))
+      const jitter = Math.floor(Math.random() * 200)
+      effectivePollMsRef.current = Math.min(cap, doubled + jitter)
+      setEffectivePollMs(effectivePollMsRef.current)
+      const nextDeadline = Date.now() + effectivePollMsRef.current
+      deadlineRef.current = nextDeadline
+      setRpcDeadline(nextDeadline)
     }
   }, [t, mainnetHttpUrl, publishSnap])
 
@@ -257,7 +289,7 @@ export function RpcLiveBlock() {
 
     if (rpcIntervalRef.current) return
     const t0 = Date.now()
-    const d = t0 + RPC_POLL_INTERVAL_MS
+    const d = t0 + effectivePollMsRef.current
     deadlineRef.current = d
     queueMicrotask(() => {
       setRpcDeadline(d)
@@ -266,7 +298,7 @@ export function RpcLiveBlock() {
     rpcIntervalRef.current = window.setInterval(() => {
       const now = Date.now()
       if (now >= deadlineRef.current) {
-        const next = now + RPC_POLL_INTERVAL_MS
+        const next = now + effectivePollMsRef.current
         deadlineRef.current = next
         setRpcDeadline(next)
         queueMicrotask(() => {
@@ -348,6 +380,37 @@ export function RpcLiveBlock() {
         ? t('rpc.wsConnecting')
         : ''
 
+  const sloLatency = snap.status === 'ok' && snap.latencyMs != null && snap.latencyMs >= RPC_SLO_LATENCY_WARN_MS
+  const headAgeSec = useMemo(() => blockHeadAgeSec(snap), [snap])
+  const sloStale =
+    snap.status === 'ok' && headAgeSec != null && headAgeSec > RPC_SLO_BLOCK_STALE_SEC
+
+  const exportJson = useMemo(
+    () => buildRpcSnapshotExportJson({ rpcUrl: mainnetHttpUrl, snap, locale: loc }),
+    [mainnetHttpUrl, snap, loc],
+  )
+
+  const copyExport = useCallback(async () => {
+    try {
+      await navigator.clipboard.writeText(exportJson)
+      setExportCopied(true)
+      window.setTimeout(() => setExportCopied(false), 2000)
+    } catch {
+      /* ignore */
+    }
+  }, [exportJson])
+
+  const downloadExport = useCallback(() => {
+    const blob = new Blob([exportJson], { type: 'application/json;charset=utf-8' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `rayls-rpc-snapshot-${new Date().toISOString().replace(/[:.]/g, '-')}.json`
+    a.rel = 'noopener'
+    a.click()
+    URL.revokeObjectURL(url)
+  }, [exportJson])
+
   const coordHint = useMemo(() => {
     if (!tabVisible) return t('rpc.coordBackground')
     if (coordCtx.channelSupported && !coordCtx.isLeader && coordCtx.peerCount > 1) {
@@ -369,7 +432,7 @@ export function RpcLiveBlock() {
         <div className="dash-reseau-control__status">
           <span className="dash-pill dash-pill--live">
             <span className="dash-pulse" aria-hidden />
-            {t('rpc.live')} · {fmtPollInterval(RPC_POLL_INTERVAL_MS, loc)}
+            {t('rpc.live')} · {fmtPollInterval(effectivePollMs, loc)}
             {wsPill}
           </span>
           <span className="dash-reseau-control__tick mono">
@@ -385,6 +448,8 @@ export function RpcLiveBlock() {
           type="button"
           className="dash-btn dash-btn--primary dash-reseau-control__action"
           onClick={() => {
+            effectivePollMsRef.current = RPC_POLL_INTERVAL_MS
+            setEffectivePollMs(RPC_POLL_INTERVAL_MS)
             const n = Date.now()
             const next = n + RPC_POLL_INTERVAL_MS
             deadlineRef.current = next
@@ -403,8 +468,29 @@ export function RpcLiveBlock() {
         </p>
       ) : null}
 
+      <div className="dash-reseau-toolbar" role="group" aria-label={t('rpc.exportGroupAria')}>
+        <button type="button" className="dash-btn dash-btn--ghost dash-reseau-toolbar__btn" onClick={() => void copyExport()}>
+          {exportCopied ? t('rpc.exportCopied') : t('rpc.exportCopy')}
+        </button>
+        <button type="button" className="dash-btn dash-btn--ghost dash-reseau-toolbar__btn" onClick={downloadExport}>
+          {t('rpc.exportDownload')}
+        </button>
+      </div>
+
       <div className="dash-reseau-live" aria-label={t('rpc.liveStateAria')}>
         <p className="dash-reseau-live__eyebrow">{t('rpc.liveEyebrow')}</p>
+        {(sloLatency || sloStale) && (
+          <ul className="dash-reseau-slo-row" aria-label={t('rpc.sloAria')}>
+            {sloLatency ? (
+              <li className="dash-reseau-slo-pill dash-reseau-slo-pill--warn">{t('rpc.sloLatency')}</li>
+            ) : null}
+            {sloStale ? (
+              <li className="dash-reseau-slo-pill dash-reseau-slo-pill--warn">
+                {t('rpc.sloStale', { sec: Math.round(headAgeSec ?? 0) })}
+              </li>
+            ) : null}
+          </ul>
+        )}
         <div className="dash-reseau-live-metrics">
           <article
             className={`dash-reseau-kpi dash-reseau-kpi--latency dash-reseau-kpi--${latencyClass}`}
@@ -502,7 +588,7 @@ export function RpcLiveBlock() {
             localeTag={loc}
             emptyLabel={t('rpc.latencyChartEmpty')}
             ariaLabel={t('rpc.latencyChartAria')}
-            sampleIntervalHintMs={RPC_POLL_INTERVAL_MS}
+            sampleIntervalHintMs={effectivePollMs}
           />
           <p className="dash-caption">{t('rpc.chartCaption')}</p>
         </div>

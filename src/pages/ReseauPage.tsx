@@ -1,5 +1,5 @@
 import { PageHero, RefreshCadenceBar } from '../components/layout'
-import { RpcLiveBlock } from '../components/rpc'
+import { RpcComparePanel, RpcLiveBlock } from '../components/rpc'
 import { useI18n } from '../i18n'
 import { RAYLS_MAINNET } from '../raylsConfig'
 
@@ -28,6 +28,7 @@ export function ReseauPage() {
       <div className="dash-page-body">
         <RefreshCadenceBar kind="rpc" />
         <RpcLiveBlock />
+        <RpcComparePanel />
       </div>
     </div>
   )

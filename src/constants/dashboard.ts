@@ -38,6 +38,15 @@ const envRpcPoll = Number(import.meta.env.VITE_RPC_POLL_MS)
 export const RPC_POLL_INTERVAL_MS =
   Number.isFinite(envRpcPoll) && envRpcPoll >= 300 ? envRpcPoll : 1000
 
+/** Plafond du backoff après erreurs RPC (ms). */
+export const RPC_POLL_BACKOFF_MAX_MS = 30_000
+
+/** SLO visuel : latence HTTP au-delà de laquelle l’UI affiche un avertissement. */
+export const RPC_SLO_LATENCY_WARN_MS = 1_500
+
+/** SLO visuel : âge du dernier bloc (secondes) au-delà duquel l’UI signale un head « stale ». */
+export const RPC_SLO_BLOCK_STALE_SEC = 120
+
 /** Vérification du prochain batch RPC (sans setState global — le compteur fluide est en rAF local). */
 export const RPC_DEADLINE_CHECK_MS = 400
 
