@@ -4,6 +4,8 @@
 #   1) Cloudflare → Workers et Pages → **Modifier** le sous-domaine workers.dev (sinon wrangler échoue en CI).
 #   2) Secrets GitHub : CLOUDFLARE_API_TOKEN (Workers Edit), CLOUDFLARE_ACCOUNT_ID
 #
+# PAT optionnel si `gh variable set` échoue avec GITHUB_TOKEN : **ACTIONS_VARIABLES_TOKEN** (voir deploy-coingecko-proxy.yml).
+#
 # Puis : Actions → « Deploy RPC CORS proxy » → Run workflow → Pages se relance ou manuel.
 name: Deploy RPC CORS proxy
 
@@ -73,7 +75,7 @@ jobs:
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          GH_TOKEN: ${{ github.token }}
+          GH_TOKEN: ${{ secrets.ACTIONS_VARIABLES_TOKEN || github.token }}
         run: |
           set -euo pipefail
           NAME=$(grep -E '^name[[:space:]]*=' workers/rpc-cors-proxy/wrangler.toml | head -1 | sed -E 's/^name[[:space:]]*=[[:space:]]*"([^"]+)".*/\1/')
@@ -88,47 +90,13 @@ jobs:
           echo "### Proxy RPC mainnet (Cloudflare Worker)" >> "$GITHUB_STEP_SUMMARY"
           echo "- **URL** : \`$WORKER_URL\`" >> "$GITHUB_STEP_SUMMARY"
 
-          upsert_repo_var() {
-            local var_name="$1" var_value="$2"
-            local code body
-            body=$(jq -n --arg n "$var_name" --arg v "$var_value" '{name:$n,value:$v}')
-            code=$(curl -sS -o /tmp/gh_var_body.txt -w "%{http_code}" \
-              -X PATCH \
-              -H "Accept: application/vnd.github+json" \
-              -H "Authorization: Bearer $GH_TOKEN" \
-              -H "X-GitHub-Api-Version: 2022-11-28" \
-              "https://api.github.com/repos/${{ github.repository }}/actions/variables/${var_name}" \
-              -d "$body") || true
-            if [ "$code" = "204" ]; then
-              echo "Variable mise à jour : $var_name"
-              return 0
-            fi
-            if [ "$code" != "404" ]; then
-              echo "::error::GitHub API variable **$var_name** : HTTP $code"
-              cat /tmp/gh_var_body.txt || true
-              echo ""
-              echo "::error::Dépôt **Settings → Actions → General → Workflow permissions** → **Read and write permissions**, puis relancez ce workflow."
-              exit 1
-            fi
-            code=$(curl -sS -o /tmp/gh_var_body.txt -w "%{http_code}" \
-              -X POST \
-              -H "Accept: application/vnd.github+json" \
-              -H "Authorization: Bearer $GH_TOKEN" \
-              -H "X-GitHub-Api-Version: 2022-11-28" \
-              "https://api.github.com/repos/${{ github.repository }}/actions/variables" \
-              -d "$body") || true
-            if [ "$code" = "201" ]; then
-              echo "Variable créée : $var_name"
-              return 0
-            fi
-            echo "::error::Création variable **$var_name** : HTTP $code"
-            cat /tmp/gh_var_body.txt || true
-            echo ""
-            echo "::error::Dépôt **Settings → Actions → General → Workflow permissions** → **Read and write permissions**, puis relancez ce workflow."
+          if ! gh variable set VITE_RAYLS_RPC_HTTP_URL -b "$WORKER_URL" --repo "${{ github.repository }}" 2>/tmp/gh_var_err.txt; then
+            echo "::error::Échec \`gh variable set\` pour **VITE_RAYLS_RPC_HTTP_URL**."
+            cat /tmp/gh_var_err.txt || true
+            echo "::error::Vérifiez **Workflow permissions** → **Read and write**, ou ajoutez **ACTIONS_VARIABLES_TOKEN** (PAT) puis relancez."
             exit 1
-          }
-
-          upsert_repo_var VITE_RAYLS_RPC_HTTP_URL "$WORKER_URL"
+          fi
+          echo "Variable enregistrée : VITE_RAYLS_RPC_HTTP_URL=$WORKER_URL"
 
           echo "- Variable **VITE_RAYLS_RPC_HTTP_URL** mise à jour." >> "$GITHUB_STEP_SUMMARY"
           echo "" >> "$GITHUB_STEP_SUMMARY"

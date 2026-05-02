@@ -1,6 +1,9 @@
 # Déploie workers/coingecko-cors-proxy et définit VITE_COINGECKO_API_ROOT.
 #
 # Secret CoinGecko : COINGECKO_DEMO_API_KEY ou (fallback) VITE_COINGECKO_DEMO_API_KEY
+#
+# Si l’étape variable échoue encore (403) : secret optionnel **ACTIONS_VARIABLES_TOKEN**
+# = PAT « classic » scope **repo** ou PAT à granularité limitée avec *Variables* R/W sur ce dépôt.
 name: Deploy CoinGecko CORS proxy
 
 on:
@@ -96,42 +99,26 @@ jobs:
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          GH_TOKEN: ${{ github.token }}
+          GH_TOKEN: ${{ secrets.ACTIONS_VARIABLES_TOKEN || github.token }}
         run: |
           set -euo pipefail
           NAME=$(grep -E '^name[[:space:]]*=' workers/coingecko-cors-proxy/wrangler.toml | head -1 | sed -E 's/^name[[:space:]]*=[[:space:]]*"([^"]+)".*/\1/')
           RESP=$(curl -sS -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" \
             "https://api.cloudflare.com/client/v4/accounts/$CLOUDFLARE_ACCOUNT_ID/workers/subdomain")
           SUB=$(echo "$RESP" | jq -r '.result.subdomain // empty')
+          if [ -z "$SUB" ]; then
+            echo "::error::API workers/subdomain : pas de sous-domaine."
+            exit 1
+          fi
           WORKER_URL="https://${NAME}.${SUB}.workers.dev"
           echo "### Proxy CoinGecko" >> "$GITHUB_STEP_SUMMARY"
           echo "- **URL** : \`$WORKER_URL\`" >> "$GITHUB_STEP_SUMMARY"
 
-          upsert_repo_var() {
-            local var_name="$1" var_value="$2"
-            local code body
-            body=$(jq -n --arg n "$var_name" --arg v "$var_value" '{name:$n,value:$v}')
-            code=$(curl -sS -o /tmp/gh_var_body.txt -w "%{http_code}" \
-              -X PATCH \
-              -H "Accept: application/vnd.github+json" \
-              -H "Authorization: Bearer $GH_TOKEN" \
-              -H "X-GitHub-Api-Version: 2022-11-28" \
-              "https://api.github.com/repos/${{ github.repository }}/actions/variables/${var_name}" \
-              -d "$body") || true
-            if [ "$code" = "204" ]; then echo "Variable mise à jour : $var_name"; return 0; fi
-            if [ "$code" != "404" ]; then
-              echo "::error::GitHub API variable **$var_name** : HTTP $code"; cat /tmp/gh_var_body.txt || true; exit 1
-            fi
-            code=$(curl -sS -o /tmp/gh_var_body.txt -w "%{http_code}" \
-              -X POST \
-              -H "Accept: application/vnd.github+json" \
-              -H "Authorization: Bearer $GH_TOKEN" \
-              -H "X-GitHub-Api-Version: 2022-11-28" \
-              "https://api.github.com/repos/${{ github.repository }}/actions/variables" \
-              -d "$body") || true
-            if [ "$code" = "201" ]; then echo "Variable créée : $var_name"; return 0; fi
-            echo "::error::Création variable **$var_name** : HTTP $code"; cat /tmp/gh_var_body.txt || true; exit 1
-          }
-
-          upsert_repo_var VITE_COINGECKO_API_ROOT "$WORKER_URL"
+          if ! gh variable set VITE_COINGECKO_API_ROOT -b "$WORKER_URL" --repo "${{ github.repository }}" 2>/tmp/gh_var_err.txt; then
+            echo "::error::Échec \`gh variable set\` pour **VITE_COINGECKO_API_ROOT**."
+            cat /tmp/gh_var_err.txt || true
+            echo "::error::Vérifiez **Settings → Actions → General → Workflow permissions** → **Read and write**. Si le message indique un accès refusé malgré tout, ajoutez le secret **ACTIONS_VARIABLES_TOKEN** (PAT avec droits *Variables* sur ce dépôt ou scope **repo**) puis relancez ce workflow."
+            exit 1
+          fi
+          echo "Variable enregistrée : VITE_COINGECKO_API_ROOT=$WORKER_URL"
           echo "- **VITE_COINGECKO_API_ROOT** enregistrée." >> "$GITHUB_STEP_SUMMARY"

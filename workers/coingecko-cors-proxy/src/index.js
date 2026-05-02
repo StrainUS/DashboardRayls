@@ -7,7 +7,9 @@ export default {
     const cors = {
       'Access-Control-Allow-Origin': '*',
       'Access-Control-Allow-Methods': 'GET, HEAD, OPTIONS',
-      'Access-Control-Allow-Headers': 'Content-Type, Accept',
+      // Le client peut envoyer Accept + en-têtes CoinGecko si la clé est aussi dans le bundle Pages.
+      'Access-Control-Allow-Headers':
+        'Content-Type, Accept, x-cg-demo-api-key, x-cg-pro-api-key',
       'Access-Control-Max-Age': '86400',
     }
 
