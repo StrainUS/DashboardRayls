@@ -1,5 +1,5 @@
-import { PageHero, RefreshCadenceBar } from '../components/layout'
-import { OfficialContractsPanel, TestnetTelemetryCard } from '../components/overview'
+import { PageHero } from '../components/layout'
+import { OfficialContractsPanel } from '../components/overview'
 import { useI18n } from '../i18n'
 
 export function ChainePage() {
@@ -15,16 +15,11 @@ export function ChainePage() {
             <span className="dash-page-badge dash-page-badge--chip dash-page-badge--chip-accent">
               {t('chaine.mainnet')}
             </span>
-            <span className="dash-page-badge dash-page-badge--chip">{t('chaine.testnet')}</span>
           </div>
         }
       />
       <div className="dash-page-body">
-        <RefreshCadenceBar kind="testnet" />
-        <div className="dash-page-grid-2">
-          <OfficialContractsPanel />
-          <TestnetTelemetryCard />
-        </div>
+        <OfficialContractsPanel />
       </div>
     </div>
   )

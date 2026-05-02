@@ -88,175 +88,185 @@ export function CandleChartCanvas({
     let bufDpr = 0
 
     const draw = () => {
-      const arr = candlesRef.current
-      const dpr = Math.min(2, window.devicePixelRatio || 1)
-      const w = canvas.clientWidth
-      const h = canvas.clientHeight
-      if (w < 8 || h < 8) return
+      try {
+        const arr = candlesRef.current
+        const dpr = Math.min(2, window.devicePixelRatio || 1)
+        const w = canvas.clientWidth
+        const h = canvas.clientHeight
+        if (w < 8 || h < 8) return
 
-      if (w !== bufW || h !== bufH || dpr !== bufDpr) {
-        bufW = w
-        bufH = h
-        bufDpr = dpr
-        canvas.width = Math.floor(w * dpr)
-        canvas.height = Math.floor(h * dpr)
-        ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
-      } else {
-        ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
-        ctx.clearRect(0, 0, w, h)
-      }
-
-      if (arr.length < 1) return
-
-      let loRaw = Infinity
-      let hiRaw = -Infinity
-      for (const c of arr) {
-        if (c.l < loRaw) loRaw = c.l
-        if (c.h > hiRaw) hiRaw = c.h
-      }
-      const { lo, hi } = yAxisBounds(loRaw, hiRaw)
-      const ySpan = Math.max(hi - lo, 1e-18)
-
-      let tMin = Infinity
-      let tMax = -Infinity
-      for (const c of arr) {
-        if (c.t < tMin) tMin = c.t
-        if (c.t > tMax) tMax = c.t
-      }
-      const tSpanMs = Math.max(tMax - tMin, 1)
-
-      const chartLeft = CHART_AXIS_LEFT
-      const chartRight = w - CHART_AXIS_RIGHT
-      const chartTop = CHART_AXIS_TOP
-      const chartBottom = h - CHART_AXIS_BOTTOM
-      const chartW = chartRight - chartLeft
-      const chartH = chartBottom - chartTop
-
-      const nxTime = (ts: number) => chartLeft + ((ts - tMin) / tSpanMs) * chartW
-      const ny = (v: number) => chartTop + (1 - (v - lo) / ySpan) * chartH
-
-      const yTicks = nicePriceTicks(lo, hi, 5)
-      ctx.strokeStyle = 'rgba(255, 255, 255, 0.07)'
-      ctx.lineWidth = 1
-      ctx.setLineDash([])
-      for (const v of yTicks) {
-        const yg = ny(v)
-        ctx.beginPath()
-        ctx.moveTo(chartLeft, yg)
-        ctx.lineTo(chartRight, yg)
-        ctx.stroke()
-      }
-
-      ctx.fillStyle = 'rgba(148, 163, 184, 0.72)'
-      ctx.font = '11px ui-monospace, SF Mono, Menlo, monospace'
-      ctx.textAlign = 'right'
-      ctx.textBaseline = 'middle'
-      for (const v of yTicks) {
-        const yg = ny(v)
-        if (yg >= chartTop - 2 && yg <= chartBottom + 2) {
-          ctx.fillText(formatAxisPrice(v, localeRef.current), chartLeft - 8, yg)
+        if (w !== bufW || h !== bufH || dpr !== bufDpr) {
+          bufW = w
+          bufH = h
+          bufDpr = dpr
+          canvas.width = Math.floor(w * dpr)
+          canvas.height = Math.floor(h * dpr)
+          ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
+        } else {
+          ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
+          ctx.clearRect(0, 0, w, h)
         }
-      }
 
-      const xTicks = timeAxisTicks(tMin, tMax, 7)
-      ctx.textAlign = 'center'
-      ctx.textBaseline = 'top'
-      for (const ts of xTicks) {
-        const xg = nxTime(ts)
-        if (xg >= chartLeft - 1 && xg <= chartRight + 1) {
-          ctx.fillText(formatAxisTime(ts, tSpanMs, localeRef.current), xg, chartBottom + 6)
+        if (arr.length < 1) return
+
+        let loRaw = Infinity
+        let hiRaw = -Infinity
+        for (const c of arr) {
+          if (c.l < loRaw) loRaw = c.l
+          if (c.h > hiRaw) hiRaw = c.h
         }
-      }
+        const { lo, hi } = yAxisBounds(loRaw, hiRaw)
+        const ySpan = Math.max(hi - lo, 1e-18)
 
-      for (let i = 0; i < arr.length; i++) {
-        const c = arr[i]!
-        const x = nxTime(c.t)
-        const yO = ny(c.o)
-        const yC = ny(c.c)
-        const yHi = ny(c.h)
-        const yLo = ny(c.l)
-        const up = c.c >= c.o
-        const stroke = up ? GREEN : RED
-        const fill = up ? GREEN_DIM : RED_DIM
-        const top = Math.min(yO, yC)
-        const bot = Math.max(yO, yC)
-        const bw = candleBodyWidth(nxTime, arr, i, chartLeft, chartRight)
+        let tMin = Infinity
+        let tMax = -Infinity
+        for (const c of arr) {
+          if (c.t < tMin) tMin = c.t
+          if (c.t > tMax) tMax = c.t
+        }
+        const tSpanMs = Math.max(tMax - tMin, 1)
 
-        ctx.strokeStyle = stroke
-        ctx.lineWidth = 1.25
-        ctx.beginPath()
-        ctx.moveTo(x, yHi)
-        ctx.lineTo(x, yLo)
-        ctx.stroke()
+        const chartLeft = CHART_AXIS_LEFT
+        const chartRight = w - CHART_AXIS_RIGHT
+        const chartTop = CHART_AXIS_TOP
+        const chartBottom = h - CHART_AXIS_BOTTOM
+        const chartW = chartRight - chartLeft
+        const chartH = chartBottom - chartTop
 
-        const bodyH = Math.max(bot - top, 1)
-        ctx.fillStyle = fill
-        ctx.strokeStyle = stroke
-        ctx.lineWidth = 1.1
-        ctx.beginPath()
-        ctx.rect(x - bw / 2, top, bw, bodyH)
-        ctx.fill()
-        ctx.stroke()
-      }
+        const nxTime = (ts: number) => chartLeft + ((ts - tMin) / tSpanMs) * chartW
+        const ny = (v: number) => chartTop + (1 - (v - lo) / ySpan) * chartH
 
-      const last = arr[arr.length - 1]!
-      const lx = nxTime(last.t)
-      const ly = ny(last.c)
-      drawLiveQuoteMarker(ctx, lx, ly)
+        const yTicks = nicePriceTicks(lo, hi, 5)
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.07)'
+        ctx.lineWidth = 1
+        ctx.setLineDash([])
+        for (const v of yTicks) {
+          const yg = ny(v)
+          ctx.beginPath()
+          ctx.moveTo(chartLeft, yg)
+          ctx.lineTo(chartRight, yg)
+          ctx.stroke()
+        }
 
-      const sf = scrubFracRef.current
-      if (sf != null && arr.length >= 1) {
-        const f = Math.max(0, Math.min(1, sf))
-        const tSel = tMin + f * tSpanMs
-        let best = 0
-        let bestD = Infinity
-        for (let i = 0; i < arr.length; i++) {
-          const d = Math.abs(arr[i]!.t - tSel)
-          if (d < bestD) {
-            bestD = d
-            best = i
+        ctx.fillStyle = 'rgba(148, 163, 184, 0.72)'
+        ctx.font = '11px ui-monospace, SF Mono, Menlo, monospace'
+        ctx.textAlign = 'right'
+        ctx.textBaseline = 'middle'
+        for (const v of yTicks) {
+          const yg = ny(v)
+          if (yg >= chartTop - 2 && yg <= chartBottom + 2) {
+            ctx.fillText(formatAxisPrice(v, localeRef.current), chartLeft - 8, yg)
           }
         }
-        const sel = arr[best]!
-        const hx = nxTime(sel.t)
-        const hy = ny(sel.c)
 
-        ctx.strokeStyle = 'rgba(255, 255, 255, 0.22)'
-        ctx.lineWidth = 1
-        ctx.setLineDash([4, 4])
-        ctx.beginPath()
-        ctx.moveTo(hx, chartTop)
-        ctx.lineTo(hx, chartBottom)
-        ctx.stroke()
-        ctx.beginPath()
-        ctx.moveTo(chartLeft, hy)
-        ctx.lineTo(chartRight, hy)
-        ctx.stroke()
-        ctx.setLineDash([])
+        const xTicks = timeAxisTicks(tMin, tMax, 7)
+        ctx.textAlign = 'center'
+        ctx.textBaseline = 'top'
+        for (const ts of xTicks) {
+          const xg = nxTime(ts)
+          if (xg >= chartLeft - 1 && xg <= chartRight + 1) {
+            ctx.fillText(formatAxisTime(ts, tSpanMs, localeRef.current), xg, chartBottom + 6)
+          }
+        }
 
-        ctx.fillStyle = 'rgba(148, 163, 184, 0.95)'
-        ctx.strokeStyle = 'rgba(15, 24, 40, 0.9)'
-        ctx.lineWidth = 2
-        ctx.beginPath()
-        ctx.arc(hx, hy, 5, 0, Math.PI * 2)
-        ctx.fill()
-        ctx.stroke()
+        for (let i = 0; i < arr.length; i++) {
+          const c = arr[i]!
+          const x = nxTime(c.t)
+          const yO = ny(c.o)
+          const yC = ny(c.c)
+          const yHi = ny(c.h)
+          const yLo = ny(c.l)
+          const up = c.c >= c.o
+          const stroke = up ? GREEN : RED
+          const fill = up ? GREEN_DIM : RED_DIM
+          const top = Math.min(yO, yC)
+          const bot = Math.max(yO, yC)
+          const bw = candleBodyWidth(nxTime, arr, i, chartLeft, chartRight)
+
+          ctx.strokeStyle = stroke
+          ctx.lineWidth = 1.25
+          ctx.beginPath()
+          ctx.moveTo(x, yHi)
+          ctx.lineTo(x, yLo)
+          ctx.stroke()
+
+          const bodyH = Math.max(bot - top, 1)
+          ctx.fillStyle = fill
+          ctx.strokeStyle = stroke
+          ctx.lineWidth = 1.1
+          ctx.beginPath()
+          ctx.rect(x - bw / 2, top, bw, bodyH)
+          ctx.fill()
+          ctx.stroke()
+        }
+
+        const last = arr[arr.length - 1]!
+        const lx = nxTime(last.t)
+        const ly = ny(last.c)
+        const sentiment = last.c >= last.o ? 'bullish' : 'bearish'
+        drawLiveQuoteMarker(ctx, lx, ly, { nowMs: performance.now(), sentiment })
+
+        const sf = scrubFracRef.current
+        if (sf != null && arr.length >= 1) {
+          const f = Math.max(0, Math.min(1, sf))
+          const tSel = tMin + f * tSpanMs
+          let best = 0
+          let bestD = Infinity
+          for (let i = 0; i < arr.length; i++) {
+            const d = Math.abs(arr[i]!.t - tSel)
+            if (d < bestD) {
+              bestD = d
+              best = i
+            }
+          }
+          const sel = arr[best]!
+          const hx = nxTime(sel.t)
+          const hy = ny(sel.c)
+
+          ctx.strokeStyle = 'rgba(255, 255, 255, 0.22)'
+          ctx.lineWidth = 1
+          ctx.setLineDash([4, 4])
+          ctx.beginPath()
+          ctx.moveTo(hx, chartTop)
+          ctx.lineTo(hx, chartBottom)
+          ctx.stroke()
+          ctx.beginPath()
+          ctx.moveTo(chartLeft, hy)
+          ctx.lineTo(chartRight, hy)
+          ctx.stroke()
+          ctx.setLineDash([])
+
+          ctx.fillStyle = 'rgba(148, 163, 184, 0.95)'
+          ctx.strokeStyle = 'rgba(15, 24, 40, 0.9)'
+          ctx.lineWidth = 2
+          ctx.beginPath()
+          ctx.arc(hx, hy, 5, 0, Math.PI * 2)
+          ctx.fill()
+          ctx.stroke()
+        }
+      } finally {
+        if (!document.hidden) {
+          cancelAnimationFrame(raf)
+          raf = requestAnimationFrame(draw)
+        } else {
+          raf = 0
+        }
       }
-    }
-
-    const schedule = () => {
-      cancelAnimationFrame(raf)
-      raf = requestAnimationFrame(draw)
     }
 
     const onVis = () => {
-      if (!document.hidden) schedule()
+      if (document.hidden) {
+        cancelAnimationFrame(raf)
+        raf = 0
+      } else if (raf === 0) {
+        raf = requestAnimationFrame(draw)
+      }
     }
 
     drawRef.current = draw
-    schedule()
+    raf = requestAnimationFrame(draw)
     document.addEventListener('visibilitychange', onVis)
-    const ro = new ResizeObserver(schedule)
+    const ro = new ResizeObserver(() => drawRef.current())
     ro.observe(canvas)
     return () => {
       drawRef.current = () => {}

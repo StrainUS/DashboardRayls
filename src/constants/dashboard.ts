@@ -44,8 +44,6 @@ const envNews = Number(import.meta.env.VITE_NEWS_REFRESH_MS)
 export const NEWS_AND_DOCS_REFRESH_MS =
   Number.isFinite(envNews) && envNews >= 1_800_000 ? envNews : 21_600_000
 
-/** Télémétrie testnet (voir `TestnetTelemetryCard`). */
-export const TESTNET_TELEMETRY_POLL_MS = 12_000
 
 /** Libellé localisé pour une période de polling (ex. ~1 s, ~18 s, 6 h). */
 export function formatPollInterval(ms: number, locale: Locale): string {

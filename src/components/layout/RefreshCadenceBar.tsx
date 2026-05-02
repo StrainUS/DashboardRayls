@@ -2,14 +2,13 @@ import {
   NEWS_AND_DOCS_REFRESH_MS,
   OFFICIAL_HUB_REFRESH_MS,
   RPC_POLL_INTERVAL_MS,
-  TESTNET_TELEMETRY_POLL_MS,
   formatPollInterval,
 } from '../../constants/dashboard'
 import { useI18n } from '../../i18n'
 import { marketCadenceBarMessage } from '../../lib/marketCadenceCopy'
 
 type Props =
-  | { kind: 'rpc' | 'market' | 'hub' | 'news' | 'testnet' }
+  | { kind: 'rpc' | 'market' | 'hub' | 'news' }
   | { kind: 'custom'; label: string }
 
 const VARIANT = {
@@ -17,7 +16,6 @@ const VARIANT = {
   market: 'live',
   hub: 'steady',
   news: 'news',
-  testnet: 'steady',
 } as const
 
 export function RefreshCadenceBar(props: Props) {
@@ -32,9 +30,7 @@ export function RefreshCadenceBar(props: Props) {
           ? marketCadenceBarMessage(t, locale)
           : props.kind === 'hub'
             ? t('cadence.hub', { interval: formatPollInterval(OFFICIAL_HUB_REFRESH_MS, locale) })
-            : props.kind === 'news'
-              ? t('cadence.news', { interval: formatPollInterval(NEWS_AND_DOCS_REFRESH_MS, locale) })
-              : t('cadence.testnet', { interval: formatPollInterval(TESTNET_TELEMETRY_POLL_MS, locale) })
+            : t('cadence.news', { interval: formatPollInterval(NEWS_AND_DOCS_REFRESH_MS, locale) })
 
   const variant = props.kind === 'custom' ? 'custom' : VARIANT[props.kind]
   const isLive = variant === 'live'

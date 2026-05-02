@@ -2523,7 +2523,6 @@
 }
 
 .dash-panel--global,
-.dash-panel--testnet,
 .dash-panel--contracts {
   border-radius: var(--dash-radius-lg);
   border: 1px solid var(--panel-border);
@@ -2537,10 +2536,6 @@
 
 .dash-panel--global {
   border-left: 3px solid rgba(126, 200, 235, 0.45);
-}
-
-.dash-panel--testnet {
-  border-left: 3px solid rgba(62, 207, 154, 0.4);
 }
 
 .dash-panel--official {
@@ -2670,27 +2665,6 @@
   flex-direction: column;
   gap: 4px;
   min-width: 0;
-}
-
-.testnet-metric-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-  gap: 12px;
-  margin-top: 10px;
-}
-
-.testnet-metric-grid .label {
-  font-size: 10px;
-  font-weight: 700;
-  color: var(--dim);
-  text-transform: uppercase;
-  letter-spacing: 0.03em;
-}
-
-.testnet-metric-grid .value {
-  font-size: 14px;
-  font-weight: 700;
-  margin-top: 4px;
 }
 
 .contracts-grid {

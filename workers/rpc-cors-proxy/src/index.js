@@ -1,6 +1,5 @@
 /**
- * Relaie POST JSON-RPC avec CORS * vers le RPC Rayls.
- * Racine du worker → mainnet ; chemin /testnet → testnet.
+ * Relaie POST JSON-RPC avec CORS * vers le RPC Rayls mainnet.
  */
 export default {
   async fetch(request, env) {
@@ -18,13 +17,8 @@ export default {
       return new Response('POST only', { status: 405, headers: cors })
     }
 
-    const pathname = new URL(request.url).pathname.replace(/\/$/, '') || '/'
-    const isTestnet = pathname === '/testnet' || pathname.startsWith('/testnet/')
-
     const mainnetBase = String(env.TARGET_RPC_URL || 'https://mainnet-rpc.rayls.com').replace(/\/$/, '')
-    const testnetBase = String(env.TARGET_TESTNET_RPC_URL || 'https://testnet-rpc.rayls.com').replace(/\/$/, '')
-    const base = isTestnet ? testnetBase : mainnetBase
-    const target = `${base}/`
+    const target = `${mainnetBase}/`
 
     const body = await request.arrayBuffer()
     const res = await fetch(target, {

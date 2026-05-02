@@ -63,7 +63,6 @@ jobs:
         env:
           VITE_BASE_PATH: /${{ github.event.repository.name }}/
           VITE_RAYLS_RPC_HTTP_URL: ${{ vars.VITE_RAYLS_RPC_HTTP_URL }}
-          VITE_RAYLS_TESTNET_RPC_HTTP_URL: ${{ vars.VITE_RAYLS_TESTNET_RPC_HTTP_URL }}
           # WebSocket direct vers mainnet-rpc depuis *.github.io peut échouer ; le batch HTTP suffit.
           VITE_RPC_WS_URL: '0'
         run: npm run build

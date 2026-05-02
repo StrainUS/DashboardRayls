@@ -103,7 +103,7 @@ function decodeUintCall(r: unknown): bigint | null {
 
 /**
  * Batch JSON-RPC : métriques chaîne + nœud + bloc courant + fee history + totalSupply on-chain (tokens doc Rayls).
- * `tokenContracts` absent → pas d’eth_call (ex. testnet ou RPC minimal).
+ * `tokenContracts` absent → pas d’eth_call (RPC minimal ou vue sans jetons).
  */
 export async function raylsRpcTelemetryBatch(
   rpcUrl: string,

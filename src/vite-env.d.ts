@@ -12,7 +12,6 @@ interface ImportMetaEnv {
   readonly VITE_RPC_POLL_MS?: string
   /** POST JSON-RPC navigateur — proxy CORS pour *.github.io (workflow Deploy RPC CORS proxy) */
   readonly VITE_RAYLS_RPC_HTTP_URL?: string
-  readonly VITE_RAYLS_TESTNET_RPC_HTTP_URL?: string
   readonly VITE_RPC_WS_URL?: string
   readonly VITE_OFFICIAL_HUB_POLL_MS?: string
   /** Délai max fetch (ms), entre 5000 et 120000. Défaut 28000. */

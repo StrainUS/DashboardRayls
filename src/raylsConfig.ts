@@ -21,16 +21,6 @@ export const RAYLS_MAINNET = {
   explorerUrl: 'https://explorer.rayls.com/',
 } as const
 
-/** Testnet public — cf. documentation Rayls (chain ID, RPC, explorateur, faucet). */
-export const RAYLS_TESTNET = {
-  name: 'Rayls Testnet',
-  rpcUrl: 'https://testnet-rpc.rayls.com',
-  expectedChainIdDecimal: 7_295_799,
-  docsUrl: 'https://docs.rayls.com/docs/public-chain-reference',
-  explorerUrl: 'https://testnet-explorer.rayls.com/',
-  faucetUrl: 'https://devnet-dapp.rayls.com/',
-} as const
-
 /**
  * URL utilisée pour les POST JSON-RPC **depuis le navigateur**.
  * `mainnet-rpc.rayls.com` renvoie `Access-Control-Allow-Origin` pour localhost (dev),
@@ -48,32 +38,6 @@ export function raylsMainnetRpcHttpUrl(): string {
     return o.replace(/\/$/, '')
   }
   return RAYLS_MAINNET.rpcUrl
-}
-
-/**
- * Si seul le proxy mainnet Cloudflare (`*.workers.dev`) est défini, la testnet utilise `…/testnet` (même Worker).
- */
-function inferTestnetUrlFromWorkersProxy(mainnetProxyUrl: string): string | null {
-  const trimmed = mainnetProxyUrl.replace(/\/$/, '')
-  if (!trimmed.includes('.workers.dev')) return null
-  return `${trimmed}/testnet`
-}
-
-export function raylsTestnetRpcHttpUrl(): string {
-  const o = envStr('VITE_RAYLS_TESTNET_RPC_HTTP_URL')
-  if (o) {
-    if (!isSafeHttpOrHttpsUrl(o)) {
-      console.warn('[Rayls Monitor] VITE_RAYLS_TESTNET_RPC_HTTP_URL ignorée (URL https invalide).')
-      return RAYLS_TESTNET.rpcUrl
-    }
-    return o.replace(/\/$/, '')
-  }
-  const main = envStr('VITE_RAYLS_RPC_HTTP_URL')
-  if (main && isSafeHttpOrHttpsUrl(main)) {
-    const inferred = inferTestnetUrlFromWorkersProxy(main)
-    if (inferred) return inferred
-  }
-  return RAYLS_TESTNET.rpcUrl
 }
 
 /**

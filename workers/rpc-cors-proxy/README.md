@@ -13,7 +13,7 @@ Ce Worker Cloudflare relaie les corps POST vers le RPC et ajoute `Access-Control
    - `CLOUDFLARE_API_TOKEN`
    - `CLOUDFLARE_ACCOUNT_ID`
 4. Onglet **Actions** → workflow **Deploy RPC CORS proxy** → **Run workflow**.
-5. Le workflow enregistre **`VITE_RAYLS_RPC_HTTP_URL`** (racine → mainnet) et **`VITE_RAYLS_TESTNET_RPC_HTTP_URL`** (`…/testnet`). **Pages** peut se relancer tout seul ; sinon relancez-le ou poussez sur `main`.
+5. Le workflow enregistre **`VITE_RAYLS_RPC_HTTP_URL`** (URL du Worker → relais vers le RPC mainnet). **Pages** peut se relancer tout seul ; sinon relancez-le ou poussez sur `main`.
 
 ## Déploiement manuel (CLI)
 
@@ -23,7 +23,7 @@ npx wrangler@3 login
 npx wrangler@3 deploy
 ```
 
-Variables de dépôt : **`VITE_RAYLS_RPC_HTTP_URL`** = `https://<name>.<subdomain>.workers.dev`, **`VITE_RAYLS_TESTNET_RPC_HTTP_URL`** = même URL + `/testnet`, puis rebuild **Pages**.
+Variable de dépôt : **`VITE_RAYLS_RPC_HTTP_URL`** = `https://<name>.<subdomain>.workers.dev`, puis rebuild **Pages**.
 
 ## Sécurité
 

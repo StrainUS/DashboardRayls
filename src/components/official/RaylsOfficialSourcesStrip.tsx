@@ -1,6 +1,6 @@
 import { useMemo } from 'react'
 import { useI18n } from '../../i18n'
-import { RAYLS_MAINNET, RAYLS_COINGECKO_PAGE, RAYLS_OFFICIAL, RAYLS_TESTNET } from '../../raylsConfig'
+import { RAYLS_MAINNET, RAYLS_COINGECKO_PAGE, RAYLS_OFFICIAL } from '../../raylsConfig'
 
 export function RaylsOfficialSourcesStrip() {
   const { t } = useI18n()
@@ -8,13 +8,7 @@ export function RaylsOfficialSourcesStrip() {
   const items = useMemo(
     () => [
       { label: t('sources.rpcMainnet'), href: RAYLS_MAINNET.rpcUrl, detail: t('sources.rpcMainnetD') },
-      {
-        label: t('sources.rpcTestnet'),
-        href: RAYLS_TESTNET.rpcUrl,
-        detail: t('sources.rpcTestnetD', { id: RAYLS_TESTNET.expectedChainIdDecimal }),
-      },
       { label: t('sources.explorerMainnet'), href: RAYLS_MAINNET.explorerUrl, detail: t('sources.explorerMainnetD') },
-      { label: t('sources.explorerTestnet'), href: RAYLS_TESTNET.explorerUrl, detail: t('sources.explorerTestnetD') },
       { label: t('sources.bridge'), href: RAYLS_OFFICIAL.bridge, detail: t('sources.bridgeD') },
       { label: t('sources.docsChain'), href: RAYLS_MAINNET.docsUrl, detail: t('sources.docsChainD') },
       { label: t('sources.site'), href: RAYLS_OFFICIAL.site, detail: t('sources.siteD') },

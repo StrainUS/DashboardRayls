@@ -417,6 +417,7 @@ export function RpcLiveBlock() {
             localeTag={loc}
             emptyLabel={t('rpc.latencyChartEmpty')}
             ariaLabel={t('rpc.latencyChartAria')}
+            sampleIntervalHintMs={RPC_POLL_INTERVAL_MS}
           />
           <p className="dash-caption">{t('rpc.chartCaption')}</p>
         </div>

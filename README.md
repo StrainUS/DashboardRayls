@@ -5,7 +5,7 @@
 [![License](https://img.shields.io/badge/Licence-Propriétaire%20StrainUS-333333.svg)](./LICENSE)
 [![Node.js](https://img.shields.io/badge/node-%3E%3D20-brightgreen)](https://nodejs.org/)
 
-> **EN** — Client-side operational dashboard for **Rayls** public mainnet/testnet RPC health, **CoinGecko** market aggregates, optional **MEXC** spot WebSocket (USD), and public **Rayls** API links. **Unofficial**, informational only; not endorsed by Rayls or exchanges.
+> **EN** — Client-side operational dashboard for **Rayls** public **mainnet** RPC health, **CoinGecko** market aggregates, optional **MEXC** spot WebSocket (USD), and public **Rayls** API links. **Unofficial**, informational only; not endorsed by Rayls or exchanges.
 
 Tableau de bord **React + Vite** pour suivre la **santé du RPC** Rayls mainnet, les **indicateurs de marché** (CoinGecko, tiers), un **spot USD optionnel** via WebSocket public MEXC, et les **endpoints publics** documentés (`api.rayls.com`, liens officiels). Projet **non officiel**, à vocation **strictement informative** (pas de conseil financier, pas de garantie d’exactitude).
 
@@ -15,7 +15,7 @@ Tableau de bord **React + Vite** pour suivre la **santé du RPC** Rayls mainnet,
 
 > **404 « There isn't a GitHub Pages site here »** sur `strainus.github.io` **sans** `/DashboardRayls/` : c’est la **racine** du domaine ; le dashboard est uniquement sous **`/DashboardRayls/`**. Si même l’URL complète est en 404 : *Settings → Pages → Source : **GitHub Actions***, puis vérifiez que le workflow **Pages** est vert dans *Actions*. Guide détaillé : [`.github/DEPLOY_PAGES.md`](./.github/DEPLOY_PAGES.md).
 
-> **RPC sur `*.github.io`** : sans proxy Cloudflare, CORS bloque mainnet et testnet. **Une fois** : *Actions* → **Deploy RPC CORS proxy** (remplit les variables mainnet + testnet), puis **Pages** (souvent relancé tout seul). Build Pages : WebSocket RPC désactivé, batch HTTP via proxy. URL du site : `/DashboardRayls/`. Détails : [`.github/DEPLOY_PAGES.md`](./.github/DEPLOY_PAGES.md). En local : `npm run dev`.
+> **RPC sur `*.github.io`** : sans proxy Cloudflare, CORS bloque le RPC mainnet. **Une fois** : *Actions* → **Deploy RPC CORS proxy** (remplit `VITE_RAYLS_RPC_HTTP_URL`), puis **Pages** (souvent relancé tout seul). Build Pages : WebSocket RPC désactivé, batch HTTP via proxy. URL du site : `/DashboardRayls/`. Détails : [`.github/DEPLOY_PAGES.md`](./.github/DEPLOY_PAGES.md). En local : `npm run dev`.
 
 Même application que localement : RPC, marché, chaîne, référentiel. Les assets dans `public/` (dont `rayls-feed.json`) et le favicon sont résolus avec **`import.meta.env.BASE_URL`** (ex. `/DashboardRayls/rayls-feed.json`), pas à la racine du domaine.  
 **Activation une fois :** *Settings → Pages → Build and deployment → Source : GitHub Actions*. Le workflow [`.github/workflows/pages.yml`](./.github/workflows/pages.yml) exige **`VITE_RAYLS_RPC_HTTP_URL`** (proxy Cloudflare, voir ci‑dessous) pour éviter de publier un site avec l’onglet Réseau cassé ; exécute lint, tests, `npm audit`, build avec `VITE_BASE_PATH=/<nom-du-dépôt>/`, `404.html` SPA.
@@ -45,7 +45,7 @@ Même application que localement : RPC, marché, chaîne, référentiel. Les ass
 |------|---------|
 | **Réseau** | Batch JSON-RPC étendu (latence, bloc, gas, syncing, fee history, `totalSupply` USDr & RLS documentés) ; WebSocket `newHeads` si activé |
 | **Spot** | Courbes, spot CoinGecko ; option **MEXC** (`VITE_MEXC_SPOT_WS`) pour USD plus réactif |
-| **Chaîne** | Contrats mainnet, explorateur, télémétrie testnet |
+| **Chaîne** | Contrats mainnet officiel, explorateur |
 | **Référentiel** | Supplies `api.rayls.com`, liens documentés, métadonnées CoinGecko |
 | **Accueil** | Navigation, cadences de rafraîchissement, actualités (`public/rayls-feed.json` ou URL), résumé de déploiement |
 
