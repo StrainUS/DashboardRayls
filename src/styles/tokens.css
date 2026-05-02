@@ -3,11 +3,17 @@
  * profondeur par ombre + halos atmosphériques très dosés (lisibilité sans « néon »).
  */
 :root {
-  /* Marque Rayls — teintes désaturées (cohérentes avec l’UI, pas « arc‑en‑ciel ») */
-  --rayls-violet: #6b7c90;
-  --rayls-purple: #758499;
-  --rayls-cyan: #6d8aa3;
+  /* Marque + repères couleur (tuiles accès rapide, menu actif) */
+  --rayls-violet: #8b7fd4;
+  --rayls-purple: #9b8ce8;
+  --rayls-cyan: #5ec8e8;
   --rayls-mist: #b4bcc8;
+
+  --tile-overview: #818cf8;
+  --tile-reseau: #2dd4bf;
+  --tile-spot: #4ade80;
+  --tile-chaine: #34d399;
+  --tile-referentiel: #fbbf24;
 
   --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
   --font-display: 'Plus Jakarta Sans', var(--font-sans);
@@ -25,8 +31,8 @@
   --muted: #9ca3af;
   --dim: #6b7280;
   --text-label: #8b92a0;
-  --accent: #8aa8c4;
-  --accent-strong: #b3c9df;
+  --accent: #7eb8e8;
+  --accent-strong: #a8d4f5;
   --accent-on-dark: #0a0c0f;
   --ok: #5a9d7c;
   --warn: #c9a227;
@@ -57,8 +63,15 @@
 
   --hero-accent-line: linear-gradient(180deg, #94a3b8 0%, #475569 72%, #334155 100%);
 
-  /* Bandeau d’accent horizontal : tons ardoise (lisible, pro) */
-  --spectral-bar: linear-gradient(90deg, #475569 0%, #64748b 38%, #94a3b8 62%, #64748b 100%);
+  /* Bandeau d’accent : ardoise + léger relief cyan → indigo */
+  --spectral-bar: linear-gradient(
+    90deg,
+    #3d5a6e 0%,
+    #5ec8e8 22%,
+    #64748b 50%,
+    #818cf8 78%,
+    #475569 100%
+  );
 
   --header-accent-line: linear-gradient(180deg, #64748b 0%, #475569 100%);
   --header-edge-glow: 0 0 12px rgba(0, 0, 0, 0.35);
@@ -114,31 +127,31 @@
    * l’ombre noire (profondeur sans saturation excessive).
    */
   --halo-neon-chrome:
-    0 0 44px rgba(56, 189, 248, 0.032),
-    0 0 84px rgba(99, 102, 241, 0.024);
+    0 0 44px rgba(56, 189, 248, 0.045),
+    0 0 84px rgba(99, 102, 241, 0.034);
   --halo-neon-overview:
-    0 0 56px rgba(56, 189, 248, 0.042),
-    0 0 96px rgba(129, 140, 248, 0.03),
-    0 0 118px rgba(99, 102, 241, 0.02);
+    0 0 56px rgba(56, 189, 248, 0.055),
+    0 0 96px rgba(129, 140, 248, 0.042),
+    0 0 118px rgba(99, 102, 241, 0.03);
   --halo-neon-live:
-    0 0 56px rgba(45, 212, 191, 0.038),
-    0 0 94px rgba(34, 211, 238, 0.026),
-    0 0 112px rgba(56, 189, 248, 0.02);
+    0 0 56px rgba(45, 212, 191, 0.05),
+    0 0 94px rgba(34, 211, 238, 0.036),
+    0 0 112px rgba(56, 189, 248, 0.028);
   --halo-neon-spot:
-    0 0 58px rgba(74, 222, 128, 0.038),
-    0 0 98px rgba(250, 204, 21, 0.026),
-    0 0 118px rgba(56, 189, 248, 0.02);
+    0 0 58px rgba(74, 222, 128, 0.052),
+    0 0 98px rgba(250, 204, 21, 0.034),
+    0 0 118px rgba(56, 189, 248, 0.028);
   --halo-neon-chain:
-    0 0 56px rgba(52, 211, 153, 0.036),
-    0 0 92px rgba(56, 189, 248, 0.026),
-    0 0 108px rgba(99, 102, 241, 0.018);
+    0 0 56px rgba(52, 211, 153, 0.048),
+    0 0 92px rgba(56, 189, 248, 0.034),
+    0 0 108px rgba(99, 102, 241, 0.026);
   --halo-neon-official:
-    0 0 58px rgba(250, 204, 21, 0.032),
-    0 0 96px rgba(125, 211, 252, 0.024),
-    0 0 108px rgba(129, 140, 248, 0.018);
+    0 0 58px rgba(250, 204, 21, 0.042),
+    0 0 96px rgba(125, 211, 252, 0.032),
+    0 0 108px rgba(129, 140, 248, 0.026);
   --halo-neon-legal:
-    0 0 50px rgba(129, 140, 248, 0.034),
-    0 0 86px rgba(56, 189, 248, 0.024);
+    0 0 50px rgba(129, 140, 248, 0.048),
+    0 0 86px rgba(56, 189, 248, 0.034);
 
   /* Base héros : volume noir + un seul voile bleu très léger (les routes ajoutent --halo-neon-*) */
   --hero-glow-outer:
