@@ -55,6 +55,7 @@ export const fr: MessageTree = {
     home: 'Accueil',
   },
   legal: {
+    heroEyebrow: 'Conformité & transparence',
     backHome: 'Retour à l’accueil',
     footerNavAria: 'Mentions légales et politiques',
     anchorMentions: 'Mentions',
