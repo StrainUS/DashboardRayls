@@ -60,6 +60,14 @@ jobs:
             exit 1
           fi
 
+      - name: Avertissement Spot / CoinGecko (GitHub Pages)
+        env:
+          CG_ROOT: ${{ vars.VITE_COINGECKO_API_ROOT }}
+        run: |
+          if [ -z "$CG_ROOT" ]; then
+            echo "::notice::**VITE_COINGECKO_API_ROOT** est vide — l’onglet Spot appellera l’API publique depuis le navigateur (souvent bloqué en CORS). Déployez le proxy : Actions → **Deploy CoinGecko CORS proxy**, puis laissez **Pages** se relancer (ou rebuild manuel). Voir .github/DEPLOY_PAGES.md"
+          fi
+
       - name: Build pour GitHub Pages
         env:
           VITE_BASE_PATH: /${{ github.event.repository.name }}/
@@ -68,7 +76,8 @@ jobs:
           VITE_RPC_WS_URL: '0'
           # Spot / marché : sans clé ni proxy, l’API publique CoinGecko échoue souvent depuis le navigateur (CORS / OPTIONS).
           # Secret dépôt (optionnel) : même clé demo que en local — voir .github/DEPLOY_PAGES.md
-          VITE_COINGECKO_DEMO_API_KEY: ${{ secrets.VITE_COINGECKO_DEMO_API_KEY }}
+          # Même clé que pour le Worker : COINGECKO_DEMO_API_KEY ou VITE_COINGECKO_DEMO_API_KEY
+          VITE_COINGECKO_DEMO_API_KEY: ${{ secrets.VITE_COINGECKO_DEMO_API_KEY || secrets.COINGECKO_DEMO_API_KEY }}
           # Alternative : URL d’un proxy /api/v3 (variable dépôt non secrète si vous préférez ne pas embarquer la clé)
           VITE_COINGECKO_API_ROOT: ${{ vars.VITE_COINGECKO_API_ROOT }}
         run: npm run build

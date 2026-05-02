@@ -93,11 +93,20 @@ function cgNetworkError(e: unknown): string {
   if (e instanceof TypeError) {
     const m = e.message || ''
     if (/failed to fetch|networkerror|load failed/i.test(m)) {
-      return (
+      let base =
         'Impossible de joindre CoinGecko (réseau, pare-feu ou blocage CORS). ' +
         'En local : `npm run dev` + proxy ; clé demo/pro dans `.env` (injectée par le proxy). ' +
         'En prod : `VITE_COINGECKO_API_ROOT` vers votre backend ou clés `VITE_COINGECKO_*_API_KEY`.'
-      )
+      try {
+        const host = globalThis.location?.hostname ?? ''
+        if (/\.github\.io$/i.test(host) && !trimEnv('VITE_COINGECKO_API_ROOT')) {
+          base +=
+            ' Sur ce site : la variable dépôt **VITE_COINGECKO_API_ROOT** est vide dans le build — exécutez Actions → **Deploy CoinGecko CORS proxy** (ou ajoutez la variable à la main avec l’URL `*.workers.dev`).'
+        }
+      } catch {
+        /* ignore */
+      }
+      return base
     }
   }
   return e instanceof Error ? e.message : String(e)
