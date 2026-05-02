@@ -10,7 +10,7 @@ function socialMetaPlugin(publicOrigin: string, basePath: string): Plugin {
     transformIndexHtml(html) {
       if (!origin) return html
       const canonical = `${origin}${basePath}`
-      const ogImage = `${origin}${basePath}apple-touch-icon.png?v=15`
+      const ogImage = `${origin}${basePath}apple-touch-icon.png?v=18`
       const block = `
     <link rel="canonical" href="${canonical}" />
     <meta property="og:url" content="${canonical}" />
