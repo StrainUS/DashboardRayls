@@ -1,3 +1,4 @@
+export { LegalPage } from './LegalPage'
 export { OverviewPage } from './OverviewPage'
 export { ReseauPage } from './ReseauPage'
 export { SpotPage } from './SpotPage'

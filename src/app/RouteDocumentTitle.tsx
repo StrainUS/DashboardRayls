@@ -14,6 +14,7 @@ export function RouteDocumentTitle() {
       '/spot': t('routes.spot'),
       '/chaine': t('routes.chaine'),
       '/referentiel': t('routes.referentiel'),
+      '/legal': t('routes.legal'),
     }),
     [t],
   )

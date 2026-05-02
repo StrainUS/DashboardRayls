@@ -3,6 +3,7 @@ import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
 import { useI18n } from '../i18n'
 import { AppLayout } from './AppLayout'
 import { RouteErrorBoundary } from './RouteErrorBoundary'
+import { LegalPage } from '../pages/LegalPage'
 import { OverviewPage } from '../pages/OverviewPage'
 import { ReseauPage } from '../pages/ReseauPage'
 
@@ -67,6 +68,7 @@ export default function App() {
               </LazyShell>
             }
           />
+          <Route path="legal" element={<LegalPage />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Route>
       </Routes>

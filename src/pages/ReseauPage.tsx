@@ -7,8 +7,9 @@ export function ReseauPage() {
   const { t } = useI18n()
 
   return (
-    <div className="dash-page dash-reseau-page">
+    <div className="dash-page dash-page--pro dash-reseau-page">
       <PageHero
+        eyebrow={t('nav.sectionDashboard')}
         title={t('reseau.title')}
         lead={t('reseau.lead')}
         meta={

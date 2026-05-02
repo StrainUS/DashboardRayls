@@ -98,7 +98,7 @@ function RaylsOptionalFeed({ fetchUrl }: { fetchUrl: string }) {
   }
 
   return (
-    <>
+    <div className="dash-news-panel__dynamic-inner">
       {items && items.length > 0 ? (
         <div className="dash-news-panel__feed-toolbar">
           {fresh.size > 0 ? (
@@ -158,7 +158,7 @@ function RaylsOptionalFeed({ fetchUrl }: { fetchUrl: string }) {
           {new Date(fetchedAt).toLocaleString(loc, { dateStyle: 'short', timeStyle: 'medium' })}
         </p>
       ) : null}
-    </>
+    </div>
   )
 }
 
@@ -169,33 +169,60 @@ const CURATED: { titleKey: string; descKey: string; href: string }[] = [
   { titleKey: 'news.curatedLink', descKey: 'news.curatedLinkD', href: RAYLS_OFFICIAL.linktree },
 ]
 
-export function RaylsNewsPanel() {
+type RaylsNewsPanelProps = {
+  /** Vue d’ensemble : liens épinglés d’abord, cartes plus visibles, flux en dessous. */
+  variant?: 'default' | 'hub'
+}
+
+export function RaylsNewsPanel({ variant = 'default' }: RaylsNewsPanelProps) {
   const { t } = useI18n()
   const config = getFeedUrlConfig()
   const fetchUrl = config ? resolveFeedFetchUrl(config) : null
   const feedActive = fetchUrl != null
+  const hub = variant === 'hub'
+
+  const curated = (
+    <ul
+      className={`dash-news-panel__curated${hub ? ' dash-news-panel__curated--hub' : ''}`}
+      aria-label={t('news.curatedAria')}
+    >
+      {CURATED.map((c) => (
+        <li key={c.href} className="dash-news-panel__curated-item">
+          <a className="dash-news-panel__curated-link" href={c.href} target="_blank" rel="noopener noreferrer">
+            <span className="dash-news-panel__curated-title">{t(c.titleKey)}</span>
+            <span className="dash-news-panel__curated-desc">{t(c.descKey)}</span>
+          </a>
+        </li>
+      ))}
+    </ul>
+  )
+
+  const hints = feedActive ? (
+    <p className="dash-news-panel__hint dash-news-panel__hint--subtle">
+      {t('news.hintActive')}
+    </p>
+  ) : (
+    <p className="dash-news-panel__hint">{t('news.hintOff')}</p>
+  )
 
   return (
-    <div className="dash-news-panel">
-      {feedActive ? <RaylsOptionalFeed fetchUrl={fetchUrl} /> : null}
-
-      <ul className="dash-news-panel__curated" aria-label={t('news.curatedAria')}>
-        {CURATED.map((c) => (
-          <li key={c.href} className="dash-news-panel__curated-item">
-            <a className="dash-news-panel__curated-link" href={c.href} target="_blank" rel="noopener noreferrer">
-              <span className="dash-news-panel__curated-title">{t(c.titleKey)}</span>
-              <span className="dash-news-panel__curated-desc">{t(c.descKey)}</span>
-            </a>
-          </li>
-        ))}
-      </ul>
-
-      {feedActive ? (
-        <p className="dash-news-panel__hint dash-news-panel__hint--subtle">
-          {t('news.hintActive')}
-        </p>
+    <div className={`dash-news-panel${hub ? ' dash-news-panel--hub' : ''}`}>
+      {hub ? (
+        <>
+          {curated}
+          {feedActive ? (
+            <div className="dash-news-panel__dynamic">
+              <RaylsOptionalFeed fetchUrl={fetchUrl} />
+            </div>
+          ) : null}
+          {hints}
+        </>
       ) : (
-        <p className="dash-news-panel__hint">{t('news.hintOff')}</p>
+        <>
+          {feedActive ? <RaylsOptionalFeed fetchUrl={fetchUrl} /> : null}
+          {curated}
+          {hints}
+        </>
       )}
     </div>
   )

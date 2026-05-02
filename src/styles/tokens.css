@@ -54,6 +54,13 @@
   --inset-fill: rgba(0, 0, 0, 0.22);
 
   --dash-max-width: 1180px;
+  /**
+   * Gouttière horizontale unique : sticky header, zone principale, pied de page.
+   * Même valeur partout pour cadrer et aligner les colonnes au-delà du max-width.
+   */
+  --dash-gutter-x: clamp(16px, 2.75vw, 24px);
+  --dash-gutter-y: clamp(16px, 2vw, 22px);
+  --dash-main-pad-bottom: clamp(28px, 3vw, 36px);
   --dash-radius-sm: 8px;
   --dash-radius-md: 12px;
   --dash-radius-lg: 14px;
@@ -66,6 +73,7 @@
   --dash-header-blur: 20px;
   --dash-transition-fast: 0.14s ease;
   --dash-transition-ui: 0.2s ease;
+  /* Hauteur sticky : une ligne (mobile / tablette menu seul). */
   --dash-sticky-stack-height: clamp(4.25rem, 11vw, 5.75rem);
 
   font-family: var(--font-sans);

@@ -579,17 +579,22 @@ export type CoinDetailLite = {
   fetchedAt: number
 }
 
-const GLOBAL_AGG_FRESH_MS = 90_000
+/** Rafraîchissement agrégat `coins/{id}` — équilibre fraîcheur / quota API. */
+const GLOBAL_AGG_FRESH_MS = 60_000
 const CACHE_KEY_COIN_GLOBAL = 'coin-global'
 const CACHE_KEY_COIN_LITE = 'coin-lite'
 
 /** Agrégats mondiaux CoinGecko (même instantané API — pas tous les marchés du monde). */
 export type CoinGeckoAggregated = {
   fetchedAt: number
+  /** Horodatage « marché » renvoyé par CoinGecko (`market_data.last_updated`), plus proche du flux live que l’heure locale de fetch. */
+  marketDataLastUpdated: string | null
   name: string
   symbol: string
   coingeckoRank: number | null
   marketCapRank: number | null
+  /** Rang alternatif publié par CoinGecko lorsque `coingecko_rank` est absent (capitalisation avec réhypothèque). */
+  marketCapRankWithRehypothecated: number | null
   currentPriceUsd: number | null
   currentPriceEur: number | null
   marketCapUsd: number | null
@@ -626,6 +631,8 @@ function parseCoinGeckoGlobal(j: unknown): CoinGeckoAggregated {
     symbol?: string
     coingecko_rank?: number
     market_cap_rank?: number
+    market_cap_rank_with_rehypothecated?: number
+    last_updated?: string
     market_data?: Record<string, unknown>
   }
   const md = o.market_data ?? {}
@@ -634,12 +641,22 @@ function parseCoinGeckoGlobal(j: unknown): CoinGeckoAggregated {
     return typeof v === 'number' && Number.isFinite(v) ? v : null
   }
   const athDateRaw = md.ath_date as Record<string, string> | undefined
+  const mdLu = md.last_updated
+  const marketDataLastUpdated =
+    typeof mdLu === 'string' && mdLu.length > 0
+      ? mdLu
+      : typeof o.last_updated === 'string' && o.last_updated.length > 0
+        ? o.last_updated
+        : null
+  const rehyp = o.market_cap_rank_with_rehypothecated
   return {
     fetchedAt: Date.now(),
+    marketDataLastUpdated,
     name: typeof o.name === 'string' ? o.name : 'Rayls',
     symbol: typeof o.symbol === 'string' ? o.symbol.toUpperCase() : 'RLS',
     coingeckoRank: typeof o.coingecko_rank === 'number' ? o.coingecko_rank : null,
     marketCapRank: typeof o.market_cap_rank === 'number' ? o.market_cap_rank : null,
+    marketCapRankWithRehypothecated: typeof rehyp === 'number' && Number.isFinite(rehyp) ? rehyp : null,
     currentPriceUsd: usdObj(md.current_price),
     currentPriceEur: eurObj(md.current_price),
     marketCapUsd: usdObj(md.market_cap),

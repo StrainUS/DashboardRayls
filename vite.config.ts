@@ -18,14 +18,14 @@ function socialMetaPlugin(publicOrigin: string, basePath: string): Plugin {
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
     <meta property="og:image:type" content="image/png" />
-    <meta property="og:image:alt" content="Rayls — public network monitoring" />
-    <meta property="og:locale" content="en_US" />
-    <meta property="og:locale:alternate" content="fr_FR" />
+    <meta property="og:image:alt" content="Rayls — surveillance du réseau public" />
+    <meta property="og:locale" content="fr_FR" />
+    <meta property="og:locale:alternate" content="en_US" />
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="Rayls · Public network monitoring" />
+    <meta name="twitter:title" content="Rayls · Surveillance du réseau public" />
     <meta
       name="twitter:description"
-      content="RPC latency, blocks, CoinGecko market and links to Rayls docs and public endpoints."
+      content="RPC, marché CoinGecko et liens vers la doc Rayls — application tierce, sans garantie d’exactitude."
     />
     <meta name="twitter:image" content="${ogImage}" />
     <meta name="apple-mobile-web-app-capable" content="yes" />

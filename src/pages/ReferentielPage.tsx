@@ -6,8 +6,9 @@ export function ReferentielPage() {
   const { t } = useI18n()
 
   return (
-    <div className="dash-page">
+    <div className="dash-page dash-page--pro dash-referentiel-page">
       <PageHero
+        eyebrow={t('nav.sectionDashboard')}
         title={t('referentiel.title')}
         lead={t('referentiel.lead')}
         meta={

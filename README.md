@@ -5,9 +5,9 @@
 [![License](https://img.shields.io/badge/Licence-Propriétaire%20StrainUS-333333.svg)](./LICENSE)
 [![Node.js](https://img.shields.io/badge/node-%3E%3D20-brightgreen)](https://nodejs.org/)
 
-> **EN** — Client-side operational dashboard for **Rayls** public **mainnet** RPC health, **CoinGecko** market aggregates, optional **MEXC** spot WebSocket (USD), and public **Rayls** API links. **Unofficial**, informational only; not endorsed by Rayls or exchanges.
+Tableau de bord **React + Vite** pour suivre la **santé du RPC** Rayls mainnet, les **indicateurs de marché** (CoinGecko, tiers), un **spot USD optionnel** via WebSocket public MEXC, et les **endpoints publics** documentés (`api.rayls.com`, liens officiels). Projet **non officiel**, à vocation **strictement informative** (pas de conseil financier, pas de garantie d’exactitude). **Édition** : interface et métadonnées **principalement en français** (FR par défaut, EN au choix).
 
-Tableau de bord **React + Vite** pour suivre la **santé du RPC** Rayls mainnet, les **indicateurs de marché** (CoinGecko, tiers), un **spot USD optionnel** via WebSocket public MEXC, et les **endpoints publics** documentés (`api.rayls.com`, liens officiels). Projet **non officiel**, à vocation **strictement informative** (pas de conseil financier, pas de garantie d’exactitude).
+> **EN** — Client-side operational dashboard for **Rayls** public **mainnet** RPC health, **CoinGecko** market aggregates, optional **MEXC** spot WebSocket (USD), and public **Rayls** API links. **Unofficial**, informational only; not endorsed by Rayls or exchanges.
 
 ### Démo en ligne (GitHub Pages)
 
@@ -150,6 +150,10 @@ Voir [**CONTRIBUTING.md**](./CONTRIBUTING.md) et [**SECURITY.md**](./SECURITY.md
 - Données **agrégées** ou **ponctuelles** : pas de certification, pas de « cours officiel ».
 - **Contenu informatif uniquement** — pas un conseil financier, juridique ou en investissement.
 - Réseau documenté : [référence chaîne publique Rayls](https://docs.rayls.com/docs/public-chain-reference).
+
+### Informations légales (interface)
+
+L’application expose une page **Informations légales** (`/legal`, FR/EN) structurée pour un usage **professionnel** : **mentions légales** (référence **LCEN**, identification éditeur à compléter, hébergement, **médiation conso** — lien [economie.gouv](https://www.economie.gouv.fr/mediation-conso)), **CGU** (obligations utilisateur, PI, responsabilité, droit français, force majeure, nullité partielle), **politique de confidentialité** (responsable de traitement, finalités et bases légales type **RGPD**, transferts hors UE, droits, DPO, sécurité). Les textes sont dans `src/legal/copy.ts`. **Validation par un avocat et/ou DPO** reste indispensable avant de vous présenter comme pleinement conforme (RCS/SIRET, directeur de publication, médiateur désigné si obligatoire, registre des traitements, etc.).
 
 ---
 

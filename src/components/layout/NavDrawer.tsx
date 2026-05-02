@@ -1,24 +1,13 @@
 import { useEffect, useRef } from 'react'
 import { NavLink } from 'react-router-dom'
 import { prefetchDashboardRoute } from '../../app/prefetchRoutes'
-import { APP_PAGES } from '../../constants/appRoutes'
+import { APP_PAGES, APP_PAGE_LABEL_KEYS } from '../../constants/appRoutes'
 import { useI18n, type Locale } from '../../i18n'
 import { RAYLS_MAINNET, RAYLS_OFFICIAL } from '../../raylsConfig'
 import { useNavDrawer } from './NavDrawerContext'
 
 function appNavClass({ isActive }: { isActive: boolean }) {
   return `nav-drawer__link${isActive ? ' nav-drawer__link--active' : ''}`
-}
-
-function navLabelKey(path: (typeof APP_PAGES)[number]['path']): string {
-  const map: Record<(typeof APP_PAGES)[number]['path'], string> = {
-    overview: 'nav.overview',
-    reseau: 'nav.reseau',
-    spot: 'nav.spot',
-    chaine: 'nav.chaine',
-    referentiel: 'nav.referentiel',
-  }
-  return map[path]
 }
 
 export function NavDrawer() {
@@ -88,7 +77,7 @@ export function NavDrawer() {
                   onFocus={() => prefetchDashboardRoute(href)}
                   onClick={() => closeDrawer()}
                 >
-                  {t(navLabelKey(path))}
+                  {t(APP_PAGE_LABEL_KEYS[path])}
                 </NavLink>
               </li>
             ))}
@@ -139,6 +128,15 @@ export function NavDrawer() {
               >
                 {t('nav.chainParams')}
               </a>
+            </li>
+            <li>
+              <NavLink
+                to="/legal"
+                className={appNavClass}
+                onClick={() => closeDrawer()}
+              >
+                {t('nav.legal')}
+              </NavLink>
             </li>
           </ul>
           <div className="nav-drawer__lang" role="group" aria-label={t('lang.switch')}>

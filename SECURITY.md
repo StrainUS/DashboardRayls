@@ -6,8 +6,9 @@ Application **100 % frontale** (React / Vite) : pas de serveur applicatif ni de 
 
 ## Signaler un problème
 
-- Ouvrez une **[issue privée de sécurité](https://github.com/StrainUS/DashboardRayls/security/advisories/new)** sur GitHub *ou* une issue publique en **ne publiant aucun secret** (tokens, clés, cookies).
-- Incluez : version du code (commit), étapes de reproduction, impact estimé.
+- **Utilisateurs du site déployé** : utilisez d’abord les **coordonnées / contact** indiqués dans la page **Informations légales** de l’application (`/legal`) ; **ne publiez pas** de secrets ni de détails d’exploit sur un canal public.
+- **Contributeurs / chercheurs (dépôt GitHub)** : ouvrez une **[demande d’avis de sécurité](https://github.com/StrainUS/DashboardRayls/security/advisories/new)** (*GitHub Security Advisories*) *ou*, à défaut, une issue en **évitant tout secret** (tokens, clés, cookies).
+- Incluez : référence de version (commit ou déploiement), étapes de reproduction, impact estimé.
 
 ## Bonnes pratiques pour les contributeurs
 

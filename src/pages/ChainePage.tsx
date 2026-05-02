@@ -6,8 +6,9 @@ export function ChainePage() {
   const { t } = useI18n()
 
   return (
-    <div className="dash-page">
+    <div className="dash-page dash-page--pro dash-chaine-page">
       <PageHero
+        eyebrow={t('nav.sectionDashboard')}
         title={t('chaine.title')}
         lead={t('chaine.lead')}
         meta={

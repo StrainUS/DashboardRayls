@@ -9,8 +9,9 @@ export function SpotPage() {
   const { t } = useI18n()
 
   return (
-    <div className="dash-page dash-spot-page">
+    <div className="dash-page dash-page--pro dash-spot-page">
       <PageHero
+        eyebrow={t('nav.sectionDashboard')}
         title={t('spot.title')}
         lead={spotPageLeadText(t)}
         meta={

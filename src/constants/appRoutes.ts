@@ -8,3 +8,12 @@ export const APP_PAGES = [
 ] as const
 
 export type AppPagePath = (typeof APP_PAGES)[number]['path']
+
+/** Clés i18n `nav.*` alignées sur chaque page. */
+export const APP_PAGE_LABEL_KEYS: Record<AppPagePath, string> = {
+  overview: 'nav.overview',
+  reseau: 'nav.reseau',
+  spot: 'nav.spot',
+  chaine: 'nav.chaine',
+  referentiel: 'nav.referentiel',
+}

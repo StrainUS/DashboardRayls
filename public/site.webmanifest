@@ -1,8 +1,8 @@
 {
-  "name": "Rayls · Public network monitoring",
+  "name": "Rayls · Surveillance du réseau public",
   "short_name": "Rayls",
-  "description": "Rayls mainnet RPC, market and reference dashboard — informational third-party tool.",
-  "lang": "en",
+  "description": "Tableau de bord Rayls mainnet : RPC, marché et référentiel — outil tiers informatif.",
+  "lang": "fr",
   "dir": "ltr",
   "icons": [
     {
