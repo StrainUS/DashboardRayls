@@ -22,6 +22,7 @@ Même application que localement : RPC, marché, chaîne, référentiel, flux JS
 
 ## Sommaire
 
+- [Démo en ligne (GitHub Pages)](#démo-en-ligne-github-pages)
 - [Fonctionnalités](#fonctionnalités)
 - [Démarrage rapide](#démarrage-rapide)
 - [Qualité & CI](#qualité--ci)
