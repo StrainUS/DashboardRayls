@@ -89,7 +89,7 @@ html {
 
 @media (max-width: 640px) {
   :root {
-    --dash-sticky-stack-height: clamp(10rem, 42vw, 13rem);
+    --dash-sticky-stack-height: clamp(8.25rem, 34vw, 10.5rem);
   }
 }
 
