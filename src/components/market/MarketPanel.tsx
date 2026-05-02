@@ -323,7 +323,7 @@ function MarketSpotViz({
         }
       : null
 
-  const analysis = displaySnap ? analyzeTrend(displaySnap.prices) : null
+  const analysis = displaySnap ? analyzeTrend(displaySnap.prices, timeframeLiveDisplayWindowMs(tf)) : null
   const trendWindowLabel = liveWindowLabelTf(tf, t)
   const liveBufLen = (chartCurrency === 'eur' ? liveSeriesEur : liveSeries).length
   const errBlocksChart = err != null && err !== MARKET_ERR_CG429
@@ -403,6 +403,7 @@ function MarketSpotViz({
               vsCurrency={chartCurrency}
               prices={displaySnap.prices}
               localeTag={loc}
+              liveSentimentNominalMs={timeframeLiveDisplayWindowMs(tf)}
               ariaLabel={chartCurrency === 'eur' ? t('market.chartAriaEur') : t('market.chartAriaUsd')}
             />
             <p className="chart-provenance">{t('market.chartProvenance')}</p>
@@ -430,7 +431,7 @@ function MarketSpotViz({
 export function MarketPanel() {
   const { t, locale } = useI18n()
   const loc = localeTag(locale)
-  const [tf, setTf] = useState<TimeframeId>('15m')
+  const [tf, setTf] = useState<TimeframeId>('5m')
   const [chartCurrency, setChartCurrency] = useState<ChartVsCurrency>('usd')
   const [quote, setQuote] = useState<SimpleQuote | null>(null)
   const [err, setErr] = useState<string | null>(null)

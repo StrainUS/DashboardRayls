@@ -319,7 +319,7 @@ export const fr: MessageTree = {
     priceUsd: 'Prix spot (USD)',
     priceEur: 'Prix spot (EUR)',
     trend: 'Tendance ({{window}}) · {{ccy}}',
-    trendScope: '1er → dernier point visibles (≠ 24 h).',
+    trendScope: 'Fin de fenêtre (dernier spot vs portion récente), aligné sur la courbe.',
     trendUp: 'Hausse',
     trendDown: 'Baisse',
     trendFlat: 'Stable',

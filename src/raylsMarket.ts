@@ -490,7 +490,18 @@ export async function fetchCgSimpleQuote(opts?: { refresh?: boolean }): Promise<
   return simpleQuoteInflight
 }
 
-export function analyzeTrend(prices: [number, number][]): {
+/**
+ * Tendance « live » : variation sur la **fin** de la fenêtre affichée (alignée sur le dernier point /
+ * spot), pas sur le tout premier point du graphique — évite un badge « baisse » alors que la courbe
+ * monte à droite.
+ *
+ * @param nominalWindowMs — `timeframeLiveDisplayWindowMs(tf)` : borne la profondeur du regard sur
+ *   les longues périodes (ex. 30 j) pour rester réactif.
+ */
+export function analyzeTrend(
+  prices: [number, number][],
+  nominalWindowMs?: number,
+): {
   trend: MarketTrend
   changePct: number
   high: number
@@ -503,21 +514,57 @@ export function analyzeTrend(prices: [number, number][]): {
   if (n < 2) {
     return { trend: 'stable', changePct: 0, high: 0, low: 0, open: 0, close: 0, points: n }
   }
-  const open = prices[0]![1]
-  const close = prices[n - 1]![1]
-  let high = open
-  let low = open
+  const sorted = [...prices].sort((a, b) => a[0] - b[0])
+  const tFirst = sorted[0]![0]
+  const tLast = sorted[n - 1]![0]
+  const span = Math.max(0, tLast - tFirst)
+
+  let high = sorted[0]![1]
+  let low = sorted[0]![1]
   for (let i = 1; i < n; i++) {
-    const v = prices[i]![1]
+    const v = sorted[i]![1]
     if (v > high) high = v
     if (v < low) low = v
   }
+
+  const close = sorted[n - 1]![1]
+  let open: number
+  if (span < 90_000) {
+    open = sorted[0]![1]
+  } else {
+    const nominal = nominalWindowMs != null && Number.isFinite(nominalWindowMs) ? nominalWindowMs : span
+    const cap = Math.min(6 * 60 * 60 * 1000, Math.max(60_000, nominal * 0.4))
+    const lookbackMs = Math.max(90_000, Math.min(span * 0.28, cap))
+    const cutT = tLast - lookbackMs
+    const tail = sorted.filter(([t]) => t >= cutT)
+    if (tail.length < 2) {
+      open = sorted[n - 2]![1]
+    } else {
+      open = tail[0]![1]
+    }
+  }
+
   const changePct = open !== 0 ? ((close - open) / open) * 100 : 0
   const eps = 0.02
   let trend: MarketTrend = 'stable'
   if (changePct > eps) trend = 'hausse'
   else if (changePct < -eps) trend = 'baisse'
   return { trend, changePct, high, low, open, close, points: n }
+}
+
+/** Couleur du point live sur le graphique : alignée sur `analyzeTrend` (pas dernier vs avant-dernier brut). */
+export function liveMarkerSentiment(
+  prices: [number, number][],
+  nominalWindowMs?: number,
+): 'bullish' | 'bearish' {
+  const r = analyzeTrend(prices, nominalWindowMs)
+  if (r.trend === 'hausse') return 'bullish'
+  if (r.trend === 'baisse') return 'bearish'
+  if (prices.length < 2) return 'bullish'
+  const s = [...prices].sort((a, b) => a[0] - b[0])
+  const lastY = s[s.length - 1]![1]
+  const prevY = s[s.length - 2]![1]
+  return lastY >= prevY ? 'bullish' : 'bearish'
 }
 
 export type CoinDetailLite = {

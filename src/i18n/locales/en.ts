@@ -317,7 +317,7 @@ export const en: MessageTree = {
     priceUsd: 'Spot price (USD)',
     priceEur: 'Spot price (EUR)',
     trend: 'Trend ({{window}}) · {{ccy}}',
-    trendScope: 'First → last visible point (≠ 24 h).',
+    trendScope: 'End of window (live vs recent segment), matches the right side of the chart.',
     trendUp: 'Up',
     trendDown: 'Down',
     trendFlat: 'Flat',
