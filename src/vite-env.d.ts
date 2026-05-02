@@ -6,6 +6,9 @@ interface ImportMetaEnv {
   readonly VITE_COINGECKO_API_ROOT?: string
   readonly VITE_LIVE_SPOT_MS?: string
   readonly VITE_CG_QUOTE_MIN_GAP_MS?: string
+  readonly VITE_CG_CHART_MIN_GAP_MS?: string
+  /** Pause avant appel OHLC (ms), après throttle chart ; défaut 4500. */
+  readonly VITE_CG_OHLC_EXTRA_GAP_MS?: string
   readonly VITE_RPC_POLL_MS?: string
   readonly VITE_RPC_WS_URL?: string
   readonly VITE_OFFICIAL_HUB_POLL_MS?: string

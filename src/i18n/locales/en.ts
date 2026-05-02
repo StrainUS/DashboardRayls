@@ -103,7 +103,7 @@ export const en: MessageTree = {
     mexc: {
       label: 'Spot exchange (MEXC)',
       on: 'USD spot WebSocket enabled — verify connect-src (e.g. vercel.json).',
-      off: 'Disabled by default. Enable with VITE_MEXC_SPOT_WS=1 for more reactive USD price.',
+      off: 'Production: off unless VITE_MEXC_SPOT_WS=1. Dev: on by default (set VITE_MEXC_SPOT_WS=0 to disable).',
     },
   },
   cadence: {
@@ -236,12 +236,16 @@ export const en: MessageTree = {
     mcap: 'Market cap',
     vol24: '24 h volume',
     fdv: 'FDV',
-    chg: '24 h / 7 d / 30 d change',
+    chgTitle: 'Price change',
+    chg24: '24 h',
+    chg7: '7 d',
+    chg30: '30 d',
     hiLo: '24 h high / low (USD)',
     ath: 'ATH (USD)',
     atl: 'ATL (USD)',
     circ: 'Circulating supply (CG)',
-    supply: 'Total / max supply (CG)',
+    supplyTotal: 'Total supply (CG)',
+    supplyMax: 'Max supply (CG)',
     mdSuffix: ' B',
   },
   sources: {
@@ -329,9 +333,20 @@ export const en: MessageTree = {
     trendUp: 'Up',
     trendDown: 'Down',
     trendFlat: 'Flat',
+    trendLoading: 'Loading…',
     pts: 'pts',
     chartAriaUsd: 'Price chart in US dollars',
     chartAriaEur: 'Price chart in euros',
+    chartAriaCandlesUsd: 'Candlestick chart (USD)',
+    chartAriaCandlesEur: 'Candlestick chart (EUR)',
+    chartStyleLabel: 'Display',
+    chartStyleAria: 'Chart type (line or candles)',
+    chartStyleLine: 'Line',
+    chartStyleCandles: 'Candles',
+    chartProvenance:
+      'Chart: CoinGecko aggregate (market_chart + simple/price), all windows — not a Rayls-issued price. USD strip: when MEXC is on, adds an exchange quote for responsiveness.',
+    chartProvenanceCandles:
+      'Candles: CoinGecko aggregate OHLC (/ohlc); last candle aligned to spot (simple/price / MEXC per strip). Not a Rayls-issued price.',
     loadingChart: 'Loading chart…',
     noData: 'No data — check network or CoinGecko quota.',
     waitingData: 'Waiting for data (history + spot ~{{sec}} s).',
@@ -344,6 +359,9 @@ export const en: MessageTree = {
     scaleD: 'Days',
     scaleDTitle: 'Multi-day history',
     windowAria: 'Display window on series',
+    windowSelect: 'Window',
+    histErr429LiveFallback:
+      'CoinGecko history unavailable (rate limit). Chart uses the live stream — add a demo key in `.env` for aggregated history.',
     scaleAria: 'Chart scale',
     durationAria: 'Displayed duration',
     ccyAria: 'Chart currency',
@@ -358,12 +376,13 @@ export const en: MessageTree = {
     titleMexcWs: 'MEXC spot stream state (public WebSocket)',
     cg429Title: 'CoinGecko · quota exceeded (429)',
     cg429Text:
-      'The app uses cache when still valid. Without an API key, calls are already spaced (~18 s).',
+      'The app relies on cache when it is still usable. Without an API key, calls are already spaced (~10 s).',
     cg429Local:
       'Local: VITE_COINGECKO_DEMO_API_KEY in .env — Vite proxy sends the key; it is not in browser JS.',
     cg429Prod: 'Production: VITE_COINGECKO_API_ROOT (recommended) or pro key — .env.example.',
     histErr:
       'CoinGecko history: {{msg}} — falling back to live buffer if present. Add a demo key (VITE_COINGECKO_DEMO_API_KEY) or proxy (VITE_COINGECKO_API_ROOT).',
+    ohlcErr: 'Candles (OHLC): {{msg}}',
     liveErr: 'Spot refresh: {{msg}}',
     titleMexcStream: 'MEXC spot stream (WebSocket, not affiliated) — {{iso}}',
     titleCgStream: 'CoinGecko simple/price — {{iso}} (age updates live)',

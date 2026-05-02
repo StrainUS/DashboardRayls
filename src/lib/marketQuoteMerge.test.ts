@@ -31,6 +31,8 @@ describe('mergeCgQuoteWithMexc', () => {
     const out = mergeCgQuoteWithMexc(cg, prev, false)
     expect(out.usdSource).toBe('coingecko')
     expect(out.usd).toBe(2)
+    expect(out.cgSpotUsd).toBe(2)
+    expect(out.cgSpotAt).toBe(cg.fetchedAt)
   })
 
   it('avec MEXC actif, conserve le USD exchange et met à jour le taux EUR', () => {
@@ -42,6 +44,8 @@ describe('mergeCgQuoteWithMexc', () => {
     expect(out.fetchedAt).toBe(2000)
     expect(out.eur).toBeCloseTo(2.5 * (2.1 / 2), 10)
     expect(out.usd24hChange).toBe(0.05)
+    expect(out.cgSpotUsd).toBe(2)
+    expect(out.cgSpotEur).toBe(2.1)
   })
 })
 
@@ -61,5 +65,20 @@ describe('mexcTickToQuote', () => {
     const { next, eurForSeries } = mexcTickToQuote(prev, { usd: 2.2, at: 3000 })
     expect(next.eur).toBeNull()
     expect(eurForSeries).toBeNull()
+  })
+
+  it('conserve le snapshot CoinGecko pour l’ancre courbe', () => {
+    const prev: SimpleQuote = {
+      ...cg,
+      usd: 2.2,
+      usdSource: 'mexc',
+      cgSpotUsd: 2.05,
+      cgSpotEur: 1.9,
+      cgSpotAt: 5000,
+    }
+    const { next } = mexcTickToQuote(prev, { usd: 2.25, at: 6000 })
+    expect(next.cgSpotUsd).toBe(2.05)
+    expect(next.cgSpotEur).toBe(1.9)
+    expect(next.cgSpotAt).toBe(5000)
   })
 })

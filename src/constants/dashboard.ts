@@ -3,11 +3,11 @@ import { localeTag } from '../i18n/translate'
 
 /**
  * Cadences CoinGecko — sans clé demo/pro, l’API publique déclenche vite des 429 si on poll trop souvent.
- * Défaut 18 s (min 5 s). Temps réel serré : clé + `VITE_LIVE_SPOT_MS` (ex. 3000).
+ * Défaut 10 s (min 5 s). Plus serré : clé + `VITE_LIVE_SPOT_MS` (ex. 5000–8000), en restant sous `VITE_CG_QUOTE_MIN_GAP_MS`.
  */
 const envSpot = Number(import.meta.env.VITE_LIVE_SPOT_MS)
 export const LIVE_SPOT_INTERVAL_MS =
-  Number.isFinite(envSpot) && envSpot >= 5_000 ? envSpot : 18_000
+  Number.isFinite(envSpot) && envSpot >= 5_000 ? envSpot : 10_000
 
 /** Délai avant le 1er tick spot (démarrage rapide tout en laissant passer le chargement initial). */
 export const LIVE_SPOT_START_DELAY_MS = 600

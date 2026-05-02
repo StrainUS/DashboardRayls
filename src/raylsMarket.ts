@@ -56,10 +56,13 @@ function getCgAuthHeaders(): Record<string, string> {
 const SIMPLE_FRESH_MS = 120_000
 const COIN_FRESH_MS = 60 * 60 * 1000
 
-/** Entre deux appels réseau `simple/price` en mode live. `VITE_CG_QUOTE_MIN_GAP_MS` (min 3 s, défaut 12 s). */
+/**
+ * Entre deux appels réseau `simple/price` en mode live. `VITE_CG_QUOTE_MIN_GAP_MS` (min 3 s, défaut 7 s).
+ * Un défaut inférieur à `LIVE_SPOT_INTERVAL_MS` évite que le tick spot renvoie un cache sans nouveau `fetchedAt`.
+ */
 const envQuoteGap = Number(import.meta.env.VITE_CG_QUOTE_MIN_GAP_MS)
 const QUOTE_MIN_NETWORK_GAP_MS =
-  Number.isFinite(envQuoteGap) && envQuoteGap >= 3_000 ? envQuoteGap : 12_000
+  Number.isFinite(envQuoteGap) && envQuoteGap >= 3_000 ? envQuoteGap : 7_000
 
 /** Espace les requêtes CoinGecko pour éviter les rafales au chargement (plusieurs endpoints). */
 let lastCgRequestDoneAt = 0
@@ -140,7 +143,7 @@ export type TimeframeId =
 
 /**
  * Chaque timeframe charge un historique CoinGecko `market_chart` (jours = ceil(fenêtre / 1j)) et filtre la fenêtre d’affichage.
- * Le spot et le dernier point de courbe sont rafraîchis via `simple/price` (défaut ~18 s sans clé ; voir `VITE_LIVE_SPOT_MS`).
+ * Le spot et le dernier point de courbe sont rafraîchis via `simple/price` (défaut ~10 s sans clé ; voir `VITE_LIVE_SPOT_MS`).
  */
 export const TIMEFRAMES: { id: TimeframeId; label: string; hint: string }[] = [
   {
@@ -218,7 +221,107 @@ export function marketChartDaysForTimeframe(tf: TimeframeId): number {
   return Math.min(366, Math.max(1, Math.ceil(w / day)))
 }
 
-const CHART_FRESH_MS = 180_000
+/** Paramètre `days` de l’URL `market_chart` (entier ou `max` selon la doc CoinGecko). */
+export type MarketChartDaysQuery = number | 'max'
+
+/**
+ * Requête `market_chart` : `max` pour 1 an (historique utile côté API) ; sinon `marketChartDaysForTimeframe`.
+ */
+export function marketChartDaysQueryForTimeframe(tf: TimeframeId): MarketChartDaysQuery {
+  if (tf === '1y') return 'max'
+  return marketChartDaysForTimeframe(tf)
+}
+
+/**
+ * Marge sous la borne gauche d’affichage : les points CoinGecko >90 j sont quotidiens (~00:00 UTC) ;
+ * entre 2 et 90 j, souvent horaires — évite d’exclure toute la série avec `t >= cut` quand `cut` tombe entre deux bougies.
+ */
+export function chartWindowFilterSlackMs(tf: TimeframeId): number {
+  const MS_PER_DAY = 24 * 60 * 60 * 1000
+  const d = marketChartDaysForTimeframe(tf)
+  if (d > 90) return MS_PER_DAY
+  if (d >= 2) return 3600_000
+  return 0
+}
+
+/**
+ * Clé de série chargée côté UI : inclut le `tf` car plusieurs périodes partagent le même `days`
+ * (ex. 1 min / 1 h / 24 h → 1 jour) — sans cela, le filtre de fenêtre ne se réaligne pas correctement.
+ */
+export function marketChartLoadedKey(tf: TimeframeId, vs: ChartVsCurrency): string {
+  const q = marketChartDaysQueryForTimeframe(tf)
+  return `${tf}:${q === 'max' ? 'max' : String(q)}:${vs}`
+}
+
+/** Valeurs `days` acceptées par l’endpoint CoinGecko `ohlc`. */
+const OHLC_ALLOWED_DAYS = [1, 7, 14, 30, 90, 180, 365] as const
+
+export type OhlcDays = (typeof OHLC_ALLOWED_DAYS)[number]
+
+/**
+ * Jours OHLC CoinGecko : premier palier autorisé qui couvre au moins la fenêtre d’affichage du TF
+ * (granularité des bougies imposée par l’API selon ce paramètre).
+ */
+export function ohlcDaysForTimeframe(tf: TimeframeId): OhlcDays {
+  const w = timeframeLiveDisplayWindowMs(tf)
+  const day = 24 * 60 * 60 * 1000
+  const needed = Math.max(1, Math.ceil(w / day))
+  for (const d of OHLC_ALLOWED_DAYS) {
+    if (d >= needed) return d
+  }
+  return 365
+}
+
+/** Même principe que `marketChartLoadedKey` pour OHLC (ex. plusieurs TF → `days: 1` ou `7`). */
+export function marketOhlcLoadedKey(tf: TimeframeId, vs: ChartVsCurrency): string {
+  return `${tf}:${ohlcDaysForTimeframe(tf)}:${vs}`
+}
+
+export type OhlcCandle = { t: number; o: number; h: number; l: number; c: number }
+
+/** Dernière bougie : clôture / extrêmes recalés sur le spot live (même logique que le dernier point ligne). */
+export function mergeOhlcWithLiveSpot(candles: OhlcCandle[], livePrice: number | null): OhlcCandle[] {
+  if (candles.length === 0 || livePrice == null || !Number.isFinite(livePrice)) return candles
+  const next = candles.slice()
+  const last = { ...next[next.length - 1]! }
+  last.c = livePrice
+  last.h = Math.max(last.h, livePrice)
+  last.l = Math.min(last.l, livePrice)
+  next[next.length - 1] = last
+  return next
+}
+
+/** Cache `market_chart` : fenêtre longue pour limiter les 429 (les changements de `days` sont coûteux). */
+const CHART_FRESH_MS = 8 * 60 * 1000
+
+/**
+ * Espace minimal entre le **début** de deux appels réseau lourds `market_chart` / `ohlc`.
+ * Les réponses encore « fraîches » (`CHART_FRESH_MS`) ne refont pas de requête — ce délai ne s’applique
+ * qu’aux vrais allers-retour API. Défaut 6 s (équilibre 429 / réactivité quand on enchaîne les périodes).
+ * Augmentez avec `VITE_CG_CHART_MIN_GAP_MS` si vous voyez des 429 (ex. 12000–20000).
+ */
+let lastMarketChartNetworkAt = 0
+const envChartNetGap = Number(import.meta.env.VITE_CG_CHART_MIN_GAP_MS)
+const MARKET_CHART_NETWORK_MIN_GAP_MS =
+  Number.isFinite(envChartNetGap) && envChartNetGap >= 3_000 ? envChartNetGap : 6_000
+
+async function waitMarketChartNetworkGap(): Promise<void> {
+  const w = Math.max(0, MARKET_CHART_NETWORK_MIN_GAP_MS - (Date.now() - lastMarketChartNetworkAt))
+  if (w > 0) await new Promise((r) => setTimeout(r, w))
+  lastMarketChartNetworkAt = Date.now()
+}
+
+/**
+ * Délai après l’espacement « lourd » commun, **avant** `ohlc` uniquement.
+ * L’endpoint OHLC arrive souvent juste après `market_chart` / `simple/price` → 429 sans clé.
+ * `VITE_CG_OHLC_EXTRA_GAP_MS` (défaut 4500, min 0).
+ */
+const envOhlcExtraGap = Number(import.meta.env.VITE_CG_OHLC_EXTRA_GAP_MS)
+const OHLC_EXTRA_GAP_MS =
+  Number.isFinite(envOhlcExtraGap) && envOhlcExtraGap >= 0 ? envOhlcExtraGap : 4500
+
+/** Seconde tentative OHLC après 429 (en plus des 2 essais internes à `cgFetch`). */
+const OHLC_429_COOLDOWN_MS = 14_000
 
 /** Devise de cotation pour `market_chart` (prix réels agrégés CoinGecko). */
 export type ChartVsCurrency = 'usd' | 'eur'
@@ -229,10 +332,21 @@ function chartCacheKey(d: number, vs: ChartVsCurrency): string {
   return `mchart:${d}:${vs}`
 }
 
-async function fetchCgMarketChartNetwork(days: number, vs: ChartVsCurrency): Promise<[number, number][]> {
-  const d = Math.max(1, Math.min(366, Math.round(days)))
-  const key = chartCacheKey(d, vs)
-  const path = `/coins/${RAYLS_COINGECKO_ID}/market_chart?vs_currency=${vs}&days=${d}`
+function chartCacheKeyForQuery(q: MarketChartDaysQuery, vs: ChartVsCurrency): string {
+  return q === 'max' ? `mchart:max:${vs}` : chartCacheKey(q, vs)
+}
+
+function chartInflightKeyForQuery(q: MarketChartDaysQuery, vs: ChartVsCurrency): string {
+  return `${q}:${vs}`
+}
+
+async function fetchCgMarketChartNetwork(q: MarketChartDaysQuery, vs: ChartVsCurrency): Promise<[number, number][]> {
+  await waitMarketChartNetworkGap()
+  const key = chartCacheKeyForQuery(q, vs)
+  const path =
+    q === 'max'
+      ? `/coins/${RAYLS_COINGECKO_ID}/market_chart?vs_currency=${vs}&days=max`
+      : `/coins/${RAYLS_COINGECKO_ID}/market_chart?vs_currency=${vs}&days=${Math.max(1, Math.min(366, Math.round(q)))}`
   const res = await cgFetch(path)
   if (res.status === 429) {
     const stale = cacheGetStale<[number, number][]>(key)
@@ -253,30 +367,117 @@ async function fetchCgMarketChartNetwork(days: number, vs: ChartVsCurrency): Pro
       const ms = t < 1e11 ? Math.round(t * 1000) : Math.round(t)
       return [ms, p]
     })
+  out.sort((a, b) => a[0] - b[0])
+  if (out.length === 0) {
+    throw new Error('CoinGecko market_chart : aucun point de prix (période ou devise).')
+  }
   cacheSet(key, out)
   return out
 }
 
 /**
  * Historique de prix agrégé (CoinGecko `market_chart`). Granularité imposée par l’API selon la plage.
- * Mis en cache ~3 min par couple (`days`, `vs`) pour limiter les 429.
+ * Mis en cache plusieurs minutes par couple (`days`, `vs`) ; espacement minimal entre appels réseau.
  */
 export async function fetchCgMarketChart(
-  days: number,
+  daysQuery: MarketChartDaysQuery,
   vs: ChartVsCurrency = 'usd',
 ): Promise<[number, number][]> {
-  const d = Math.max(1, Math.min(366, Math.round(days)))
-  const inflightKey = `${d}:${vs}`
-  const key = chartCacheKey(d, vs)
+  const inflightKey = chartInflightKeyForQuery(daysQuery, vs)
+  const key = chartCacheKeyForQuery(daysQuery, vs)
   const hit = cacheGetFresh<[number, number][]>(key, CHART_FRESH_MS)
   if (hit) return hit
 
   let p = chartInflight.get(inflightKey)
   if (!p) {
-    p = fetchCgMarketChartNetwork(d, vs).finally(() => {
+    p = fetchCgMarketChartNetwork(daysQuery, vs).finally(() => {
       chartInflight.delete(inflightKey)
     })
     chartInflight.set(inflightKey, p)
+  }
+  return p
+}
+
+/** Cache `ohlc` : TTL plus long que `market_chart` (moins de rafales sur un quota serré). */
+const OHLC_FRESH_MS = 12 * 60 * 1000
+
+const ohlcInflight = new Map<string, Promise<OhlcCandle[]>>()
+
+function ohlcCacheKey(days: OhlcDays, vs: ChartVsCurrency): string {
+  return `ohlc:${days}:${vs}`
+}
+
+function parseCgOhlcJson(j: unknown): OhlcCandle[] {
+  if (!Array.isArray(j)) return []
+  const out: OhlcCandle[] = []
+  for (const row of j) {
+    if (!Array.isArray(row) || row.length < 5) continue
+    const [t0, o, h, l, c] = row
+    if (
+      typeof t0 !== 'number' ||
+      typeof o !== 'number' ||
+      typeof h !== 'number' ||
+      typeof l !== 'number' ||
+      typeof c !== 'number'
+    ) {
+      continue
+    }
+    const ms = t0 < 1e11 ? Math.round(t0 * 1000) : Math.round(t0)
+    out.push({ t: ms, o, h, l, c })
+  }
+  return out
+}
+
+async function fetchCgOhlcNetwork(days: OhlcDays, vs: ChartVsCurrency): Promise<OhlcCandle[]> {
+  await waitMarketChartNetworkGap()
+  if (OHLC_EXTRA_GAP_MS > 0) {
+    await new Promise((r) => setTimeout(r, OHLC_EXTRA_GAP_MS))
+  }
+  const key = ohlcCacheKey(days, vs)
+  const path = `/coins/${RAYLS_COINGECKO_ID}/ohlc?vs_currency=${vs}&days=${days}`
+
+  let res = await cgFetch(path)
+  if (res.status === 429) {
+    const stale = cacheGetStale<OhlcCandle[]>(key)
+    if (stale) return stale
+    await new Promise((r) => setTimeout(r, OHLC_429_COOLDOWN_MS))
+    await cgThrottle()
+    res = await cgFetch(path)
+  }
+  if (res.status === 429) {
+    const stale = cacheGetStale<OhlcCandle[]>(key)
+    if (stale) return stale
+    throw new Error(
+      'CoinGecko ohlc : limite de débit (429). Créez `.env` avec VITE_COINGECKO_DEMO_API_KEY (dev : proxy Vite) ou VITE_COINGECKO_API_ROOT en prod — voir `.env.example`.',
+    )
+  }
+  if (!res.ok) throw new Error(`CoinGecko ohlc ${res.status}`)
+  const parsed = parseCgOhlcJson(await res.json())
+  parsed.sort((a, b) => a.t - b.t)
+  if (parsed.length === 0) {
+    throw new Error('CoinGecko ohlc : réponse sans bougies pour cette période.')
+  }
+  cacheSet(key, parsed)
+  return parsed
+}
+
+/**
+ * Bougies OHLC agrégées (CoinGecko `/coins/{id}/ohlc`). Paramètre `days` restreint aux valeurs API.
+ * Cache et espacement réseau alignés sur `market_chart`.
+ */
+export async function fetchCgOhlc(days: OhlcDays, vs: ChartVsCurrency = 'usd'): Promise<OhlcCandle[]> {
+  const d = days
+  const inflightKey = `${d}:${vs}`
+  const key = ohlcCacheKey(d, vs)
+  const hit = cacheGetFresh<OhlcCandle[]>(key, OHLC_FRESH_MS)
+  if (hit) return hit
+
+  let p = ohlcInflight.get(inflightKey)
+  if (!p) {
+    p = fetchCgOhlcNetwork(d, vs).finally(() => {
+      ohlcInflight.delete(inflightKey)
+    })
+    ohlcInflight.set(inflightKey, p)
   }
   return p
 }
@@ -293,6 +494,13 @@ export type SimpleQuote = {
    * `coingecko` = agrégat CoinGecko (simple/price).
    */
   usdSource?: 'coingecko' | 'mexc'
+  /**
+   * Dernier snapshot `simple/price` CoinGecko (agrégat marché), pour aligner la courbe sur la même source que `market_chart`
+   * même lorsque `usd` affiché provient de MEXC.
+   */
+  cgSpotUsd?: number
+  cgSpotEur?: number | null
+  cgSpotAt?: number
 }
 
 const cache = new Map<string, { at: number; data: unknown }>()

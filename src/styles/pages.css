@@ -1794,7 +1794,7 @@
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 8px 12px;
+  gap: 10px 14px;
   padding: 8px 12px 10px;
   border-bottom: 1px solid var(--border-subtle);
   background: rgba(0, 0, 0, 0.2);
@@ -1803,12 +1803,72 @@
 .chart-toolbar__title {
   margin: 0;
   flex: 0 0 auto;
+  align-self: center;
   font-family: var(--font-display);
   font-size: 13px;
   font-weight: 700;
   letter-spacing: -0.02em;
   color: var(--text);
   line-height: 1.25;
+}
+
+/* Libellé + contrôle toujours sur une ligne ; pas d’étirement horizontal qui casse l’alignement. */
+.chart-toolbar__tf-wrap {
+  display: inline-flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 8px 10px;
+  flex: 0 1 auto;
+  min-width: 0;
+}
+
+.chart-toolbar__tf-lbl {
+  margin: 0;
+  flex: 0 0 auto;
+  align-self: center;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--dim);
+  white-space: nowrap;
+  line-height: 1.2;
+}
+
+.chart-tf-select {
+  flex: 0 1 auto;
+  width: auto;
+  min-width: 6.25rem;
+  max-width: 11rem;
+  margin: 0;
+  padding: 7px 28px 7px 10px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(0, 0, 0, 0.35);
+  color: var(--text);
+  font-family: var(--font-sans);
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.2;
+  cursor: pointer;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%2394a3b8' d='M3 4.5 6 8l3-3.5'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  transition:
+    border-color var(--dash-transition-fast),
+    background-color var(--dash-transition-fast);
+}
+
+.chart-tf-select:hover {
+  border-color: rgba(125, 211, 252, 0.35);
+  background-color: rgba(255, 255, 255, 0.04);
+}
+
+.chart-tf-select:focus-visible {
+  outline: 2px solid var(--accent-strong);
+  outline-offset: 1px;
 }
 
 .chart-toolbar__tf-rail {
@@ -1913,27 +1973,31 @@
 .chart-toolbar__rule {
   flex: 0 0 auto;
   width: 1px;
-  height: 22px;
+  height: 26px;
   background: var(--border-subtle);
   align-self: center;
 }
 
 .chart-toolbar__ccy {
-  display: flex;
+  display: inline-flex;
   flex-wrap: nowrap;
   align-items: center;
-  gap: 4px;
+  gap: 6px;
   flex: 0 0 auto;
+  align-self: center;
 }
 
 .chart-toolbar__ccy-key {
+  flex: 0 0 auto;
+  align-self: center;
   font-size: 10px;
   font-weight: 600;
   letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--dim);
-  margin-right: 2px;
+  margin-right: 0;
   white-space: nowrap;
+  line-height: 1.2;
 }
 
 .chart-tool-btn {
@@ -1983,11 +2047,12 @@
 .chart-toolbar__sync {
   flex: 0 1 auto;
   margin-left: auto;
+  align-self: center;
   font-size: 11px;
   font-variant-numeric: tabular-nums;
   font-family: var(--mono);
   color: var(--dim);
-  line-height: 1.2;
+  line-height: 1.25;
   white-space: nowrap;
   letter-spacing: -0.01em;
 }
@@ -2079,6 +2144,7 @@
 
   .chart-toolbar__ccy {
     flex: 1 1 100%;
+    justify-content: flex-start;
     padding-top: 8px;
     margin-top: 2px;
     border-top: 1px solid var(--border-subtle);
@@ -2087,9 +2153,22 @@
   .chart-toolbar__sync {
     flex: 1 1 100%;
     margin-left: 0;
+    align-self: stretch;
     text-align: right;
     white-space: normal;
     max-width: 100%;
+  }
+
+  .chart-toolbar__tf-wrap {
+    flex: 1 1 auto;
+    min-width: min(100%, 12rem);
+    max-width: 100%;
+  }
+
+  .chart-tf-select {
+    flex: 1 1 auto;
+    min-width: 0;
+    max-width: none;
   }
 
   .chart-toolbar__tf-rail {
@@ -2185,6 +2264,17 @@
 .chart-wrap--hero.chart-wrap--in-stack {
   min-height: 220px;
   margin-top: 0;
+}
+
+.chart-provenance {
+  margin: 0;
+  padding: 6px 10px 8px;
+  font-size: 10px;
+  line-height: 1.45;
+  color: var(--dim);
+  letter-spacing: 0.01em;
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+  background: rgba(0, 0, 0, 0.12);
 }
 
 @media (max-width: 720px) {
@@ -2443,9 +2533,22 @@
 
 .global-agg-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 10px 14px;
   margin-top: 10px;
+  align-items: stretch;
+}
+
+@media (max-width: 900px) {
+  .global-agg-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 480px) {
+  .global-agg-grid {
+    grid-template-columns: 1fr;
+  }
 }
 
 .global-agg-cell {
@@ -2456,6 +2559,60 @@
   border-radius: var(--dash-radius-sm);
   border: 1px solid var(--border-subtle);
   background: rgba(0, 0, 0, 0.12);
+  min-width: 0;
+}
+
+.global-agg-cell--wide {
+  grid-column: 1 / -1;
+}
+
+.global-agg-cell--chg {
+  min-width: 0;
+}
+
+.global-agg-chg {
+  display: flex;
+  flex-direction: row;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 2px;
+}
+
+.global-agg-chg-item {
+  flex: 1 1 0;
+  min-width: 4.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 8px 10px;
+  border-radius: calc(var(--dash-radius-sm) - 2px);
+  border: 1px solid var(--border-subtle);
+  background: rgba(0, 0, 0, 0.18);
+}
+
+.global-agg-chg-lbl {
+  font-size: 9px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--dim);
+}
+
+.global-agg-chg-val {
+  font-size: 12px;
+  line-height: 1.3;
+}
+
+.global-agg-pct--up {
+  color: #3ecf9a;
+}
+
+.global-agg-pct--down {
+  color: #f56565;
+}
+
+.global-agg-pct--flat {
+  color: var(--text);
 }
 
 .global-agg-k {
@@ -2470,6 +2627,33 @@
   font-size: 12px;
   color: var(--text);
   line-height: 1.35;
+}
+
+.global-agg-v-sub {
+  font-size: 11px;
+  color: var(--dim);
+  line-height: 1.3;
+  margin-top: 2px;
+}
+
+.global-agg-supply {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  width: 100%;
+}
+
+@media (max-width: 480px) {
+  .global-agg-supply {
+    grid-template-columns: 1fr;
+  }
+}
+
+.global-agg-supply-col {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
 }
 
 .testnet-metric-grid {

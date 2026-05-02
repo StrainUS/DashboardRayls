@@ -10,9 +10,18 @@ function trimEnv(key: string): string {
   return String((import.meta.env as Record<string, string | undefined>)[key] ?? '').trim()
 }
 
+/**
+ * Spot MEXC (WebSocket) : explicite via `VITE_MEXC_SPOT_WS`.
+ * En développement (`npm run dev`), activé par défaut pour une courbe USD plus précise sans saturer CoinGecko.
+ * Désactiver : `VITE_MEXC_SPOT_WS=0` dans `.env.local`.
+ */
 export function mexcSpotStreamEnabled(): boolean {
-  const v = trimEnv('VITE_MEXC_SPOT_WS').toLowerCase()
-  return v === '1' || v === 'true' || v === 'on'
+  const raw = trimEnv('VITE_MEXC_SPOT_WS')
+  if (raw.length > 0) {
+    const v = raw.toLowerCase()
+    return v !== '0' && v !== 'false' && v !== 'off' && v !== 'no'
+  }
+  return import.meta.env.DEV
 }
 
 export function mexcSpotWsUrl(): string {

@@ -11,8 +11,16 @@ export function quoteShallowEqual(a: SimpleQuote | null, b: SimpleQuote | null):
     a.usd24hChange === b.usd24hChange &&
     a.eur24hChange === b.eur24hChange &&
     a.fetchedAt === b.fetchedAt &&
-    sa === sb
+    sa === sb &&
+    a.cgSpotUsd === b.cgSpotUsd &&
+    a.cgSpotEur === b.cgSpotEur &&
+    a.cgSpotAt === b.cgSpotAt
   )
+}
+
+/** Snapshot agrégat CoinGecko à chaque `simple/price` (ancre courbe = même source que `market_chart`). */
+function cgSpotFields(q: SimpleQuote): Pick<SimpleQuote, 'cgSpotUsd' | 'cgSpotEur' | 'cgSpotAt'> {
+  return { cgSpotUsd: q.usd, cgSpotEur: q.eur, cgSpotAt: q.fetchedAt }
 }
 
 /** Quand le flux MEXC est connecté, on garde le USD « exchange » et on répercute seulement le taux EUR depuis CoinGecko. */
@@ -21,8 +29,9 @@ export function mergeCgQuoteWithMexc(
   prev: SimpleQuote | null,
   mexcLive: boolean,
 ): SimpleQuote {
+  const cg = cgSpotFields(q)
   if (!mexcLive || !prev || (prev.usdSource ?? 'coingecko') !== 'mexc') {
-    return { ...q, usdSource: 'coingecko' }
+    return { ...q, usdSource: 'coingecko', ...cg }
   }
   const rate =
     q.eur != null && typeof q.usd === 'number' && q.usd > 0 && Number.isFinite(q.usd)
@@ -35,6 +44,7 @@ export function mergeCgQuoteWithMexc(
     eur24hChange: q.eur24hChange,
     fetchedAt: prev.fetchedAt,
     usdSource: 'mexc',
+    ...cg,
   }
 }
 
@@ -56,6 +66,9 @@ export function mexcTickToQuote(
       eur24hChange: prev?.eur24hChange ?? null,
       fetchedAt: tick.at,
       usdSource: 'mexc',
+      cgSpotUsd: prev?.cgSpotUsd,
+      cgSpotEur: prev?.cgSpotEur,
+      cgSpotAt: prev?.cgSpotAt,
     },
     eurForSeries,
   }

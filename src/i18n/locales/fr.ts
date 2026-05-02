@@ -105,7 +105,7 @@ export const fr: MessageTree = {
     mexc: {
       label: 'Spot exchange (MEXC)',
       on: 'WebSocket spot USD activé — vérifier connect-src (ex. vercel.json).',
-      off: 'Désactivé par défaut. Activer avec VITE_MEXC_SPOT_WS=1 pour un prix USD plus réactif.',
+      off: 'En prod : désactivé sauf `VITE_MEXC_SPOT_WS=1`. En dev : activé par défaut (désactiver avec `VITE_MEXC_SPOT_WS=0`).',
     },
   },
   cadence: {
@@ -238,12 +238,16 @@ export const fr: MessageTree = {
     mcap: 'Capitalisation',
     vol24: 'Volume 24 h',
     fdv: 'FDV',
-    chg: 'Variation 24 h / 7 j / 30 j',
+    chgTitle: 'Variation de prix',
+    chg24: '24 h',
+    chg7: '7 j',
+    chg30: '30 j',
     hiLo: 'High / Low 24 h (USD)',
     ath: 'ATH (USD)',
     atl: 'ATL (USD)',
     circ: 'Offre circulante (CG)',
-    supply: 'Offre totale / max (CG)',
+    supplyTotal: 'Offre totale (CG)',
+    supplyMax: 'Offre max (CG)',
     mdSuffix: ' Md',
   },
   sources: {
@@ -331,9 +335,20 @@ export const fr: MessageTree = {
     trendUp: 'Hausse',
     trendDown: 'Baisse',
     trendFlat: 'Stable',
+    trendLoading: 'Chargement…',
     pts: 'pts',
     chartAriaUsd: 'Courbe de prix en dollars',
     chartAriaEur: 'Courbe de prix en euros',
+    chartAriaCandlesUsd: 'Graphique en bougies (USD)',
+    chartAriaCandlesEur: 'Graphique en bougies (EUR)',
+    chartStyleLabel: 'Affichage',
+    chartStyleAria: 'Type de graphique (courbe ou bougies)',
+    chartStyleLine: 'Courbe',
+    chartStyleCandles: 'Bougies',
+    chartProvenance:
+      'Courbe : agrégat CoinGecko (market_chart + simple/price), toutes périodes — pas un cours émis par Rayls. Bandeau USD : si MEXC est actif, cotation bourse en complément (réactivité).',
+    chartProvenanceCandles:
+      'Bougies : OHLC agrégé CoinGecko (/ohlc) ; dernière bougie recalée sur le spot (simple/price / MEXC selon bandeau). Pas un cours émis par Rayls.',
     loadingChart: 'Chargement courbe…',
     noData: 'Pas de données — vérifiez le réseau ou le quota CoinGecko.',
     waitingData: 'En attente de données (historique + spot ~{{sec}} s).',
@@ -346,6 +361,9 @@ export const fr: MessageTree = {
     scaleD: 'Jours',
     scaleDTitle: 'Historique sur plusieurs jours',
     windowAria: 'Fenêtre d’affichage sur la série',
+    windowSelect: 'Période',
+    histErr429LiveFallback:
+      'Historique CoinGecko indisponible (quota). La courbe utilise le flux live — ajoutez une clé demo dans `.env` pour l’historique agrégé.',
     scaleAria: 'Échelle du graphique',
     durationAria: 'Durée affichée',
     ccyAria: 'Devise du graphique',
@@ -360,12 +378,13 @@ export const fr: MessageTree = {
     titleMexcWs: 'État du flux WebSocket MEXC (spot public)',
     cg429Title: 'CoinGecko · quota dépassé (429)',
     cg429Text:
-      'L’app s’appuie sur le cache quand il est encore utilisable. Sans clé API, les appels sont déjà espacés (~18 s).',
+      'L’app s’appuie sur le cache quand il est encore utilisable. Sans clé API, les appels sont déjà espacés (~10 s).',
     cg429Local:
       'Local : VITE_COINGECKO_DEMO_API_KEY dans .env — le proxy Vite envoie la clé, elle n’est pas dans le JS du navigateur.',
     cg429Prod:
       'Production : VITE_COINGECKO_API_ROOT (recommandé) ou clé pro — .env.example.',
     histErr: 'Historique CoinGecko : {{msg}} — repli sur le buffer live si présent. Vérifiez une clé demo (VITE_COINGECKO_DEMO_API_KEY) ou un proxy (VITE_COINGECKO_API_ROOT).',
+    ohlcErr: 'Bougies (OHLC) : {{msg}}',
     liveErr: 'Rafraîchissement spot : {{msg}}',
     titleMexcStream: 'Flux spot MEXC (WebSocket, non affilié) — {{iso}}',
     titleCgStream: 'Réception CoinGecko simple/price — {{iso}} (âge mis à jour en direct)',
