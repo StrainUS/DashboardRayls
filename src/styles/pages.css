@@ -449,7 +449,9 @@
   max-width: 100%;
   display: flex;
   flex-direction: column;
-  padding: calc(12px + env(safe-area-inset-top, 0px)) 0 calc(16px + env(safe-area-inset-bottom, 0px));
+  /* min() évite le chevauchement barre d’état / encoche si env() est faible ou nul (Safari) */
+  padding-top: max(1.75rem, calc(0.875rem + env(safe-area-inset-top, 0px)));
+  padding-bottom: max(1.5rem, calc(1rem + env(safe-area-inset-bottom, 0px)));
   padding-left: calc(14px + env(safe-area-inset-left, 0px));
   padding-right: calc(14px + env(safe-area-inset-right, 0px));
   background: linear-gradient(180deg, rgba(14, 15, 19, 0.99) 0%, rgba(8, 9, 12, 1) 100%);
@@ -457,8 +459,7 @@
   box-shadow: 8px 0 40px rgba(0, 0, 0, 0.45);
   transform: translateX(-100%);
   transition: transform var(--dash-transition-ui);
-  overflow: hidden auto;
-  -webkit-overflow-scrolling: touch;
+  overflow: hidden;
 }
 
 .nav-drawer--open {
@@ -471,6 +472,7 @@
   justify-content: space-between;
   gap: 10px;
   min-width: 0;
+  flex-shrink: 0;
   margin-bottom: 16px;
   padding-bottom: 12px;
   border-bottom: 1px solid var(--border-subtle);
@@ -536,10 +538,13 @@
 .nav-drawer__body {
   flex: 1;
   min-height: 0;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
 }
 
 .nav-drawer__section-k {
-  margin: 18px 0 8px;
+  margin: 20px 0 10px;
   font-size: 10px;
   font-weight: 700;
   letter-spacing: 0.12em;
@@ -608,6 +613,7 @@
 .nav-drawer__lang {
   margin-top: 24px;
   padding-top: 16px;
+  padding-bottom: 8px;
   border-top: 1px solid var(--border-subtle);
 }
 

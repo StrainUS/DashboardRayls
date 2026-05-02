@@ -10,14 +10,17 @@ function socialMetaPlugin(publicOrigin: string, basePath: string): Plugin {
     transformIndexHtml(html) {
       if (!origin) return html
       const canonical = `${origin}${basePath}`
-      const ogImage = `${origin}${basePath}apple-touch-icon.png?v=18`
+      const ogImage = `${origin}${basePath}og-image.png?v=19`
       const block = `
     <link rel="canonical" href="${canonical}" />
     <meta property="og:url" content="${canonical}" />
     <meta property="og:image" content="${ogImage}" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:type" content="image/png" />
     <meta property="og:image:alt" content="Rayls — surveillance du réseau public" />
     <meta property="og:locale" content="fr_FR" />
-    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content="Rayls · Surveillance du réseau public" />
     <meta
       name="twitter:description"
