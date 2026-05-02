@@ -11,7 +11,7 @@
   "bugs": {
     "url": "https://github.com/StrainUS/DashboardRayls/issues"
   },
-  "homepage": "https://github.com/StrainUS/DashboardRayls#readme",
+  "homepage": "https://strainus.github.io/DashboardRayls/",
   "license": "UNLICENSED",
   "engines": {
     "node": ">=20"

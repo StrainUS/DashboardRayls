@@ -1,4 +1,6 @@
+import { publicAssetUrl } from '../lib/publicAssetUrl'
+
 /** Assets statiques (hors i18n). */
 export const BRANDING = {
-  officialLogoSrc: '/rayls-logo-official.png',
+  officialLogoSrc: publicAssetUrl('rayls-logo-official.png'),
 } as const

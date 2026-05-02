@@ -1,12 +1,22 @@
 # Dashboard Rayls — moniteur réseau public
 
 [![CI](https://github.com/StrainUS/DashboardRayls/actions/workflows/ci.yml/badge.svg)](https://github.com/StrainUS/DashboardRayls/actions/workflows/ci.yml)
+[![Pages](https://github.com/StrainUS/DashboardRayls/actions/workflows/pages.yml/badge.svg)](https://github.com/StrainUS/DashboardRayls/actions/workflows/pages.yml)
 [![License](https://img.shields.io/badge/Licence-Propriétaire%20StrainUS-333333.svg)](./LICENSE)
 [![Node.js](https://img.shields.io/badge/node-%3E%3D20-brightgreen)](https://nodejs.org/)
 
 > **EN** — Client-side operational dashboard for **Rayls** public mainnet/testnet RPC health, **CoinGecko** market aggregates, optional **MEXC** spot WebSocket (USD), and public **Rayls** API links. **Unofficial**, informational only; not endorsed by Rayls or exchanges.
 
 Tableau de bord **React + Vite** pour suivre la **santé du RPC** Rayls mainnet, les **indicateurs de marché** (CoinGecko, tiers), un **spot USD optionnel** via WebSocket public MEXC, et les **endpoints publics** documentés (`api.rayls.com`, liens officiels). Projet **non officiel**, à vocation **strictement informative** (pas de conseil financier, pas de garantie d’exactitude).
+
+### Démo en ligne (GitHub Pages)
+
+**URL :** [https://strainus.github.io/DashboardRayls/](https://strainus.github.io/DashboardRayls/)
+
+Même application que localement : RPC, marché, chaîne, référentiel, flux JSON sous le `base` du dépôt.  
+**Activation une fois :** *Settings → Pages → Build and deployment → Source : GitHub Actions*. Le workflow [`.github/workflows/pages.yml`](./.github/workflows/pages.yml) build avec `VITE_BASE_PATH=/<nom-du-dépôt>/` et dépose `404.html` pour le routage SPA.
+
+> Comme pour tout hébergement **statique**, il n’y a pas de proxy Vite : pour des quotas CoinGecko confortables en prod, prévoir `VITE_COINGECKO_API_ROOT` (build) vers votre proxy ou clé côté serveur — voir [Variables d’environnement](#variables-denvironnement).
 
 ---
 
@@ -99,7 +109,17 @@ Copier [`.env.example`](./.env.example) vers `.env` ou `.env.local` (fichiers **
 
 ## Déploiement
 
-Exemple **Vercel** (ou tout hébergeur de fichiers statiques) : build `npm run build`, servir `dist/`, respecter les en-têtes de sécurité (CSP alignée sur `vercel.json`).
+### GitHub Pages
+
+1. Activer **Pages** avec la source **GitHub Actions** (cf. lien *Démo en ligne* ci-dessus).
+2. Pousser sur `main` : le workflow **Pages** exécute d’abord `npm run ci`, puis build avec `VITE_BASE_PATH=/<nom-du-repo>/`.
+3. Les assets et le flux par défaut `rayls-feed.json` utilisent ce préfixe (logo, fetch du JSON, etc.).
+
+Sous un **autre** sous-chemin ou domaine : définir `VITE_BASE_PATH` au build (slash final recommandé), comme dans le workflow.
+
+### Autres hébergeurs (ex. Vercel)
+
+Build `npm run build`, servir `dist/`, définir `VITE_BASE_PATH` si l’app n’est pas à la racine du domaine. Pour la sécurité, aligner la **CSP** sur [`vercel.json`](./vercel.json) (`connect-src`) si vous réutilisez ce fichier.
 
 ---
 

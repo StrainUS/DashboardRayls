@@ -1,4 +1,5 @@
 import { isSafeHttpOrHttpsUrl, isSafeRootRelativePublicPath } from './safeUrl'
+import { sameOriginPublicAbsoluteUrl } from './publicAssetUrl'
 
 export type RaylsPublicFeedItem = {
   title: string
@@ -26,7 +27,7 @@ export function normalizeFeedItemHref(href: string): string {
   const h = href.trim()
   if (isSafeHttpOrHttpsUrl(h)) return h
   if (isSafeRootRelativePublicPath(h)) {
-    return `${window.location.origin}${h}`
+    return sameOriginPublicAbsoluteUrl(h)
   }
   return h
 }
