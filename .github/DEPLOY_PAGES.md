@@ -31,11 +31,11 @@ Sans cette étape, le build peut être vert mais **aucun site** n’est publié 
 
 ### RPC Réseau (latence, bloc, gas) sur github.io
 
-Le RPC public Rayls n’autorise pas les POST navigateur depuis `*.github.io` (CORS). Sans configuration, l’onglet **Réseau** reste vide ou en erreur.
+Le RPC public Rayls n’autorise pas les POST navigateur depuis `*.github.io` (CORS).
 
-1. Déployer le proxy : [`workers/rpc-cors-proxy/README.md`](../workers/rpc-cors-proxy/README.md) (`npx wrangler deploy`).
-2. GitHub → **Settings** → **Secrets and variables** → **Actions** → **Variables** : créer **`VITE_RAYLS_RPC_HTTP_URL`** = URL HTTPS du worker.
-3. Relancer le workflow **Pages** (ou pousser un commit) pour rebundler avec la variable.
+**Méthode recommandée** : workflow [`.github/workflows/deploy-rpc-proxy.yml`](../.github/workflows/deploy-rpc-proxy.yml) — ajoutez les secrets `CLOUDFLARE_API_TOKEN` et `CLOUDFLARE_ACCOUNT_ID`, puis *Run workflow*. La variable **`VITE_RAYLS_RPC_HTTP_URL`** est créée automatiquement ; relancez ensuite **Pages**.
+
+Détails : [`workers/rpc-cors-proxy/README.md`](../workers/rpc-cors-proxy/README.md).
 
 ## 2. Vérifier le workflow
 

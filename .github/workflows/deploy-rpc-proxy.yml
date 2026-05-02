@@ -1,0 +1,75 @@
+# Déploie workers/rpc-cors-proxy sur Cloudflare et définit VITE_RAYLS_RPC_HTTP_URL pour les builds Pages.
+#
+# Prérequis (une seule fois) : repo → Settings → Secrets and variables → Actions → Secrets
+#   - CLOUDFLARE_API_TOKEN : token avec permission « Edit Cloudflare Workers »
+#   - CLOUDFLARE_ACCOUNT_ID : Account ID (aperçu Cloudflare, colonne de droite)
+#
+# Ensuite : Actions → « Deploy RPC CORS proxy » → Run workflow → puis relancer « Pages ».
+name: Deploy RPC CORS proxy
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: write
+
+concurrency:
+  group: deploy-rpc-proxy
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Vérifier les secrets Cloudflare
+        env:
+          CF_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CF_ACCOUNT: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          if [ -z "$CF_TOKEN" ]; then
+            echo "::error::Secret **CLOUDFLARE_API_TOKEN** manquant (API Token avec droit Workers)."
+            exit 1
+          fi
+          if [ -z "$CF_ACCOUNT" ]; then
+            echo "::error::Secret **CLOUDFLARE_ACCOUNT_ID** manquant (Cloudflare Dashboard → compte → Account ID)."
+            exit 1
+          fi
+
+      - name: Déployer le Worker (wrangler)
+        working-directory: workers/rpc-cors-proxy
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: npx wrangler@3 deploy
+
+      - name: URL workers.dev et variable VITE_RAYLS_RPC_HTTP_URL
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          NAME=$(grep -E '^name[[:space:]]*=' workers/rpc-cors-proxy/wrangler.toml | head -1 | sed -E 's/^name[[:space:]]*=[[:space:]]*"([^"]+)".*/\1/')
+          RESP=$(curl -sS -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" \
+            "https://api.cloudflare.com/client/v4/accounts/$CLOUDFLARE_ACCOUNT_ID/workers/subdomain")
+          SUB=$(echo "$RESP" | jq -r '.result.subdomain // empty')
+          if [ -z "$SUB" ]; then
+            echo "::error::API workers/subdomain : pas de sous-domaine (réponse : $RESP). Activez workers.dev pour le compte."
+            exit 1
+          fi
+          WORKER_URL="https://${NAME}.${SUB}.workers.dev"
+          echo "### Proxy RPC" >> "$GITHUB_STEP_SUMMARY"
+          echo "- **URL** : \`$WORKER_URL\`" >> "$GITHUB_STEP_SUMMARY"
+          gh variable set VITE_RAYLS_RPC_HTTP_URL --repo "${{ github.repository }}" --body "$WORKER_URL"
+          echo "- Variable **VITE_RAYLS_RPC_HTTP_URL** mise à jour." >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "Relancez le workflow **Pages** (ou poussez sur \`main\`) pour publier le site avec le proxy." >> "$GITHUB_STEP_SUMMARY"
