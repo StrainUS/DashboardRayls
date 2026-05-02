@@ -12,6 +12,10 @@ import {
   marketOhlcLoadedKey,
   mergeOhlcWithLiveSpot,
   ohlcDaysForTimeframe,
+  preferSyntheticCandles,
+  marketSyntheticOhlcLoadedKey,
+  lineSeriesToOhlcCandles,
+  timeframeCandleBucketMs,
   analyzeTrend,
   timeframeLiveDisplayWindowMs,
   TIMEFRAMES,
@@ -250,16 +254,26 @@ function MarketSpotViz({
   const loc = localeTag(locale)
   const chartNowMs = useChartRafClock()
   const chartKey = marketChartLoadedKey(tf, chartCurrency)
-  const ohlcChartKey = marketOhlcLoadedKey(tf, chartCurrency)
+  const prefersSynthOhlc = preferSyntheticCandles(tf)
+  const ohlcChartKey = prefersSynthOhlc
+    ? marketSyntheticOhlcLoadedKey(tf, chartCurrency)
+    : marketOhlcLoadedKey(tf, chartCurrency)
   /** Nouvelle période : ancienne série encore en mémoire ou fetch en cours — ne pas afficher « pas assez de points ». */
   const awaitingHistoryForTf =
     chartStyle === 'line' &&
     !histErr &&
     (histLoading || (histLoadedKey !== chartKey && histSeries.length > 0))
-  const awaitingOhlcForTf =
+  const awaitingSyntheticCandles =
     chartStyle === 'candles' &&
+    prefersSynthOhlc &&
+    !histErr &&
+    (histLoading || (histLoadedKey !== chartKey && histSeries.length > 0))
+  const awaitingApiOhlc =
+    chartStyle === 'candles' &&
+    !prefersSynthOhlc &&
     !ohlcErr &&
     (ohlcLoading || (ohlcLoadedKey !== ohlcChartKey && ohlcSeries.length > 0))
+  const awaitingOhlcForTf = awaitingSyntheticCandles || awaitingApiOhlc
 
   const displayPrices = useMemo(() => {
     const w = timeframeLiveDisplayWindowMs(tf)
@@ -338,17 +352,6 @@ function MarketSpotViz({
     const slack = chartWindowFilterSlackMs(tf)
     const relaxedCut = cut - slack
 
-    let base: OhlcCandle[]
-    if (ohlcLoadedKey === ohlcChartKey && ohlcSeries.length > 0) {
-      const filtered = ohlcSeries.filter((c) => c.t >= relaxedCut)
-      base =
-        filtered.length >= 1
-          ? filtered
-          : ohlcSeries.slice(-Math.min(500, ohlcSeries.length))
-    } else {
-      return []
-    }
-
     const CG_CHART_ANCHOR_MAX_AGE_MS = 4 * 60_000
     const cgAt = quote?.cgSpotAt
     const cgAnchorFresh =
@@ -366,6 +369,26 @@ function MarketSpotViz({
             ? quote.usd
             : null
 
+    if (prefersSynthOhlc) {
+      const inWin = displayPrices.filter(([t0]) => t0 >= relaxedCut)
+      const pts = inWin.length >= 2 ? inWin : displayPrices
+      if (pts.length < 2) return []
+      const bucket = timeframeCandleBucketMs(tf)
+      const syn = lineSeriesToOhlcCandles(pts, bucket)
+      return mergeOhlcWithLiveSpot(syn, liveSpot)
+    }
+
+    let base: OhlcCandle[]
+    if (ohlcLoadedKey === ohlcChartKey && ohlcSeries.length > 0) {
+      const filtered = ohlcSeries.filter((c) => c.t >= relaxedCut)
+      base =
+        filtered.length >= 1
+          ? filtered
+          : ohlcSeries.slice(-Math.min(500, ohlcSeries.length))
+    } else {
+      return []
+    }
+
     return mergeOhlcWithLiveSpot(base, liveSpot)
   }, [
     chartStyle,
@@ -376,6 +399,8 @@ function MarketSpotViz({
     chartNowMs,
     chartCurrency,
     ohlcChartKey,
+    prefersSynthOhlc,
+    displayPrices,
   ])
 
   const snapshotFetchedAt = quote?.fetchedAt ?? chartNowMs
@@ -632,7 +657,9 @@ export function MarketPanel() {
   }, [load])
 
   useEffect(() => {
-    if (chartStyle !== 'line') return
+    const needsMarketChart =
+      chartStyle === 'line' || (chartStyle === 'candles' && preferSyntheticCandles(tf))
+    if (!needsMarketChart) return
     let cancelled = false
     const key = marketChartLoadedKey(tf, chartCurrency)
     const req = ++histReqId.current
@@ -665,6 +692,16 @@ export function MarketPanel() {
 
   useEffect(() => {
     if (chartStyle !== 'candles') return
+    if (preferSyntheticCandles(tf)) {
+      const synthKey = marketSyntheticOhlcLoadedKey(tf, chartCurrency)
+      queueMicrotask(() => {
+        setOhlcLoading(false)
+        setOhlcErr(null)
+        setOhlcSeries([])
+        setOhlcLoadedKey(synthKey)
+      })
+      return
+    }
     let cancelled = false
     const days = ohlcDaysForTimeframe(tf)
     const key = marketOhlcLoadedKey(tf, chartCurrency)

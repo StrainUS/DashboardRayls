@@ -330,7 +330,7 @@ export const fr: MessageTree = {
     chartProvenance:
       'Courbe : agrégat CoinGecko (market_chart + simple/price), toutes périodes — pas un cours émis par Rayls. Bandeau USD : si MEXC est actif, cotation bourse en complément (réactivité).',
     chartProvenanceCandles:
-      'Bougies : OHLC agrégé CoinGecko (/ohlc) ; dernière bougie recalée sur le spot (simple/price / MEXC selon bandeau). Pas un cours émis par Rayls.',
+      'Bougies : si la période est plus fine que l’OHLC CoinGecko (ex. 1 min alors que /ohlc est ~30 min), agrégat à partir de la même série que la courbe (market_chart + spot) ; sinon endpoint /ohlc. Dernière bougie recalée sur le spot. Pas un cours émis par Rayls.',
     loadingChart: 'Chargement courbe…',
     noData: 'Pas de données — vérifiez le réseau ou le quota CoinGecko.',
     waitingData: 'En attente de données (historique + spot ~{{sec}} s).',

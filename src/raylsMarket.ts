@@ -284,6 +284,76 @@ export function marketOhlcLoadedKey(tf: TimeframeId, vs: ChartVsCurrency): strin
   return `${ohlcDaysForTimeframe(tf)}:${vs}`
 }
 
+/**
+ * Granularité imposée par CoinGecko pour `/coins/{id}/ohlc` (non paramétrable).
+ * Ex. `days=1` → pas 1 min mais ~30 min ; sinon l’UI « 1 min » + bougies laissait 3–4 bougies sur 2 h.
+ * @see https://docs.coingecko.com/reference/coins-id-ohlc
+ */
+export function coingeckoOhlcIntervalMs(days: OhlcDays): number {
+  if (days === 1) return 30 * 60 * 1000
+  if (days <= 90) return 4 * 60 * 60 * 1000
+  return 24 * 60 * 60 * 1000
+}
+
+/** Taille de bougie voulue côté UI pour le mode « Chandelier » (agrégation depuis la série ligne). */
+export function timeframeCandleBucketMs(tf: TimeframeId): number {
+  switch (tf) {
+    case '1m':
+      return 60_000
+    case '5m':
+      return 5 * 60_000
+    case '15m':
+      return 15 * 60_000
+    case '30m':
+      return 30 * 60_000
+    case '1h':
+      return 60 * 60_000
+    case '24h':
+      return 60 * 60_000
+    case '7d':
+      return 4 * 60 * 60_000
+    case '30d':
+      return 24 * 60 * 60_000
+    default:
+      return 60 * 60_000
+  }
+}
+
+/** Utiliser des bougies dérivées de `market_chart` + buffer live plutôt que `/ohlc` (trop grossier). */
+export function preferSyntheticCandles(tf: TimeframeId): boolean {
+  const bucket = timeframeCandleBucketMs(tf)
+  const days = ohlcDaysForTimeframe(tf)
+  return bucket < coingeckoOhlcIntervalMs(days)
+}
+
+export function marketSyntheticOhlcLoadedKey(tf: TimeframeId, vs: ChartVsCurrency): string {
+  return `synth:${tf}:${vs}`
+}
+
+/** Regroupe les points [t, prix] en bougies OHLC (t = début de bucket, aligné sur bucketMs). */
+export function lineSeriesToOhlcCandles(points: [number, number][], bucketMs: number): OhlcCandle[] {
+  if (points.length === 0 || bucketMs < 1) return []
+  const sorted = [...points].filter(
+    ([t, p]) => Number.isFinite(t) && Number.isFinite(p),
+  ) as [number, number][]
+  sorted.sort((a, b) => a[0] - b[0])
+  const buckets = new Map<number, { o: number; h: number; l: number; c: number }>()
+  for (const [t, p] of sorted) {
+    const k = Math.floor(t / bucketMs) * bucketMs
+    const ex = buckets.get(k)
+    if (!ex) {
+      buckets.set(k, { o: p, h: p, l: p, c: p })
+    } else {
+      ex.h = Math.max(ex.h, p)
+      ex.l = Math.min(ex.l, p)
+      ex.c = p
+    }
+  }
+  return [...buckets.entries()]
+    .sort((a, b) => a[0] - b[0])
+    .map(([t, v]) => ({ t, o: v.o, h: v.h, l: v.l, c: v.c }))
+}
+
 export type OhlcCandle = { t: number; o: number; h: number; l: number; c: number }
 
 /** Dernière bougie : clôture / extrêmes recalés sur le spot live (même logique que le dernier point ligne). */

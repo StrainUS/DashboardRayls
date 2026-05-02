@@ -328,7 +328,7 @@ export const en: MessageTree = {
     chartProvenance:
       'Chart: CoinGecko aggregate (market_chart + simple/price), all windows — not a Rayls-issued price. USD strip: when MEXC is on, adds an exchange quote for responsiveness.',
     chartProvenanceCandles:
-      'Candles: CoinGecko aggregate OHLC (/ohlc); last candle aligned to spot (simple/price / MEXC per strip). Not a Rayls-issued price.',
+      'Candles: when the selected window is finer than CoinGecko OHLC (e.g. 1 min vs ~30 min from /ohlc), we bucket the same series as the line chart (market_chart + spot); otherwise CoinGecko /ohlc. Last candle aligned to spot. Not a Rayls-issued price.',
     loadingChart: 'Loading chart…',
     noData: 'No data — check network or CoinGecko quota.',
     waitingData: 'Waiting for data (history + spot ~{{sec}} s).',
