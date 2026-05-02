@@ -143,7 +143,8 @@ export type TimeframeId =
   | '1y'
 
 /**
- * Chaque timeframe charge un historique CoinGecko `market_chart` (jours = ceil(fenêtre / 1j)) et filtre la fenêtre d’affichage.
+ * Chaque timeframe affiche une fenêtre filtrée côté client sur l’historique CoinGecko `market_chart`.
+ * Les fenêtres ≥ 30 j partagent une seule requête `days=max` ; les courtes partagent le même `days` entier quand c’est possible (moins de 429).
  * Le spot et le dernier point de courbe sont rafraîchis via `simple/price` (défaut ~10 s sans clé ; voir `VITE_LIVE_SPOT_MS`).
  */
 export const TIMEFRAMES: { id: TimeframeId; label: string; hint: string }[] = [
@@ -226,11 +227,13 @@ export function marketChartDaysForTimeframe(tf: TimeframeId): number {
 export type MarketChartDaysQuery = number | 'max'
 
 /**
- * Requête `market_chart` : `max` pour 1 an (historique utile côté API) ; sinon `marketChartDaysForTimeframe`.
+ * Requête `market_chart` : `max` dès ≥ 30 j d’historique (30 j / 90 j / 1 an partagent la même réponse filtrée côté UI).
+ * Évite trois appels distincts (`days=30`, `90`, `max`) qui saturaient le quota public (429).
  */
 export function marketChartDaysQueryForTimeframe(tf: TimeframeId): MarketChartDaysQuery {
-  if (tf === '1y') return 'max'
-  return marketChartDaysForTimeframe(tf)
+  const d = marketChartDaysForTimeframe(tf)
+  if (d >= 30) return 'max'
+  return d
 }
 
 /**
@@ -246,12 +249,12 @@ export function chartWindowFilterSlackMs(tf: TimeframeId): number {
 }
 
 /**
- * Clé de série chargée côté UI : inclut le `tf` car plusieurs périodes partagent le même `days`
- * (ex. 1 min / 1 h / 24 h → 1 jour) — sans cela, le filtre de fenêtre ne se réaligne pas correctement.
+ * Identifiant de la série `market_chart` côté UI : uniquement le paramètre réseau (`days` ou `max`) et la devise.
+ * Plusieurs timeframes partagent la même clé (ex. 1 min … 24 h → `1`, 30 j / 90 j / 1 an → `max`) pour ne pas refetch au changement de fenêtre.
  */
 export function marketChartLoadedKey(tf: TimeframeId, vs: ChartVsCurrency): string {
   const q = marketChartDaysQueryForTimeframe(tf)
-  return `${tf}:${q === 'max' ? 'max' : String(q)}:${vs}`
+  return `${q === 'max' ? 'max' : String(q)}:${vs}`
 }
 
 /** Valeurs `days` acceptées par l’endpoint CoinGecko `ohlc`. */
@@ -260,22 +263,23 @@ const OHLC_ALLOWED_DAYS = [1, 7, 14, 30, 90, 180, 365] as const
 export type OhlcDays = (typeof OHLC_ALLOWED_DAYS)[number]
 
 /**
- * Jours OHLC CoinGecko : premier palier autorisé qui couvre au moins la fenêtre d’affichage du TF
- * (granularité des bougies imposée par l’API selon ce paramètre).
+ * Jours OHLC CoinGecko : premier palier autorisé qui couvre la fenêtre d’affichage.
+ * Pour ≥ 30 j, on demande toujours `365` : même charge utile pour 30 j / 90 j / 1 an → moins de 429.
  */
 export function ohlcDaysForTimeframe(tf: TimeframeId): OhlcDays {
   const w = timeframeLiveDisplayWindowMs(tf)
   const day = 24 * 60 * 60 * 1000
   const needed = Math.max(1, Math.ceil(w / day))
+  if (needed >= 30) return 365
   for (const d of OHLC_ALLOWED_DAYS) {
     if (d >= needed) return d
   }
   return 365
 }
 
-/** Même principe que `marketChartLoadedKey` pour OHLC (ex. plusieurs TF → `days: 1` ou `7`). */
+/** Aligné sur le paramètre `days` OHLC réel (plusieurs TF → une seule requête réseau). */
 export function marketOhlcLoadedKey(tf: TimeframeId, vs: ChartVsCurrency): string {
-  return `${tf}:${ohlcDaysForTimeframe(tf)}:${vs}`
+  return `${ohlcDaysForTimeframe(tf)}:${vs}`
 }
 
 export type OhlcCandle = { t: number; o: number; h: number; l: number; c: number }
@@ -350,7 +354,10 @@ async function fetchCgMarketChartNetwork(q: MarketChartDaysQuery, vs: ChartVsCur
       : `/coins/${RAYLS_COINGECKO_ID}/market_chart?vs_currency=${vs}&days=${Math.max(1, Math.min(366, Math.round(q)))}`
   const res = await cgFetch(path)
   if (res.status === 429) {
-    const stale = cacheGetStale<[number, number][]>(key)
+    let stale = cacheGetStale<[number, number][]>(key)
+    if (!stale && q !== 'max') {
+      stale = cacheGetStale<[number, number][]>(chartCacheKeyForQuery('max', vs))
+    }
     if (stale) return stale
     throw new Error(
       'CoinGecko market_chart : limite de débit (429). Ajoutez une clé demo/pro (`.env` + proxy Vite en local) ou `VITE_COINGECKO_API_ROOT`.',
@@ -429,6 +436,16 @@ function parseCgOhlcJson(j: unknown): OhlcCandle[] {
   return out
 }
 
+/** Repli 429 : toute série OHLC en cache pour cette devise (du plus long au plus court). */
+function ohlcStaleAnyVs(vs: ChartVsCurrency): OhlcCandle[] | null {
+  for (let i = OHLC_ALLOWED_DAYS.length - 1; i >= 0; i--) {
+    const d = OHLC_ALLOWED_DAYS[i]!
+    const s = cacheGetStale<OhlcCandle[]>(ohlcCacheKey(d, vs))
+    if (s && s.length > 0) return s
+  }
+  return null
+}
+
 async function fetchCgOhlcNetwork(days: OhlcDays, vs: ChartVsCurrency): Promise<OhlcCandle[]> {
   await waitMarketChartNetworkGap()
   if (OHLC_EXTRA_GAP_MS > 0) {
@@ -439,14 +456,16 @@ async function fetchCgOhlcNetwork(days: OhlcDays, vs: ChartVsCurrency): Promise<
 
   let res = await cgFetch(path)
   if (res.status === 429) {
-    const stale = cacheGetStale<OhlcCandle[]>(key)
+    let stale = cacheGetStale<OhlcCandle[]>(key)
+    if (!stale) stale = ohlcStaleAnyVs(vs)
     if (stale) return stale
     await new Promise((r) => setTimeout(r, OHLC_429_COOLDOWN_MS))
     await cgThrottle()
     res = await cgFetch(path)
   }
   if (res.status === 429) {
-    const stale = cacheGetStale<OhlcCandle[]>(key)
+    let stale = cacheGetStale<OhlcCandle[]>(key)
+    if (!stale) stale = ohlcStaleAnyVs(vs)
     if (stale) return stale
     throw new Error(
       'CoinGecko ohlc : limite de débit (429). Créez `.env` avec VITE_COINGECKO_DEMO_API_KEY (dev : proxy Vite) ou VITE_COINGECKO_API_ROOT en prod — voir `.env.example`.',

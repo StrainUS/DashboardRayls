@@ -269,19 +269,6 @@ function MarketSpotViz({
     const relaxedCut = cut - slack
     const liveBuf = chartCurrency === 'eur' ? liveSeriesEur : liveSeries
 
-    let base: [number, number][]
-    if (histLoadedKey === chartKey && histSeries.length > 0) {
-      const filtered = histSeries.filter(([t0]) => t0 >= relaxedCut)
-      base =
-        filtered.length >= 2
-          ? filtered
-          : histSeries.slice(-Math.min(2000, histSeries.length))
-    } else {
-      if (liveBuf.length === 0) return []
-      const lastT = liveBuf[liveBuf.length - 1]![0]
-      base = liveBuf.filter(([t0]) => t0 >= Math.max(relaxedCut, lastT - w))
-    }
-
     /** Dernier point courbe = agrégat CoinGecko si frais (aligné sur `market_chart`), sinon repli sur la cotation affichée. */
     const CG_CHART_ANCHOR_MAX_AGE_MS = 4 * 60_000
     const cgAt = quote?.cgSpotAt
@@ -299,6 +286,27 @@ function MarketSpotViz({
           : quote != null && Number.isFinite(quote.usd)
             ? quote.usd
             : null
+
+    let base: [number, number][]
+    if (histLoadedKey === chartKey && histSeries.length > 0) {
+      const filtered = histSeries.filter(([t0]) => t0 >= relaxedCut)
+      base =
+        filtered.length >= 2
+          ? filtered
+          : histSeries.slice(-Math.min(2000, histSeries.length))
+    } else {
+      if (liveBuf.length === 0) {
+        if (liveSpot == null || !Number.isFinite(liveSpot)) return []
+        const span = Math.min(Math.max(w / 24, 60_000), 4 * 3_600_000)
+        base = [
+          [now - span, liveSpot],
+          [now, liveSpot],
+        ]
+      } else {
+        const lastT = liveBuf[liveBuf.length - 1]![0]
+        base = liveBuf.filter(([t0]) => t0 >= Math.max(relaxedCut, lastT - w))
+      }
+    }
     let merged = liveSpot != null ? mergeChartWithLive(base, liveSpot, now) : base
     merged = ensureTimeSorted(merged)
 
