@@ -1,4 +1,12 @@
-import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from 'react'
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+  type ReactNode,
+} from 'react'
 
 type NavDrawerContextValue = {
   open: boolean
@@ -18,6 +26,17 @@ export function NavDrawerProvider({ children }: { children: ReactNode }) {
     () => ({ open, openDrawer, closeDrawer, toggleDrawer }),
     [open, openDrawer, closeDrawer, toggleDrawer],
   )
+
+  useEffect(() => {
+    const onPageShow = (e: PageTransitionEvent) => {
+      if (!e.persisted) return
+      setOpen(false)
+      document.body.style.removeProperty('overflow')
+    }
+    window.addEventListener('pageshow', onPageShow)
+    return () => window.removeEventListener('pageshow', onPageShow)
+  }, [])
+
   return <NavDrawerContext.Provider value={value}>{children}</NavDrawerContext.Provider>
 }
 

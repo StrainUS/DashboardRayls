@@ -54,7 +54,6 @@ export function NavDrawer() {
         aria-modal="true"
         aria-label={t('nav.drawerAria')}
         aria-hidden={!open}
-        inert={!open}
       >
         <div className="nav-drawer__head">
           <Link
