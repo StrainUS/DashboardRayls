@@ -1,6 +1,6 @@
 /**
  * Design tokens — interface institutionnelle sombre : surfaces calibrées,
- * contrastes WCAG-friendly, une seule famille d’ombres et d’accents.
+ * contrastes WCAG-friendly, échelle d’ombres et accents cohérents (niveau « produit »).
  */
 :root {
   --rayls-violet: #7c6cf0;
@@ -11,20 +11,23 @@
   --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
   --font-display: 'Plus Jakarta Sans', var(--font-sans);
 
-  --bg: #0a0b0e;
-  --bg-deep: #060708;
-  --bg-elevated: #101218;
-  --surface: #14161d;
-  --surface-raised: #1a1d26;
-  --surface-hover: #22262f;
-  --border: rgba(255, 255, 255, 0.065);
-  --border-subtle: rgba(255, 255, 255, 0.038);
-  --border-accent: rgba(94, 200, 232, 0.28);
-  --text: #ececf1;
-  --muted: #9b9ba8;
-  --dim: #6b6b78;
-  --accent: #7ec8eb;
-  --accent-strong: #9db0f4;
+  /* Fonds bleu nuit + surfaces un cran plus lisibles (encadrés visibles sur noir) */
+  --bg: #0a0b10;
+  --bg-deep: #06070c;
+  --bg-elevated: #11131a;
+  --surface: #151821;
+  --surface-raised: #1a1d28;
+  --surface-hover: #222530;
+  --border: rgba(255, 255, 255, 0.1);
+  --border-subtle: rgba(255, 255, 255, 0.07);
+  --border-accent: rgba(94, 200, 232, 0.36);
+  --text: #f1f2f7;
+  --muted: #a8adb8;
+  --dim: #7a808c;
+  /* Libellés (eyebrows, surtitres) */
+  --text-label: #969dad;
+  --accent: #7fd4f3;
+  --accent-strong: #a8b8f8;
   --accent-on-dark: #0a0c10;
   --ok: #3ecf9a;
   --warn: #e8b84d;
@@ -41,17 +44,191 @@
 
   --panel-bg: linear-gradient(
     165deg,
-    rgba(22, 24, 32, 0.97) 0%,
-    rgba(14, 16, 22, 0.99) 100%
+    rgba(22, 24, 34, 0.96) 0%,
+    rgba(13, 15, 21, 0.99) 100%
   );
-  --panel-bg-flat: #15171e;
-  --panel-border: rgba(255, 255, 255, 0.055);
-  --panel-inset-highlight: inset 0 1px 0 rgba(255, 255, 255, 0.045);
+  --panel-bg-flat: #13151d;
+  --panel-border: rgba(255, 255, 255, 0.1);
+  --panel-inset-highlight: inset 0 1px 0 rgba(255, 255, 255, 0.052);
   --panel-shadow:
     var(--panel-inset-highlight),
+    0 1px 0 rgba(0, 0, 0, 0.5),
+    0 20px 56px rgba(0, 0, 0, 0.44);
+  --panel-shadow-hover:
+    var(--panel-inset-highlight),
     0 1px 0 rgba(0, 0, 0, 0.45),
-    0 16px 48px rgba(0, 0, 0, 0.42);
-  --inset-fill: rgba(0, 0, 0, 0.22);
+    0 24px 64px rgba(0, 0, 0, 0.38);
+  --inset-fill: rgba(0, 0, 0, 0.26);
+
+  /* Accent vertical hero */
+  --hero-accent-line: linear-gradient(
+    180deg,
+    rgba(14, 165, 233, 0.9) 0%,
+    rgba(59, 130, 246, 0.42) 65%,
+    rgba(99, 102, 241, 0.18) 100%
+  );
+
+  /* Filet néon institutionnel : cyan profond → bleu → indigo (moins « arc-en-ciel ») */
+  --spectral-bar: linear-gradient(
+    90deg,
+    #06b6d4 0%,
+    #0ea5e9 28%,
+    #3b82f6 62%,
+    #6366f1 100%
+  );
+
+  /* Bandeau en-tête : accent unique institutionnel (pas de spectre arc-en-ciel) */
+  --header-accent-line: linear-gradient(180deg, #64748b 0%, #475569 100%);
+  --header-edge-glow: 0 0 10px rgba(100, 116, 139, 0.12);
+
+  /* ——— Liquid glass : filets plus lisibles (produit / fintech, pas arcade) ——— */
+  --glass-border: rgba(203, 213, 225, 0.17);
+  --glass-border-hover: rgba(226, 232, 240, 0.26);
+  /** Tuiles et rangées imbriquées (cadences, sous-cartes) */
+  --glass-tile-border: rgba(226, 232, 240, 0.12);
+  --glass-tile-border-hover: rgba(241, 245, 249, 0.2);
+  --glass-fill: rgba(18, 20, 28, 0.52);
+  --glass-fill-deep: rgba(12, 14, 20, 0.62);
+  /** Reflets bord haut : blanc + néon très contrôlé */
+  --glass-sheen-top:
+    inset 0 1px 0 rgba(255, 255, 255, 0.14),
+    inset 0 1px 0 rgba(125, 211, 252, 0.08);
+  --glass-sheen-soft:
+    inset 0 1px 0 rgba(255, 255, 255, 0.085),
+    inset 0 1px 0 rgba(167, 139, 250, 0.055);
+  --glass-blur: 18px;
+  --glass-blur-panel: 14px;
+
+  /** Surfaces : nappe nuit + soupçon de cyan / indigo dans le verre */
+  --glass-gradient-panel: linear-gradient(
+    165deg,
+    rgba(26, 34, 48, 0.66) 0%,
+    rgba(18, 22, 36, 0.6) 42%,
+    rgba(14, 16, 28, 0.72) 100%
+  );
+  --glass-gradient-hero: linear-gradient(
+    165deg,
+    rgba(24, 32, 44, 0.58) 0%,
+    rgba(18, 22, 36, 0.56) 48%,
+    rgba(14, 18, 32, 0.64) 100%
+  );
+  --glass-gradient-inset: linear-gradient(
+    165deg,
+    rgba(22, 26, 38, 0.55) 0%,
+    rgba(12, 14, 22, 0.62) 100%
+  );
+  --glass-gradient-inset-hover: linear-gradient(
+    165deg,
+    rgba(26, 30, 42, 0.6) 0%,
+    rgba(14, 16, 24, 0.66) 100%
+  );
+  --glass-gradient-disclaimer: linear-gradient(
+    165deg,
+    rgba(20, 28, 40, 0.5) 0%,
+    rgba(12, 14, 26, 0.59) 100%
+  );
+
+  /** Séparateurs : filet lumineux type néon doux (opacités plafonnées) */
+  --glass-divider: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(34, 211, 238, 0.11) 12%,
+    rgba(255, 255, 255, 0.18) 50%,
+    rgba(167, 139, 250, 0.11) 88%,
+    transparent 100%
+  );
+  /** Fine ligne haute type vitre */
+  --glass-rail-top: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(56, 189, 248, 0.18) 20%,
+    rgba(255, 255, 255, 0.24) 50%,
+    rgba(192, 132, 252, 0.15) 80%,
+    transparent 100%
+  );
+  --glass-edge-left: linear-gradient(
+    180deg,
+    rgba(56, 189, 248, 0.14) 0%,
+    rgba(255, 255, 255, 0.13) 38%,
+    rgba(192, 132, 252, 0.11) 70%,
+    rgba(255, 255, 255, 0.05) 100%
+  );
+
+  /** Halos extérieurs dosés (plafond ~0.06–0.09 en alpha sur les couches colorées) */
+  --glass-halo-ambient:
+    0 0 48px rgba(14, 165, 233, 0.055),
+    0 0 88px rgba(99, 102, 241, 0.045),
+    0 0 120px rgba(45, 212, 191, 0.028);
+
+  /**
+   * Halos néon « produit » — même grammaire que Spot : plusieurs couches larges, alpha faible.
+   * À composer après --glass-panel-shadow ou --hero-glow-outer (jamais seul sur un écran complet).
+   */
+  --halo-neon-chrome:
+    0 0 44px rgba(56, 189, 248, 0.055),
+    0 0 80px rgba(129, 140, 248, 0.042);
+  --halo-neon-overview:
+    0 0 58px rgba(56, 189, 248, 0.085),
+    0 0 100px rgba(129, 140, 248, 0.065),
+    0 0 132px rgba(167, 139, 250, 0.045);
+  --halo-neon-live:
+    0 0 58px rgba(45, 212, 191, 0.095),
+    0 0 100px rgba(34, 211, 238, 0.07),
+    0 0 124px rgba(56, 189, 248, 0.048);
+  --halo-neon-spot:
+    0 0 62px rgba(74, 222, 128, 0.1),
+    0 0 104px rgba(250, 204, 21, 0.07),
+    0 0 128px rgba(56, 189, 248, 0.05);
+  --halo-neon-chain:
+    0 0 58px rgba(110, 231, 183, 0.09),
+    0 0 96px rgba(56, 189, 248, 0.065),
+    0 0 118px rgba(129, 140, 248, 0.04);
+  --halo-neon-official:
+    0 0 60px rgba(250, 204, 21, 0.075),
+    0 0 100px rgba(125, 211, 252, 0.065),
+    0 0 118px rgba(167, 139, 250, 0.045);
+  --halo-neon-legal:
+    0 0 54px rgba(129, 140, 248, 0.075),
+    0 0 92px rgba(56, 189, 248, 0.055);
+
+  /* Profondeur hero : ombre + halo cyan / indigo modéré */
+  --hero-glow-outer:
+    var(--glass-sheen-top),
+    0 0 0 1px rgba(0, 0, 0, 0.35),
+    0 20px 56px rgba(0, 0, 0, 0.42),
+    0 0 72px rgba(40, 55, 80, 0.14),
+    0 0 100px rgba(34, 211, 238, 0.055),
+    0 0 140px rgba(129, 140, 248, 0.04);
+
+  /** Panneaux : volume + même famille de halos (moins fort que le hero) */
+  --glass-panel-shadow:
+    var(--glass-sheen-top),
+    0 0 0 1px rgba(0, 0, 0, 0.38),
+    0 2px 4px rgba(0, 0, 0, 0.18),
+    0 24px 56px rgba(0, 0, 0, 0.38),
+    0 0 72px rgba(30, 58, 90, 0.11),
+    0 0 96px rgba(34, 211, 238, 0.042),
+    0 0 110px rgba(129, 140, 248, 0.032),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.065),
+    inset 0 26px 56px -28px rgba(0, 0, 0, 0.32);
+  --glass-well-bg: linear-gradient(
+    168deg,
+    rgba(6, 8, 14, 0.72) 0%,
+    rgba(8, 10, 16, 0.55) 50%,
+    rgba(4, 5, 10, 0.68) 100%
+  );
+  --glass-tile-bg: linear-gradient(
+    155deg,
+    rgba(255, 255, 255, 0.08) 0%,
+    rgba(18, 22, 34, 0.56) 38%,
+    rgba(10, 14, 26, 0.66) 100%
+  );
+  --glass-tile-bg-hover: linear-gradient(
+    155deg,
+    rgba(224, 242, 254, 0.08) 0%,
+    rgba(22, 26, 38, 0.58) 40%,
+    rgba(12, 16, 28, 0.68) 100%
+  );
 
   --dash-max-width: 1180px;
   /**
@@ -63,16 +240,18 @@
   --dash-main-pad-bottom: clamp(28px, 3vw, 36px);
   --dash-radius-sm: 8px;
   --dash-radius-md: 12px;
-  --dash-radius-lg: 14px;
-  --dash-radius-xl: 18px;
+  --dash-radius-lg: 16px;
+  --dash-radius-xl: 20px;
   --dash-space-xs: 4px;
   --dash-space-sm: 8px;
   --dash-space-md: 12px;
   --dash-space-lg: 16px;
   --dash-space-xl: 24px;
-  --dash-header-blur: 20px;
+  --dash-header-blur: 24px;
   --dash-transition-fast: 0.14s ease;
   --dash-transition-ui: 0.2s ease;
+  /** Espacement vertical sections (PageHero → corps) — toutes routes produit */
+  --dash-page-section-gap: clamp(1.15rem, 2.4vw, 1.75rem);
   /* Hauteur sticky : une ligne (mobile / tablette menu seul). */
   --dash-sticky-stack-height: clamp(4.25rem, 11vw, 5.75rem);
 
@@ -86,7 +265,7 @@
 }
 
 ::selection {
-  background: rgba(126, 200, 235, 0.22);
+  background: rgba(127, 212, 243, 0.2);
   color: var(--text);
 }
 

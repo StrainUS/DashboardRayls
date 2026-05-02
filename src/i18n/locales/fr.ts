@@ -8,7 +8,6 @@ export const fr: MessageTree = {
     chainId: 'Chain ID',
     reload: 'Recharger la page',
     routeError: 'Cette vue n’a pas pu être chargée (réseau ou mise à jour en cours).',
-    targetChain: 'Chaîne cible : Rayls mainnet (chain ID {{id}}).',
   },
   lang: {
     fr: 'FR',
@@ -40,7 +39,7 @@ export const fr: MessageTree = {
     taglineShort:
       'RPC documenté, explorateur, marché (CoinGecko, tiers) et endpoints publics Rayls — sources indiquées.',
     disclaimer:
-      'Application indépendante : pas d’affiliation, d’aval ou de parrainage par Rayls, CoinGecko ou tout autre tiers cité. Les valeurs affichées reproduisent les réponses des services indiqués (RPC JSON-RPC, API CoinGecko, api.rayls.com) au moment de la requête ; elles ne constituent pas une attestation d’exactitude, de complétude ni une recommandation. Les agrégats de marché ne représentent pas l’ensemble des plateformes d’échange. Contenu strictement informatif — pas un conseil financier, juridique ou en investissement.',
+      'Outil indépendant — sans affiliation, aval ni parrainage de Rayls, CoinGecko ni de tout autre tiers mentionné. Les données affichées reprennent les réponses des services indiqués (RPC, API CoinGecko, api.rayls.com) au moment de la requête : elles n’ont pas valeur d’attestation d’exactitude ou d’exhaustivité et ne constituent aucune recommandation. Les agrégats de marché ne couvrent pas l’ensemble des plateformes d’échange. Contenu strictement informatif ; en aucun cas conseil financier, juridique ou en investissement. Chaîne cible : Rayls mainnet (chain ID {{id}}).',
     footerLine:
       'Surveillance réseau public · Sources : RPC & doc Rayls, CoinGecko (marché), api.rayls.com · Outil tiers non officiel',
     homeAria: '{{short}} — accueil',

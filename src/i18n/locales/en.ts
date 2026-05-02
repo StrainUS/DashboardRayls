@@ -8,7 +8,6 @@ export const en: MessageTree = {
     chainId: 'Chain ID',
     reload: 'Reload page',
     routeError: 'This view could not load (network or update in progress).',
-    targetChain: 'Target chain: Rayls mainnet (chain ID {{id}}).',
   },
   lang: {
     fr: 'FR',
@@ -40,7 +39,7 @@ export const en: MessageTree = {
     taglineShort:
       'Documented RPC, explorer, market (CoinGecko, third parties), and public Rayls endpoints — sources cited.',
     disclaimer:
-      'Independent application: no affiliation, endorsement, or sponsorship by Rayls, CoinGecko, or any other party cited. Values reflect responses from the listed services (JSON-RPC, CoinGecko API, api.rayls.com) at request time; they are not a guarantee of accuracy or completeness or any recommendation. Market aggregates do not represent all exchanges. Informational only — not financial, legal, or investment advice.',
+      'Independent tool — no affiliation, endorsement, or sponsorship by Rayls, CoinGecko, or any other party named here. Figures reflect responses from the listed services (RPC, CoinGecko API, api.rayls.com) at request time; they are not a warranty of accuracy or completeness and are not a recommendation. Market aggregates do not cover all trading venues. For information only — not financial, legal, or investment advice. Target chain: Rayls mainnet (chain ID {{id}}).',
     footerLine:
       'Public network monitoring · Sources: Rayls RPC & docs, CoinGecko (market), api.rayls.com · Unofficial third-party tool',
     homeAria: '{{short}} — home',

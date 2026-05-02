@@ -27,7 +27,7 @@ export function AppLayout() {
             <Outlet />
             {!hideRouteDisclaimer ? (
               <p className="dash-disclaimer" role="note">
-                {t('branding.disclaimer')} {t('common.targetChain', { id: RAYLS_MAINNET.expectedChainIdDecimal })}
+                {t('branding.disclaimer', { id: RAYLS_MAINNET.expectedChainIdDecimal })}
               </p>
             ) : null}
           </div>

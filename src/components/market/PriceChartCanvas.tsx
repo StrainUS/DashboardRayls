@@ -247,20 +247,21 @@ export function PriceChartCanvas({
         }
 
         const g = ctx.createLinearGradient(chartLeft, chartTop, chartRight, chartBottom)
-        g.addColorStop(0, 'rgba(74, 222, 128, 0.22)')
-        g.addColorStop(0.45, 'rgba(34, 197, 94, 0.1)')
-        g.addColorStop(1, 'rgba(43, 107, 212, 0.04)')
+        g.addColorStop(0, 'rgba(74, 222, 128, 0.32)')
+        g.addColorStop(0.42, 'rgba(52, 211, 153, 0.16)')
+        g.addColorStop(0.72, 'rgba(34, 197, 94, 0.08)')
+        g.addColorStop(1, 'rgba(43, 107, 212, 0.03)')
         ctx.fillStyle = g
         ctx.beginPath()
         addSmoothCurvePath(ctx, pathPts, true, chartBottom)
         ctx.fill()
 
-        ctx.strokeStyle = 'rgba(74, 222, 128, 0.98)'
-        ctx.lineWidth = 2.25
+        ctx.strokeStyle = 'rgba(110, 255, 170, 0.98)'
+        ctx.lineWidth = 2.35
         ctx.lineJoin = 'round'
         ctx.lineCap = 'round'
-        ctx.shadowColor = 'rgba(74, 222, 128, 0.35)'
-        ctx.shadowBlur = 6
+        ctx.shadowColor = 'rgba(74, 222, 128, 0.55)'
+        ctx.shadowBlur = 10
         ctx.beginPath()
         addSmoothCurvePath(ctx, pathPts, false, chartBottom)
         ctx.stroke()
@@ -294,7 +295,7 @@ export function PriceChartCanvas({
             ctx.stroke()
             ctx.setLineDash([])
 
-            ctx.fillStyle = 'rgba(74, 222, 128, 0.95)'
+            ctx.fillStyle = 'rgba(110, 255, 170, 0.95)'
             ctx.strokeStyle = 'rgba(15, 24, 40, 0.9)'
             ctx.lineWidth = 2
             ctx.beginPath()

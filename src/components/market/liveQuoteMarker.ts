@@ -6,10 +6,10 @@ type DrawOpts = {
   sentiment?: LiveQuoteMarkerSentiment
 }
 
-const BULL_FILL_A = 'rgba(74, 222, 128, 0.98)'
-const BULL_FILL_B = 'rgba(187, 247, 208, 0.92)'
-const BEAR_FILL_A = 'rgba(248, 113, 113, 0.98)'
-const BEAR_FILL_B = 'rgba(254, 226, 226, 0.9)'
+const BULL_FILL_A = 'rgba(52, 255, 140, 0.98)'
+const BULL_FILL_B = 'rgba(187, 247, 208, 0.94)'
+const BEAR_FILL_A = 'rgba(248, 113, 113, 0.95)'
+const BEAR_FILL_B = 'rgba(254, 226, 226, 0.88)'
 
 function lerpChannel(a: number, b: number, t: number): number {
   return Math.round(a + (b - a) * t)
@@ -50,13 +50,13 @@ export function drawLiveQuoteMarker(
   const stroke = 'rgba(15, 23, 42, 0.92)'
 
   const r = 4.2 + pulse * 2.2
-  const glowA = bearish ? 'rgba(248, 113, 113, 0.55)' : 'rgba(74, 222, 128, 0.5)'
-  const glowB = bearish ? 'rgba(254, 202, 202, 0.35)' : 'rgba(187, 247, 208, 0.35)'
+  const glowA = bearish ? 'rgba(248, 113, 113, 0.55)' : 'rgba(74, 222, 128, 0.62)'
+  const glowB = bearish ? 'rgba(254, 202, 202, 0.35)' : 'rgba(167, 255, 210, 0.45)'
   const glow = mixRgba(glowA, glowB, hueOsc)
 
   ctx.save()
   ctx.shadowColor = glow
-  ctx.shadowBlur = 5 + pulse * 10
+  ctx.shadowBlur = 6 + pulse * 14
   ctx.fillStyle = fill
   ctx.strokeStyle = stroke
   ctx.lineWidth = 2
