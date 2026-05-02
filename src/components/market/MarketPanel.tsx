@@ -58,10 +58,16 @@ function mergeLiveSample(series: [number, number][], ts: number, usd: number): [
   return next
 }
 
+/** Libellé de la fenêtre réellement affichée (aligné sur `timeframeLiveDisplayWindowMs`). */
 function liveWindowLabelTf(tf: TimeframeId, t: TFn): string {
   const ms = timeframeLiveDisplayWindowMs(tf)
   const mins = Math.round(ms / 60_000)
-  if (mins < 240) return t('market.liveWindowMin', { n: mins })
+  if (mins < 90) return t('market.liveWindowMin', { n: mins })
+  const hours = ms / (60 * 60 * 1000)
+  if (hours < 40) {
+    const h = Math.round(hours * 10) / 10
+    return t('market.liveWindowHours', { n: h })
+  }
   const days = ms / (24 * 60 * 60 * 1000)
   if (days < 14) return t('market.liveWindowDaysShort', { n: Math.round(days * 10) / 10 })
   return t('market.liveWindowDays', { n: Math.round(days) })
@@ -318,7 +324,7 @@ function MarketSpotViz({
       : null
 
   const analysis = displaySnap ? analyzeTrend(displaySnap.prices) : null
-  const tfLabel = t(`market.tf.${tf}.label`)
+  const trendWindowLabel = liveWindowLabelTf(tf, t)
   const liveBufLen = (chartCurrency === 'eur' ? liveSeriesEur : liveSeries).length
   const errBlocksChart = err != null && err !== MARKET_ERR_CG429
   const chartLoading =
@@ -369,7 +375,7 @@ function MarketSpotViz({
         </div>
         <div className="stat-block stat-block--strip trend-block">
           <div className="label">
-            {t('market.trend', { tf: tfLabel, ccy: chartCurrency.toUpperCase() })}
+            {t('market.trend', { window: trendWindowLabel, ccy: chartCurrency.toUpperCase() })}
           </div>
           {analysis ? (
             <>
@@ -380,6 +386,7 @@ function MarketSpotViz({
                 {analysis.changePct >= 0 ? '+' : ''}
                 {analysis.changePct.toFixed(2)} % · {analysis.points} {t('market.pts')}
               </div>
+              <div className="sub sub--strip trend-block__scope">{t('market.trendScope')}</div>
             </>
           ) : awaitingHistoryForTf && displayPrices.length < 2 ? (
             <div className="sub sub--strip">{t('market.trendLoading')}</div>

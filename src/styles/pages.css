@@ -593,10 +593,19 @@
   .site-header__nav-group--primary .site-header__lang {
     align-self: flex-end;
     margin-right: 0;
-    padding: 3px 5px;
+    padding: 2px 4px;
+    gap: 2px;
     border-radius: 8px;
     background: rgba(255, 255, 255, 0.045);
     border: 1px solid rgba(255, 255, 255, 0.07);
+  }
+
+  .site-header__lang-btn {
+    min-height: 32px;
+    padding: 4px 9px;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.03em;
   }
 
   /* Onglets type barre d’app : scroll horizontal, soulignement actif */
@@ -624,17 +633,20 @@
   }
 
   .site-header__nav-pages .site-pill-link {
-    flex: 0 0 auto;
+    flex: 0 1 auto;
     scroll-snap-align: start;
     min-height: 44px;
+    max-width: min(7.4rem, 34vw);
     justify-content: center;
     text-align: center;
-    font-size: 13px;
+    font-size: 11px;
     font-weight: 600;
     letter-spacing: -0.02em;
-    line-height: 1.2;
-    white-space: nowrap;
-    padding: 10px 14px;
+    line-height: 1.18;
+    white-space: normal;
+    overflow-wrap: anywhere;
+    hyphens: auto;
+    padding: 8px 8px;
     border-radius: 0;
     border: none;
     border-bottom: 2px solid transparent;
@@ -675,35 +687,33 @@
     box-shadow: none;
   }
 
-  /* Liens externes : texte discret, pas de grille de boutons */
+  /* Liens externes : grille 2 cols pour libellés longs (FR), sans séparateurs · */
   .site-header__nav-ext {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    justify-content: flex-start;
-    gap: 4px 4px;
-    row-gap: 2px;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 6px 8px;
     width: 100%;
     overflow: visible;
-    padding: 2px 0 0;
+    padding: 4px 0 0;
     margin: 0;
   }
 
   .site-header__nav-ext .site-pill-link {
-    width: auto;
-    flex: 0 0 auto;
+    width: 100%;
     min-height: 40px;
     justify-content: center;
     text-align: center;
-    font-size: 11px;
+    font-size: 10px;
     font-weight: 500;
     letter-spacing: 0.01em;
-    line-height: 1.25;
-    white-space: nowrap;
-    padding: 8px 8px;
-    border-radius: 6px;
+    line-height: 1.2;
+    white-space: normal;
+    overflow-wrap: anywhere;
+    hyphens: auto;
+    padding: 8px 6px;
+    border-radius: 8px;
     border: none;
-    background: transparent;
+    background: rgba(255, 255, 255, 0.03);
     color: var(--dim);
     opacity: 1;
     text-decoration: none;
@@ -712,15 +722,11 @@
 
   .site-header__nav-ext .site-pill-link:hover {
     color: var(--muted);
-    background: rgba(255, 255, 255, 0.05);
+    background: rgba(255, 255, 255, 0.06);
   }
 
   .site-header__nav-ext .site-pill-link:not(:last-child)::after {
-    content: '·';
-    margin-left: 6px;
-    color: rgba(255, 255, 255, 0.22);
-    font-weight: 400;
-    pointer-events: none;
+    content: none;
   }
 }
 
@@ -755,14 +761,18 @@
   }
 
   .site-header__title {
-    font-size: 1.0625rem;
-    letter-spacing: -0.028em;
-    line-height: 1.2;
+    font-size: 1rem;
+    letter-spacing: -0.026em;
+    line-height: 1.22;
+    overflow-wrap: anywhere;
+    word-break: break-word;
   }
 
   .site-header__subtitle {
     margin-top: 3px;
     font-size: 11px;
+    line-height: 1.35;
+    overflow-wrap: anywhere;
   }
 
   .site-header__toolbar {
@@ -2592,6 +2602,8 @@
     text-align: left;
     line-height: 1.45;
     font-size: 10px;
+    overflow-wrap: anywhere;
+    word-break: break-word;
   }
 
   /* Spot : badge source et cadence moins « bouton » */
@@ -2614,6 +2626,11 @@
     font-size: 11px;
     line-height: 1.38;
     gap: 8px;
+  }
+
+  .dash-spot-page .dash-cadence-bar__text {
+    overflow-wrap: anywhere;
+    word-break: break-word;
   }
 
   .dash-spot-page .dash-cadence-bar__dot {
@@ -2698,6 +2715,15 @@
 .market-spot-strip .sub--strip {
   margin-top: 3px;
   font-size: 11px;
+}
+
+.market-spot-strip .trend-block__scope {
+  margin-top: 4px;
+  font-size: 9px;
+  line-height: 1.35;
+  color: var(--dim);
+  font-weight: 500;
+  letter-spacing: 0.01em;
 }
 
 .chart-wrap--in-stack {

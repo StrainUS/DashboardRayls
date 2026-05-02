@@ -313,7 +313,8 @@ export const fr: MessageTree = {
     title: 'Prix RLS',
     priceUsd: 'Prix spot (USD)',
     priceEur: 'Prix spot (EUR)',
-    trend: 'Tendance ({{tf}}) · {{ccy}}',
+    trend: 'Tendance ({{window}}) · {{ccy}}',
+    trendScope: '1er → dernier point visibles (≠ 24 h).',
     trendUp: 'Hausse',
     trendDown: 'Baisse',
     trendFlat: 'Stable',
@@ -359,6 +360,7 @@ export const fr: MessageTree = {
     titleCgStream: 'Réception CoinGecko simple/price — {{iso}} (âge mis à jour en direct)',
     h24: '24 h',
     liveWindowMin: '{{n}} min',
+    liveWindowHours: '{{n}} h',
     liveWindowDaysShort: '{{n}} j',
     liveWindowDays: '{{n}} j',
     tf: {

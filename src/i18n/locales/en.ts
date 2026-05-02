@@ -311,7 +311,8 @@ export const en: MessageTree = {
     title: 'RLS price',
     priceUsd: 'Spot price (USD)',
     priceEur: 'Spot price (EUR)',
-    trend: 'Trend ({{tf}}) · {{ccy}}',
+    trend: 'Trend ({{window}}) · {{ccy}}',
+    trendScope: 'First → last visible point (≠ 24 h).',
     trendUp: 'Up',
     trendDown: 'Down',
     trendFlat: 'Flat',
@@ -358,6 +359,7 @@ export const en: MessageTree = {
     titleCgStream: 'CoinGecko simple/price — {{iso}} (age updates live)',
     h24: '24 h',
     liveWindowMin: '{{n}} min',
+    liveWindowHours: '{{n}} h',
     liveWindowDaysShort: '{{n}} d',
     liveWindowDays: '{{n}} d',
     tf: {
