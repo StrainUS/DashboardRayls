@@ -79,6 +79,7 @@ npm run preview
 | `npm run test` | Vitest (fusion cotations, parse MEXC JSON) |
 | `npm run verify:feed` | Valide `public/rayls-feed.json` |
 | `npm run ci` | Enchaîne lint → tests → verify:feed → build |
+| `npm run build:pages` | Build avec `base` `/DashboardRayls/` (même logique que le workflow Pages — à adapter si fork) |
 | `npm audit` | Audit des dépendances (la **CI** échoue sur *moderate*+) |
 
 Le workflow GitHub Actions [`.github/workflows/ci.yml`](./.github/workflows/ci.yml) exécute `npm ci` puis `npm run ci` et `npm audit --audit-level=moderate` sur **Ubuntu**, Node **20**.
