@@ -9,6 +9,7 @@ on:
 permissions:
   contents: read
   actions: write
+  variables: write
 
 concurrency:
   group: deploy-coingecko-proxy
