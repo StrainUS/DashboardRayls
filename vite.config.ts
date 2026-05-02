@@ -1,5 +1,38 @@
+import type { Plugin } from 'vite'
 import { defineConfig, loadEnv } from 'vite'
 import react from '@vitejs/plugin-react'
+
+/** Métadonnées partage / SEO : canonical, Open Graph, Twitter (désactivé si var absente). */
+function socialMetaPlugin(publicOrigin: string, basePath: string): Plugin {
+  const origin = publicOrigin.replace(/\/$/, '')
+  return {
+    name: 'rayls-social-meta',
+    transformIndexHtml(html) {
+      if (!origin) return html
+      const canonical = `${origin}${basePath}`
+      const ogImage = `${origin}${basePath}apple-touch-icon.png?v=15`
+      const block = `
+    <link rel="canonical" href="${canonical}" />
+    <meta property="og:url" content="${canonical}" />
+    <meta property="og:image" content="${ogImage}" />
+    <meta property="og:image:alt" content="Rayls — surveillance du réseau public" />
+    <meta property="og:locale" content="fr_FR" />
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:title" content="Rayls · Surveillance du réseau public" />
+    <meta
+      name="twitter:description"
+      content="Latence RPC, blocs, marché (CoinGecko) et liens vers la doc / endpoints publics Rayls."
+    />
+    <meta name="twitter:image" content="${ogImage}" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="Rayls" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="application-name" content="Rayls" />
+    <meta name="referrer" content="strict-origin-when-cross-origin" />`
+      return html.replace('</head>', `${block}\n  </head>`)
+    },
+  }
+}
 
 // https://vite.dev/config/
 export default defineConfig(({ mode }) => {
@@ -11,10 +44,11 @@ export default defineConfig(({ mode }) => {
 
   const baseRaw = (env.VITE_BASE_PATH || '/').trim()
   const base = baseRaw.endsWith('/') ? baseRaw : `${baseRaw}/`
+  const publicOrigin = (env.VITE_PUBLIC_ORIGIN || '').trim()
 
   return {
     base,
-    plugins: [react()],
+    plugins: [react(), socialMetaPlugin(publicOrigin, base)],
     build: {
       sourcemap: false,
       rollupOptions: {

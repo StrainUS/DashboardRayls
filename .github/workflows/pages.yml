@@ -68,6 +68,11 @@ jobs:
             echo "::notice::**VITE_COINGECKO_API_ROOT** est vide — l’onglet Spot appellera l’API publique depuis le navigateur (souvent bloqué en CORS). Déployez le proxy : Actions → **Deploy CoinGecko CORS proxy**, puis laissez **Pages** se relancer (ou rebuild manuel). Voir .github/DEPLOY_PAGES.md"
           fi
 
+      - name: Origine publique (Open Graph, canonical)
+        run: |
+          O=$(echo '${{ github.repository_owner }}' | tr '[:upper:]' '[:lower:]')
+          echo "VITE_PUBLIC_ORIGIN=https://${O}.github.io" >> "$GITHUB_ENV"
+
       - name: Build pour GitHub Pages
         env:
           VITE_BASE_PATH: /${{ github.event.repository.name }}/

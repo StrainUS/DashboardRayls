@@ -1,6 +1,8 @@
 /// <reference types="vite/client" />
 
 interface ImportMetaEnv {
+  /** Origine HTTPS du site déployé (sans slash final), ex. https://strainus.github.io — Open Graph / canonical. */
+  readonly VITE_PUBLIC_ORIGIN?: string
   readonly VITE_COINGECKO_DEMO_API_KEY?: string
   readonly VITE_COINGECKO_PRO_API_KEY?: string
   readonly VITE_COINGECKO_API_ROOT?: string
