@@ -69,7 +69,7 @@
   --dash-sticky-stack-height: clamp(8.5rem, 24vw, 10.5rem);
 
   font-family: var(--font-sans);
-  font-size: 14px;
+  font-size: clamp(13px, 0.22vw + 12.2px, 15px);
   line-height: 1.55;
   color: var(--text);
   background: var(--bg);
@@ -84,11 +84,31 @@
 
 html {
   scroll-behavior: smooth;
-  scroll-padding-top: var(--dash-sticky-stack-height);
+  scroll-padding-top: calc(var(--dash-sticky-stack-height) + env(safe-area-inset-top, 0px));
 }
 
 @media (max-width: 640px) {
   :root {
     --dash-sticky-stack-height: clamp(10rem, 42vw, 13rem);
+  }
+}
+
+@media (min-width: 1400px) {
+  :root {
+    --dash-max-width: 1280px;
+  }
+}
+
+@media (min-width: 1800px) {
+  :root {
+    --dash-max-width: 1440px;
+    font-size: clamp(14px, 0.18vw + 12.5px, 16px);
+  }
+}
+
+@media (min-width: 2400px) {
+  :root {
+    --dash-max-width: min(88vw, 1680px);
+    font-size: clamp(15px, 0.12vw + 13.5px, 18px);
   }
 }

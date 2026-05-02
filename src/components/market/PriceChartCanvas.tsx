@@ -13,6 +13,7 @@ import {
   yAxisBounds,
 } from './chartAxis'
 import { drawLiveQuoteMarker } from './liveQuoteMarker'
+import { getChartTooltipFixedPosition } from './chartTooltipPosition'
 
 type Props = {
   prices: [number, number][]
@@ -396,6 +397,11 @@ export function PriceChartCanvas({
       ? interpolateSeriesAtTime(prices, timeAtFrac(prices, hover.frac))
       : null
 
+  const tooltipPos =
+    hoverSample != null && hover != null && Number.isFinite(hoverSample.price)
+      ? getChartTooltipFixedPosition(hover.clientX, hover.clientY)
+      : null
+
   return (
     <div className="price-chart-shell price-chart-shell--cg">
       <canvas
@@ -416,14 +422,14 @@ export function PriceChartCanvas({
           }
         }}
         onPointerCancel={onPointerLeave}
-        style={{ cursor: 'crosshair', touchAction: 'none' }}
+        style={{ cursor: 'crosshair' }}
       />
-      {hoverSample && hover != null && Number.isFinite(hoverSample.price) && (
+      {tooltipPos && hoverSample && (
         <div
-          className="price-chart-tooltip"
+          className={`price-chart-tooltip${tooltipPos.flipBelow ? ' price-chart-tooltip--below' : ''}`}
           style={{
-            left: hover.clientX,
-            top: hover.clientY,
+            left: tooltipPos.left,
+            top: tooltipPos.top,
           }}
         >
           <div className="price-chart-tooltip-price">

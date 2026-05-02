@@ -4,6 +4,7 @@
   position: sticky;
   top: 0;
   z-index: 200;
+  padding-top: env(safe-area-inset-top, 0px);
   background: rgba(10, 11, 14, 0.86);
   backdrop-filter: blur(var(--dash-header-blur)) saturate(1.12);
   border-bottom: 1px solid var(--border);
@@ -247,6 +248,10 @@
 
 .dash-root {
   min-height: 100vh;
+  min-height: 100dvh;
+  min-width: 0;
+  width: 100%;
+  overflow-x: clip;
   display: flex;
   flex-direction: column;
   background:
@@ -269,6 +274,8 @@
   max-width: var(--dash-max-width);
   margin: 0 auto;
   padding: 14px clamp(16px, 3vw, 26px) 10px;
+  padding-left: calc(clamp(16px, 3vw, 26px) + env(safe-area-inset-left, 0px));
+  padding-right: calc(clamp(16px, 3vw, 26px) + env(safe-area-inset-right, 0px));
   display: flex;
   flex-wrap: wrap;
   align-items: center;
@@ -412,6 +419,8 @@
   max-width: var(--dash-max-width);
   margin: 0 auto;
   padding: 10px clamp(14px, 3vw, 24px) 14px;
+  padding-left: calc(clamp(14px, 3vw, 24px) + env(safe-area-inset-left, 0px));
+  padding-right: calc(clamp(14px, 3vw, 24px) + env(safe-area-inset-right, 0px));
   border-top: 1px solid var(--border-subtle);
 }
 
@@ -496,6 +505,18 @@
   opacity: 1;
 }
 
+@media (pointer: coarse) {
+  .site-pill-link {
+    min-height: 44px;
+    padding: 10px 16px;
+  }
+
+  .site-header__lang-btn {
+    min-height: 40px;
+    padding: 6px 12px;
+  }
+}
+
 @media (max-width: 720px) {
   .site-header__nav-rail {
     width: 100%;
@@ -517,6 +538,9 @@
   border-top: 1px solid var(--border);
   background: linear-gradient(180deg, rgba(8, 9, 12, 0.98) 0%, rgba(5, 6, 8, 1) 100%);
   padding: var(--dash-space-xl) clamp(16px, 4vw, 28px);
+  padding-left: calc(clamp(16px, 4vw, 28px) + env(safe-area-inset-left, 0px));
+  padding-right: calc(clamp(16px, 4vw, 28px) + env(safe-area-inset-right, 0px));
+  padding-bottom: calc(var(--dash-space-xl) + env(safe-area-inset-bottom, 0px));
 }
 
 .site-footer__inner {
@@ -563,12 +587,17 @@
 .dash-main {
   flex: 1;
   width: 100%;
+  min-width: 0;
   padding: clamp(16px, 2vw, 22px) clamp(14px, 2.4vw, 22px) clamp(28px, 3vw, 36px);
+  padding-left: calc(clamp(14px, 2.4vw, 22px) + env(safe-area-inset-left, 0px));
+  padding-right: calc(clamp(14px, 2.4vw, 22px) + env(safe-area-inset-right, 0px));
+  padding-bottom: calc(clamp(28px, 3vw, 36px) + env(safe-area-inset-bottom, 0px));
 }
 
 .dash-main__container {
   max-width: var(--dash-max-width);
   margin: 0 auto;
+  min-width: 0;
 }
 
 .dash-page-section {
@@ -2305,8 +2334,9 @@
 
 .price-canvas {
   width: 100%;
-  height: 200px;
+  height: clamp(200px, 28dvh, 520px);
   display: block;
+  touch-action: none;
 }
 
 .price-chart-tooltip {
@@ -2315,12 +2345,18 @@
   z-index: 10000;
   transform: translate(-50%, calc(-100% - 12px));
   min-width: 140px;
+  max-width: min(22rem, calc(100vw - 20px));
   padding: 8px 12px;
   border-radius: 8px;
   border: 1px solid var(--border);
   background: rgba(12, 12, 14, 0.96);
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
   text-align: center;
+  box-sizing: border-box;
+}
+
+.price-chart-tooltip--below {
+  transform: translate(-50%, 12px);
 }
 
 .price-chart-tooltip-price {
@@ -2339,7 +2375,7 @@
 }
 
 .chart-placeholder {
-  height: 228px;
+  min-height: clamp(228px, 30dvh, 548px);
   display: flex;
   align-items: center;
   justify-content: center;

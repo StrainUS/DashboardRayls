@@ -14,6 +14,7 @@ import {
   yAxisBounds,
 } from './chartAxis'
 import { drawLiveQuoteMarker } from './liveQuoteMarker'
+import { getChartTooltipFixedPosition } from './chartTooltipPosition'
 
 type Props = {
   candles: OhlcCandle[]
@@ -361,6 +362,11 @@ export function CandleChartCanvas({
         })()
       : null
 
+  const tooltipPos =
+    hoverCandle != null && hover != null
+      ? getChartTooltipFixedPosition(hover.clientX, hover.clientY)
+      : null
+
   return (
     <div className="price-chart-shell price-chart-shell--cg">
       <canvas
@@ -381,14 +387,14 @@ export function CandleChartCanvas({
           }
         }}
         onPointerCancel={onPointerLeave}
-        style={{ cursor: 'crosshair', touchAction: 'none' }}
+        style={{ cursor: 'crosshair' }}
       />
-      {hoverCandle && hover != null && (
+      {tooltipPos && hoverCandle && (
         <div
-          className="price-chart-tooltip"
+          className={`price-chart-tooltip${tooltipPos.flipBelow ? ' price-chart-tooltip--below' : ''}`}
           style={{
-            left: hover.clientX,
-            top: hover.clientY,
+            left: tooltipPos.left,
+            top: tooltipPos.top,
           }}
         >
           <div className="price-chart-tooltip-price">
