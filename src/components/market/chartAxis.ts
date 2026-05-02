@@ -82,6 +82,24 @@ function niceTimeStepMs(spanMs: number, maxTicks = 6): number {
   return steps[steps.length - 1]!
 }
 
+/**
+ * Couleur « pro » bougie : close vs open ; si corps plat (souvent 1 seul tick dans le bucket),
+ * comparer à la clôture précédente, sinon position dans la mèche (doji).
+ */
+export function candleDisplayBullish(
+  c: { o: number; h: number; l: number; c: number },
+  prev: { c: number } | null,
+): boolean {
+  const ref = Math.max(Math.abs(c.c), Math.abs(c.o), Math.abs(c.h), Math.abs(c.l), 1e-12)
+  const eps = ref * 1e-9 + 1e-12
+  if (c.c > c.o + eps) return true
+  if (c.c < c.o - eps) return false
+  if (prev != null && Math.abs(c.c - prev.c) > eps) return c.c >= prev.c
+  const range = c.h - c.l
+  if (range > eps) return c.c - c.l >= c.h - c.c
+  return true
+}
+
 export function timeAxisTicks(tMin: number, tMax: number, maxTicks = 7): number[] {
   const span = Math.max(tMax - tMin, 1)
   const step = niceTimeStepMs(span, maxTicks)

@@ -5,6 +5,7 @@ import {
   CHART_AXIS_LEFT,
   CHART_AXIS_RIGHT,
   CHART_AXIS_TOP,
+  candleDisplayBullish,
   formatAxisPrice,
   formatAxisTime,
   formatPriceFiat,
@@ -149,7 +150,8 @@ export function CandleChartCanvas({
         }
 
         ctx.fillStyle = 'rgba(148, 163, 184, 0.72)'
-        ctx.font = '11px ui-monospace, SF Mono, Menlo, monospace'
+        const axisFontPx = w < 380 ? 9 : w < 480 ? 10 : 11
+        ctx.font = `${axisFontPx}px ui-monospace, SF Mono, Menlo, monospace`
         ctx.textAlign = 'right'
         ctx.textBaseline = 'middle'
         for (const v of yTicks) {
@@ -159,7 +161,8 @@ export function CandleChartCanvas({
           }
         }
 
-        const xTicks = timeAxisTicks(tMin, tMax, 7)
+        const maxXTicks = w < 360 ? 4 : w < 520 ? 5 : 7
+        const xTicks = timeAxisTicks(tMin, tMax, maxXTicks)
         ctx.textAlign = 'center'
         ctx.textBaseline = 'top'
         for (const ts of xTicks) {
@@ -171,12 +174,13 @@ export function CandleChartCanvas({
 
         for (let i = 0; i < arr.length; i++) {
           const c = arr[i]!
+          const prev = i > 0 ? arr[i - 1]! : null
           const x = nxTime(c.t)
           const yO = ny(c.o)
           const yC = ny(c.c)
           const yHi = ny(c.h)
           const yLo = ny(c.l)
-          const up = c.c >= c.o
+          const up = candleDisplayBullish(c, prev)
           const stroke = up ? GREEN : RED
           const fill = up ? GREEN_DIM : RED_DIM
           const top = Math.min(yO, yC)
@@ -201,9 +205,10 @@ export function CandleChartCanvas({
         }
 
         const last = arr[arr.length - 1]!
+        const prevLast = arr.length >= 2 ? arr[arr.length - 2]! : null
         const lx = nxTime(last.t)
         const ly = ny(last.c)
-        const sentiment = last.c >= last.o ? 'bullish' : 'bearish'
+        const sentiment = candleDisplayBullish(last, prevLast) ? 'bullish' : 'bearish'
         drawLiveQuoteMarker(ctx, lx, ly, { nowMs: performance.now(), sentiment })
 
         const sf = scrubFracRef.current
