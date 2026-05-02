@@ -248,16 +248,23 @@
 
 .dash-root {
   min-height: 100vh;
+  min-height: 100svh;
   min-height: 100dvh;
   min-width: 0;
   width: 100%;
-  overflow-x: clip;
+  overflow-x: hidden;
   display: flex;
   flex-direction: column;
   background:
     radial-gradient(ellipse 90% 55% at 85% -15%, rgba(100, 140, 220, 0.07), transparent 50%),
     radial-gradient(ellipse 70% 45% at 0% 95%, rgba(70, 180, 170, 0.045), transparent 48%),
     linear-gradient(180deg, var(--bg) 0%, var(--bg-deep) 55%, #050506 100%);
+}
+
+@supports (overflow: clip) {
+  .dash-root {
+    overflow-x: clip;
+  }
 }
 
 /* ——— En-tête institutionnel (logo de marque Rayls) ——— */
@@ -531,6 +538,86 @@
   }
 }
 
+@media (max-width: 520px) {
+  .site-header__inner {
+    padding: 12px 0 8px;
+    padding-left: calc(18px + env(safe-area-inset-left, 0px));
+    padding-right: calc(18px + env(safe-area-inset-right, 0px));
+    gap: 12px 14px;
+  }
+
+  .site-header__brand {
+    align-items: center;
+    gap: 12px;
+  }
+
+  .site-header__logo--official {
+    max-height: 34px;
+    max-width: 118px;
+  }
+
+  .site-header__kicker {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+  }
+
+  .site-header__title {
+    font-size: 1.0625rem;
+    letter-spacing: -0.028em;
+    line-height: 1.2;
+  }
+
+  .site-header__subtitle {
+    margin-top: 3px;
+    font-size: 11px;
+  }
+
+  .site-header__toolbar {
+    padding: 8px 0 12px;
+    padding-left: calc(18px + env(safe-area-inset-left, 0px));
+    padding-right: calc(18px + env(safe-area-inset-right, 0px));
+  }
+
+  .site-header__nav-rail {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+    padding: 10px;
+    border-radius: 14px;
+    align-items: stretch;
+  }
+
+  .site-header__nav-rail > .site-header__lang {
+    grid-column: 1 / -1;
+    margin-right: 0;
+    justify-content: center;
+    padding: 6px 8px;
+  }
+
+  .site-header__nav-rail > .site-header__nav-rail-split {
+    grid-column: 1 / -1;
+    width: 100%;
+    height: 1px;
+    margin: 2px 0;
+  }
+
+  .site-header__nav-rail > .site-pill-link {
+    justify-self: stretch;
+    text-align: center;
+    min-width: 0;
+    padding-left: 10px;
+    padding-right: 10px;
+    line-height: 1.25;
+  }
+}
+
 /* ——— Pied de page ——— */
 
 .site-footer {
@@ -598,6 +685,41 @@
   max-width: var(--dash-max-width);
   margin: 0 auto;
   min-width: 0;
+}
+
+@media (max-width: 520px) {
+  .dash-main {
+    padding-top: 14px;
+    padding-left: calc(18px + env(safe-area-inset-left, 0px));
+    padding-right: calc(18px + env(safe-area-inset-right, 0px));
+  }
+
+  .dash-page-head {
+    margin-bottom: 12px;
+    padding-bottom: 12px;
+  }
+
+  .dash-page-title {
+    font-size: 1.2rem;
+    margin-bottom: 6px;
+  }
+
+  .dash-page-desc {
+    font-size: 12px;
+    line-height: 1.5;
+  }
+
+  .dash-page-hero__title {
+    font-size: 1.2rem;
+  }
+
+  .dash-page-hero__lead {
+    font-size: 12px;
+  }
+
+  .dash-page__stack--spot {
+    gap: 12px;
+  }
 }
 
 .dash-page-section {
@@ -2209,6 +2331,40 @@
   }
 }
 
+@media (max-width: 520px) {
+  .chart-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+    padding: 14px 16px 16px;
+  }
+
+  .chart-toolbar__title {
+    flex: 1 1 auto;
+    width: 100%;
+    margin: 0;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--border-subtle);
+    font-size: 15px;
+  }
+
+  .chart-toolbar__tf-wrap {
+    flex: 1 1 auto;
+    max-width: 100%;
+  }
+
+  .chart-toolbar__ccy {
+    padding-top: 10px;
+    margin-top: 0;
+    border-top: none;
+  }
+
+  .chart-toolbar__sync {
+    text-align: left;
+    line-height: 1.45;
+  }
+}
+
 .chart-stack {
   border-radius: var(--dash-radius-md);
   border: 1px solid var(--panel-border);
@@ -2334,6 +2490,7 @@
 
 .price-canvas {
   width: 100%;
+  height: clamp(200px, 28vh, 520px);
   height: clamp(200px, 28dvh, 520px);
   display: block;
   touch-action: none;
@@ -2375,6 +2532,7 @@
 }
 
 .chart-placeholder {
+  min-height: clamp(228px, 30vh, 548px);
   min-height: clamp(228px, 30dvh, 548px);
   display: flex;
   align-items: center;
@@ -3142,7 +3300,13 @@
 .dash-cadence-bar--live {
   border-color: rgba(62, 207, 154, 0.2);
   background: rgba(62, 207, 154, 0.05);
-  color: color-mix(in srgb, var(--muted) 88%, var(--ok) 12%);
+  color: #96a89f;
+}
+
+@supports (color: color-mix(in srgb, red, blue)) {
+  .dash-cadence-bar--live {
+    color: color-mix(in srgb, var(--muted) 88%, var(--ok) 12%);
+  }
 }
 
 .dash-cadence-bar--steady {
