@@ -5,6 +5,14 @@ on:
   push:
     branches: [main, master]
   workflow_dispatch:
+  workflow_run:
+    workflows:
+      - "Deploy RPC CORS proxy"
+    types:
+      - completed
+    branches:
+      - main
+      - master
 
 permissions:
   contents: read
@@ -17,6 +25,7 @@ concurrency:
 
 jobs:
   build:
+    if: ${{ github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -34,11 +43,29 @@ jobs:
       - name: Lint, tests, flux et audit
         run: npm run lint && npm run test && npm run verify:feed && npm audit --audit-level=moderate
 
+      - name: Exiger VITE_RAYLS_RPC_HTTP_URL (évite un site public cassé par CORS)
+        env:
+          PROXY_URL: ${{ vars.VITE_RAYLS_RPC_HTTP_URL }}
+          ALLOW_SKIP: ${{ vars.PAGES_ALLOW_MISSING_RPC_PROXY }}
+        run: |
+          if [ "$ALLOW_SKIP" = "true" ]; then
+            echo "PAGES_ALLOW_MISSING_RPC_PROXY=true — build sans proxy (CORS possible sur github.io)."
+            exit 0
+          fi
+          if [ -z "$PROXY_URL" ]; then
+            echo "::error::Variable de dépôt **VITE_RAYLS_RPC_HTTP_URL** vide. Sans elle, l’onglet Réseau échoue sur *.github.io (CORS)."
+            echo "::error::1) Actions → **Deploy RPC CORS proxy** → Run workflow  2) Ce workflow se relancera tout seul, ou relancez **Pages** manuellement."
+            echo "::error::Doc : https://github.com/${{ github.repository }}/blob/${{ github.ref_name }}/.github/DEPLOY_PAGES.md"
+            exit 1
+          fi
+
       - name: Build pour GitHub Pages
         env:
           VITE_BASE_PATH: /${{ github.event.repository.name }}/
           VITE_RAYLS_RPC_HTTP_URL: ${{ vars.VITE_RAYLS_RPC_HTTP_URL }}
           VITE_RAYLS_TESTNET_RPC_HTTP_URL: ${{ vars.VITE_RAYLS_TESTNET_RPC_HTTP_URL }}
+          # WebSocket direct vers mainnet-rpc depuis *.github.io peut échouer ; le batch HTTP suffit.
+          VITE_RPC_WS_URL: '0'
         run: npm run build
 
       - name: SPA fallback (404)

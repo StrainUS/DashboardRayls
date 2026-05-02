@@ -102,7 +102,7 @@ export const en: MessageTree = {
     },
     mexc: {
       label: 'Spot exchange (MEXC)',
-      on: 'USD spot WebSocket enabled — verify connect-src (e.g. vercel.json).',
+      on: 'USD spot WebSocket enabled — verify connect-src (CSP) if you use one.',
       off: 'Production: off unless VITE_MEXC_SPOT_WS=1. Dev: on by default (set VITE_MEXC_SPOT_WS=0 to disable).',
     },
   },
@@ -169,7 +169,8 @@ export const en: MessageTree = {
     notAligned: '≠ measured RPC',
     walletHint: 'e.g. MetaMask',
     connectionTitle: 'RPC connection',
-    connectionLead: 'JSON-RPC 2.0 POST — same URL as in the public Rayls chain reference (docs).',
+    connectionLead: 'JSON-RPC 2.0 POST — URL this site uses in the browser.',
+    docCanonicalHint: 'Documented public endpoint: {{url}}',
     copyUrl: 'Copy URL',
     copied: 'Copied',
     explorerLink: 'Explorer →',
@@ -197,7 +198,7 @@ export const en: MessageTree = {
     rpcError: 'RPC error',
     rpcErrorSub: 'If the browser blocks CORS, serve the app behind a same-origin proxy.',
     githubPagesCorsHint:
-      'Hosted on *.github.io: the public Rayls RPC does not send browser CORS for this origin. Deploy the proxy in workers/rpc-cors-proxy/ and set the repo variable VITE_RAYLS_RPC_HTTP_URL for the Pages workflow — or use npm run dev locally.',
+      'GitHub Pages: without the Cloudflare proxy, RPC is blocked (CORS). Once: Actions → Deploy RPC CORS proxy (mainnet + testnet), then Pages. Use full repo URL (e.g. /DashboardRayls/). Locally: npm run dev.',
     syncUnknown: 'unknown',
     syncSynced: 'synced',
     syncProgress: 'in progress · {{from}} → {{to}}',

@@ -13,7 +13,7 @@ Application **100 % frontale** (React / Vite) : pas de serveur applicatif ni de 
 
 1. **Ne jamais committer** `.env`, `.env.local`, clés API, certificats ou mots de passe.
 2. Les variables `VITE_*` sont **injectées dans le JavaScript client** : ne pas y mettre de secrets en production ; préférer un **proxy backend** pour CoinGecko (`VITE_COINGECKO_API_ROOT`).
-3. Après ajout d’un domaine (API, WebSocket), mettre à jour **`vercel.json`** (`Content-Security-Policy` → `connect-src`).
+3. Après ajout d’un domaine (API, WebSocket), mettre à jour la **CSP** (`connect-src`) si vous en servez une devant l’app.
 4. Exécuter `npm audit` avant une release ; la CI échoue sur les vulnérabilités **moderate** et plus.
 
 ## Divulgation responsable

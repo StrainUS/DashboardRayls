@@ -34,8 +34,8 @@ export const RAYLS_TESTNET = {
 /**
  * URL utilisée pour les POST JSON-RPC **depuis le navigateur**.
  * `mainnet-rpc.rayls.com` renvoie `Access-Control-Allow-Origin` pour localhost (dev),
- * pas pour `*.github.io` — sur GitHub Pages, définir `VITE_RAYLS_RPC_HTTP_URL` vers un proxy
- * HTTPS qui relaie vers le RPC (voir `workers/rpc-cors-proxy/`).
+ * pas pour `*.github.io` — sur GitHub Pages, définir `VITE_RAYLS_RPC_HTTP_URL` vers un proxy HTTPS
+ * (workflow *Deploy RPC CORS proxy* + Cloudflare, voir `workers/rpc-cors-proxy/`).
  * L’URL **affichée** dans l’UI reste `RAYLS_MAINNET.rpcUrl` (référence doc).
  */
 export function raylsMainnetRpcHttpUrl(): string {
@@ -50,6 +50,15 @@ export function raylsMainnetRpcHttpUrl(): string {
   return RAYLS_MAINNET.rpcUrl
 }
 
+/**
+ * Si seul le proxy mainnet Cloudflare (`*.workers.dev`) est défini, la testnet utilise `…/testnet` (même Worker).
+ */
+function inferTestnetUrlFromWorkersProxy(mainnetProxyUrl: string): string | null {
+  const trimmed = mainnetProxyUrl.replace(/\/$/, '')
+  if (!trimmed.includes('.workers.dev')) return null
+  return `${trimmed}/testnet`
+}
+
 export function raylsTestnetRpcHttpUrl(): string {
   const o = envStr('VITE_RAYLS_TESTNET_RPC_HTTP_URL')
   if (o) {
@@ -58,6 +67,11 @@ export function raylsTestnetRpcHttpUrl(): string {
       return RAYLS_TESTNET.rpcUrl
     }
     return o.replace(/\/$/, '')
+  }
+  const main = envStr('VITE_RAYLS_RPC_HTTP_URL')
+  if (main && isSafeHttpOrHttpsUrl(main)) {
+    const inferred = inferTestnetUrlFromWorkersProxy(main)
+    if (inferred) return inferred
   }
   return RAYLS_TESTNET.rpcUrl
 }

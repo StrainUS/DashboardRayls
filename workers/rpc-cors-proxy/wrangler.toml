@@ -3,6 +3,8 @@
 name = "rayls-dashboard-rpc-proxy"
 main = "src/index.js"
 compatibility_date = "2024-11-01"
+workers_dev = true
 
 [vars]
 TARGET_RPC_URL = "https://mainnet-rpc.rayls.com"
+TARGET_TESTNET_RPC_URL = "https://testnet-rpc.rayls.com"

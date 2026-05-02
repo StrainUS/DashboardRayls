@@ -13,6 +13,6 @@ export function warnInsecureProductionConfig(): void {
   const demo = trimEnv('VITE_COINGECKO_DEMO_API_KEY')
   if (!pro && !demo) return
   console.warn(
-    '[Rayls Monitor] Clé CoinGecko présente dans le bundle client. Préférez VITE_COINGECKO_API_ROOT vers un proxy backend et adaptez connect-src (CSP) sur Vercel.',
+    '[Rayls Monitor] Clé CoinGecko présente dans le bundle client. Préférez VITE_COINGECKO_API_ROOT vers un proxy backend et adaptez connect-src (CSP) si vous en servez une.',
   )
 }

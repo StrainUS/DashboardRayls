@@ -15,10 +15,10 @@ Tableau de bord **React + Vite** pour suivre la **santé du RPC** Rayls mainnet,
 
 > **404 « There isn't a GitHub Pages site here »** sur `strainus.github.io` **sans** `/DashboardRayls/` : c’est la **racine** du domaine ; le dashboard est uniquement sous **`/DashboardRayls/`**. Si même l’URL complète est en 404 : *Settings → Pages → Source : **GitHub Actions***, puis vérifiez que le workflow **Pages** est vert dans *Actions*. Guide détaillé : [`.github/DEPLOY_PAGES.md`](./.github/DEPLOY_PAGES.md).
 
-> **Onglet Réseau vide / erreur RPC** sur `*.github.io` : le RPC public Rayls n’expose pas les en-têtes CORS pour ce domaine. Déployez le proxy [`workers/rpc-cors-proxy/`](./workers/rpc-cors-proxy/) puis définissez la variable de dépôt **`VITE_RAYLS_RPC_HTTP_URL`** (voir [`.github/DEPLOY_PAGES.md`](./.github/DEPLOY_PAGES.md)). En local, `npm run dev` reste sans proxy RPC.
+> **RPC sur `*.github.io`** : sans proxy Cloudflare, CORS bloque mainnet et testnet. **Une fois** : *Actions* → **Deploy RPC CORS proxy** (remplit les variables mainnet + testnet), puis **Pages** (souvent relancé tout seul). Build Pages : WebSocket RPC désactivé, batch HTTP via proxy. URL du site : `/DashboardRayls/`. Détails : [`.github/DEPLOY_PAGES.md`](./.github/DEPLOY_PAGES.md). En local : `npm run dev`.
 
 Même application que localement : RPC, marché, chaîne, référentiel. Les assets dans `public/` (dont `rayls-feed.json`) et le favicon sont résolus avec **`import.meta.env.BASE_URL`** (ex. `/DashboardRayls/rayls-feed.json`), pas à la racine du domaine.  
-**Activation une fois :** *Settings → Pages → Build and deployment → Source : GitHub Actions*. Le workflow [`.github/workflows/pages.yml`](./.github/workflows/pages.yml) exécute lint, tests, validation du flux et `npm audit`, puis build avec `VITE_BASE_PATH=/<nom-du-dépôt>/`, copie `public/.nojekyll` et dépose `404.html` pour le routage SPA.
+**Activation une fois :** *Settings → Pages → Build and deployment → Source : GitHub Actions*. Le workflow [`.github/workflows/pages.yml`](./.github/workflows/pages.yml) exige **`VITE_RAYLS_RPC_HTTP_URL`** (proxy Cloudflare, voir ci‑dessous) pour éviter de publier un site avec l’onglet Réseau cassé ; exécute lint, tests, `npm audit`, build avec `VITE_BASE_PATH=/<nom-du-dépôt>/`, `404.html` SPA.
 
 > Comme pour tout hébergement **statique**, il n’y a pas de proxy Vite : pour des quotas CoinGecko confortables en prod, prévoir `VITE_COINGECKO_API_ROOT` (build) vers votre proxy ou clé côté serveur — voir [Variables d’environnement](#variables-denvironnement).
 
@@ -108,7 +108,7 @@ Copier [`.env.example`](./.env.example) vers `.env` ou `.env.local` (fichiers **
 
 - **Pas de backend** dans ce dépôt : tout s’exécute dans le navigateur.
 - Toute variable **`VITE_*`** peut se retrouver dans le **JavaScript buildé** : ne pas y placer de **secrets** en production ; utiliser un **proxy** pour les clés CoinGecko.
-- La **CSP** est définie dans [`vercel.json`](./vercel.json) (`connect-src`). Tout nouvel hôte (API, WebSocket) doit y être ajouté.
+- Si vous imposez une **CSP** devant l’app, étendez `connect-src` pour chaque nouvel hôte (API, WebSocket, proxy RPC).
 - Politique de signalement : voir [**SECURITY.md**](./SECURITY.md).
 
 ---
@@ -123,9 +123,9 @@ Copier [`.env.example`](./.env.example) vers `.env` ou `.env.local` (fichiers **
 
 Sous un **autre** sous-chemin ou domaine : définir `VITE_BASE_PATH` au build (slash final recommandé), comme dans le workflow.
 
-### Autres hébergeurs (ex. Vercel)
+### Autres hébergeurs
 
-Build `npm run build`, servir `dist/`, définir `VITE_BASE_PATH` si l’app n’est pas à la racine du domaine. Pour la sécurité, aligner la **CSP** sur [`vercel.json`](./vercel.json) (`connect-src`) si vous réutilisez ce fichier.
+Build `npm run build`, servir `dist/`, définir `VITE_BASE_PATH` si l’app n’est pas à la racine du domaine. Prévoir un proxy RPC (`VITE_RAYLS_RPC_HTTP_URL`) si l’hébergeur statique n’est pas autorisé en CORS par le nœud Rayls.
 
 ---
 

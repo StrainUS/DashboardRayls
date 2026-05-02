@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { RPC_DEADLINE_CHECK_MS, RPC_POLL_INTERVAL_MS } from '../../constants/dashboard'
 import { useI18n } from '../../i18n'
 import { localeTag } from '../../i18n/translate'
@@ -114,6 +114,7 @@ const empty: Snapshot = {
 export function RpcLiveBlock() {
   const { t, locale } = useI18n()
   const loc = localeTag(locale)
+  const mainnetHttpUrl = useMemo(() => raylsMainnetRpcHttpUrl(), [])
   const [rpcCopied, setRpcCopied] = useState(false)
   const [snap, setSnap] = useState<Snapshot>(empty)
   const [walletChain, setWalletChain] = useState<string | null>(null)
@@ -130,13 +131,13 @@ export function RpcLiveBlock() {
 
   const copyRpcUrl = useCallback(async () => {
     try {
-      await navigator.clipboard.writeText(RAYLS_MAINNET.rpcUrl)
+      await navigator.clipboard.writeText(mainnetHttpUrl)
       setRpcCopied(true)
       window.setTimeout(() => setRpcCopied(false), 2000)
     } catch {
       /* Clipboard API unavailable or denied */
     }
-  }, [])
+  }, [mainnetHttpUrl])
 
   const refresh = useCallback(async (userInitiated = false) => {
     const seq = ++refreshSeq.current
@@ -147,7 +148,7 @@ export function RpcLiveBlock() {
       return s
     })
     try {
-      const batch = await raylsRpcTelemetryBatch(raylsMainnetRpcHttpUrl(), RAYLS_MAINNET_PROTOCOL)
+      const batch = await raylsRpcTelemetryBatch(mainnetHttpUrl, RAYLS_MAINNET_PROTOCOL)
       if (seq !== refreshSeq.current) return
       const chainIdDec = Number(hexToBigInt(batch.chainIdHex))
       const blockNum = batch.latestBlock?.number ?? hexToBigInt(batch.blockHex)
@@ -198,7 +199,7 @@ export function RpcLiveBlock() {
         updatedAt: Date.now(),
       })
     }
-  }, [t])
+  }, [t, mainnetHttpUrl])
 
   useEffect(() => {
     if (rpcIntervalRef.current) return
@@ -386,7 +387,12 @@ export function RpcLiveBlock() {
             <h3 className="dash-reseau-connect-title">{t('rpc.connectionTitle')}</h3>
             <p className="dash-reseau-connect-lead">{t('rpc.connectionLead')}</p>
           </div>
-          <p className="dash-reseau-endpoint-url mono u-break-anywhere">{RAYLS_MAINNET.rpcUrl}</p>
+          <p className="dash-reseau-endpoint-url mono u-break-anywhere">{mainnetHttpUrl}</p>
+          {mainnetHttpUrl !== RAYLS_MAINNET.rpcUrl ? (
+            <p className="dash-caption dash-reseau-connect-doc">
+              {t('rpc.docCanonicalHint', { url: RAYLS_MAINNET.rpcUrl })}
+            </p>
+          ) : null}
           <div className="dash-rpc-actions">
             <button type="button" className="dash-copy-btn" onClick={() => void copyRpcUrl()}>
               {rpcCopied ? t('rpc.copied') : t('rpc.copyUrl')}

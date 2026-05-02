@@ -6,7 +6,7 @@
 
 - [ ] `npm run ci` passe en local
 - [ ] Aucun fichier sensible (`.env`, clés, secrets) n’est inclus
-- [ ] Si nouvel appel réseau : CSP / `vercel.json` mise à jour si besoin
+- [ ] Si nouvel appel réseau : CSP `connect-src` mise à jour si vous en servez une
 
 ## Contexte (optionnel)
 

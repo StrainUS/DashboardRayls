@@ -8,6 +8,18 @@ Exemple pour ce repo : **`https://strainus.github.io/DashboardRayls/`**
 
 > La racine **`https://strainus.github.io/`** (sans `/DashboardRayls/`) affiche souvent une **404** tant qu’il n’existe pas de site *user/org* dédié (repo `username.github.io`). C’est **normal**.
 
+## Mise à jour du site (flux normal)
+
+**Modifier le code → commit → push sur `main` (ou `master`)** : le workflow **Pages** rebuild et redéploie automatiquement.
+
+**Important** : le build **Pages** exige la variable **`VITE_RAYLS_RPC_HTTP_URL`** (proxy Cloudflare). Sans elle, le workflow **échoue volontairement** — on ne publie pas un site où l’onglet Réseau serait cassé par CORS. Contournement réservé aux forks : variable **`PAGES_ALLOW_MISSING_RPC_PROXY=true`** (voir *Settings → Variables → Actions*).
+
+## 0. Ordre recommandé (première installation)
+
+1. Secrets Cloudflare + workflow **Deploy RPC CORS proxy** (une fois) — crée **`VITE_RAYLS_RPC_HTTP_URL`**.
+2. À la fin de ce workflow, **Pages** se relance **automatiquement** ; sinon lancez **Pages** manuellement ou poussez sur `main`.
+3. Activer **Pages** (*Source : GitHub Actions*) si ce n’est pas déjà fait.
+
 ## 1. Activer Pages sur le dépôt (obligatoire)
 
 Tant qu’aucun site Pages n’existe pour le repo, le job **deploy** du workflow échoue avec :
@@ -31,9 +43,17 @@ Sans cette étape, le build peut être vert mais **aucun site** n’est publié 
 
 ### RPC Réseau (latence, bloc, gas) sur github.io
 
-Le RPC public Rayls n’autorise pas les POST navigateur depuis `*.github.io` (CORS).
+Le RPC public Rayls n’autorise pas les POST navigateur depuis `*.github.io` (CORS du navigateur — ce n’est pas un bug du dépôt).
 
-**Méthode recommandée** : workflow [`.github/workflows/deploy-rpc-proxy.yml`](../.github/workflows/deploy-rpc-proxy.yml) — ajoutez les secrets `CLOUDFLARE_API_TOKEN` et `CLOUDFLARE_ACCOUNT_ID`, puis *Run workflow*. La variable **`VITE_RAYLS_RPC_HTTP_URL`** est créée automatiquement ; relancez ensuite **Pages**.
+**Une seule fois** (si ce n’est pas déjà fait) :
+
+0. **Cloudflare** → **Workers et Pages** → **Modifier** (*Change*) le sous-domaine **workers.dev** (onboarding du compte). Sans ça, `wrangler deploy` échoue depuis GitHub Actions.
+1. Secrets **`CLOUDFLARE_API_TOKEN`** et **`CLOUDFLARE_ACCOUNT_ID`** (*Settings → Secrets and variables → Actions*).  
+   **Important** : *Settings → Actions → General → **Workflow permissions*** → cochez **Read and write permissions** (sinon le workflow ne peut pas enregistrer `VITE_RAYLS_*` et échoue après le déploiement Cloudflare).
+2. **[Deploy RPC CORS proxy](workflows/deploy-rpc-proxy.yml)** → *Run workflow* : déploie [`workers/rpc-cors-proxy/`](../workers/rpc-cors-proxy/) (mainnet à la racine, testnet sur `/testnet`) et enregistre **`VITE_RAYLS_RPC_HTTP_URL`** + **`VITE_RAYLS_TESTNET_RPC_HTTP_URL`**.
+3. **Pages** repart tout seul après un proxy réussi ; sinon relancez **Pages** ou poussez sur `main`. Le build Pages désactive le WebSocket RPC (`VITE_RPC_WS_URL=0`) pour éviter des erreurs depuis `github.io` ; les mesures HTTP restent complètes.
+
+Ouvrir le site avec le **chemin du dépôt** (ex. `https://strainus.github.io/DashboardRayls/`), pas seulement la racine `strainus.github.io`.
 
 Détails : [`workers/rpc-cors-proxy/README.md`](../workers/rpc-cors-proxy/README.md).
 

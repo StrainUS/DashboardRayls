@@ -6,12 +6,14 @@ Ce Worker Cloudflare relaie les corps POST vers le RPC et ajoute `Access-Control
 
 ## Déploiement automatique (recommandé, GitHub Actions)
 
+0. **Première utilisation Cloudflare Workers** : Dashboard → **Workers et Pages** → **Modifier** (*Change*) le sous-domaine **workers.dev** et valider l’onboarding. Sans cette étape, `wrangler deploy` échoue en CI (pas d’invite interactive).
 1. Cloudflare : créer un **API Token** avec permission *Edit Cloudflare Workers* ; noter l’**Account ID** du compte.
-2. Dépot GitHub → **Settings** → **Secrets and variables** → **Actions** → **Secrets** :
+2. Dépot GitHub → **Settings** → **Actions** → **General** → **Workflow permissions** : **Read and write permissions** (obligatoire pour que le workflow enregistre les variables `VITE_RAYLS_*`).
+3. **Settings** → **Secrets and variables** → **Actions** → **Secrets** :
    - `CLOUDFLARE_API_TOKEN`
    - `CLOUDFLARE_ACCOUNT_ID`
-3. Onglet **Actions** → workflow **Deploy RPC CORS proxy** → **Run workflow**.
-4. Le workflow enregistre la variable **`VITE_RAYLS_RPC_HTTP_URL`** puis : relancer **Pages** (ou pousser sur `main`).
+4. Onglet **Actions** → workflow **Deploy RPC CORS proxy** → **Run workflow**.
+5. Le workflow enregistre **`VITE_RAYLS_RPC_HTTP_URL`** (racine → mainnet) et **`VITE_RAYLS_TESTNET_RPC_HTTP_URL`** (`…/testnet`). **Pages** peut se relancer tout seul ; sinon relancez-le ou poussez sur `main`.
 
 ## Déploiement manuel (CLI)
 
@@ -21,9 +23,7 @@ npx wrangler@3 login
 npx wrangler@3 deploy
 ```
 
-Puis variable de dépôt **`VITE_RAYLS_RPC_HTTP_URL`** = `https://<name>.<sous-domaine-compte>.workers.dev` (sans slash final), et rebuild **Pages**.
-
-Testnet (optionnel) : déployer une copie du worker avec `TARGET_RPC_URL = https://testnet-rpc.rayls.com` (autre `name` dans `wrangler.toml`), puis variable **`VITE_RAYLS_TESTNET_RPC_HTTP_URL`**.
+Variables de dépôt : **`VITE_RAYLS_RPC_HTTP_URL`** = `https://<name>.<subdomain>.workers.dev`, **`VITE_RAYLS_TESTNET_RPC_HTTP_URL`** = même URL + `/testnet`, puis rebuild **Pages**.
 
 ## Sécurité
 

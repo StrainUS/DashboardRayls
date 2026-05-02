@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { TESTNET_TELEMETRY_POLL_MS } from '../../constants/dashboard'
 import { useI18n } from '../../i18n'
 import { RAYLS_TESTNET, hexToBigInt, raylsTestnetRpcHttpUrl } from '../../raylsConfig'
@@ -38,13 +38,14 @@ const empty: Snap = {
 /** Même batch télémétrique que le mainnet, sans eth_call jetons — réseau test documenté. */
 export function TestnetTelemetryCard() {
   const { t } = useI18n()
+  const testnetHttpUrl = useMemo(() => raylsTestnetRpcHttpUrl(), [])
   const [snap, setSnap] = useState<Snap>(empty)
   const seqRef = useRef(0)
 
   const refresh = useCallback(async () => {
     const seq = ++seqRef.current
     try {
-      const batch = await raylsRpcTelemetryBatch(raylsTestnetRpcHttpUrl())
+      const batch = await raylsRpcTelemetryBatch(testnetHttpUrl)
       if (seq !== seqRef.current) return
       setSnap({
         chainIdDec: Number(hexToBigInt(batch.chainIdHex)),
@@ -72,7 +73,7 @@ export function TestnetTelemetryCard() {
         at: Date.now(),
       })
     }
-  }, [t])
+  }, [t, testnetHttpUrl])
 
   useEffect(() => {
     queueMicrotask(() => {
@@ -96,7 +97,12 @@ export function TestnetTelemetryCard() {
         <h2 id="testnet-heading" className="dash-panel-title">
           {t('testnet.title', { id: RAYLS_TESTNET.expectedChainIdDecimal })}
         </h2>
-        <span className="dash-panel-meta-muted mono">{RAYLS_TESTNET.rpcUrl}</span>
+        <div className="dash-panel-meta-stack">
+          <span className="dash-panel-meta-muted mono u-break-anywhere">{testnetHttpUrl}</span>
+          {testnetHttpUrl !== RAYLS_TESTNET.rpcUrl ? (
+            <span className="dash-caption">{t('rpc.docCanonicalHint', { url: RAYLS_TESTNET.rpcUrl })}</span>
+          ) : null}
+        </div>
       </div>
       {snap.err && (
         <div className="dash-alert dash-alert--warn" role="status">

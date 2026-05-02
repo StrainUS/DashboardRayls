@@ -104,7 +104,7 @@ export const fr: MessageTree = {
     },
     mexc: {
       label: 'Spot exchange (MEXC)',
-      on: 'WebSocket spot USD activé — vérifier connect-src (ex. vercel.json).',
+      on: 'WebSocket spot USD activé — vérifier connect-src (CSP) si besoin.',
       off: 'En prod : désactivé sauf `VITE_MEXC_SPOT_WS=1`. En dev : activé par défaut (désactiver avec `VITE_MEXC_SPOT_WS=0`).',
     },
   },
@@ -171,7 +171,8 @@ export const fr: MessageTree = {
     notAligned: '≠ RPC mesuré',
     walletHint: 'ex. MetaMask',
     connectionTitle: 'Connexion RPC',
-    connectionLead: 'POST JSON-RPC 2.0 — même URL que dans la référence chaîne publique Rayls (docs).',
+    connectionLead: 'POST JSON-RPC 2.0 — URL réellement utilisée par le navigateur pour ce site.',
+    docCanonicalHint: 'Référence documentaire (nœud public) : {{url}}',
     copyUrl: 'Copier l’URL',
     copied: 'Copié',
     explorerLink: 'Explorateur →',
@@ -199,7 +200,7 @@ export const fr: MessageTree = {
     rpcError: 'Erreur RPC',
     rpcErrorSub: 'Si CORS bloque le navigateur, servez l’app derrière un proxy same-origin.',
     githubPagesCorsHint:
-      'Hébergement *.github.io : le nœud public Rayls n’autorise pas encore CORS pour ce domaine depuis le navigateur. Déployez le proxy décrit dans workers/rpc-cors-proxy/, puis ajoutez l’URL en variable de dépôt VITE_RAYLS_RPC_HTTP_URL (workflow Pages) — ou utilisez npm run dev en local.',
+      'GitHub Pages : sans proxy Cloudflare le RPC est bloqué (CORS). Une fois : Actions → Deploy RPC CORS proxy (mainnet + testnet) → Pages. URL /DashboardRayls/. En local : npm run dev.',
     syncUnknown: 'inconnu',
     syncSynced: 'synchronisé',
     syncProgress: 'en cours · {{from}} → {{to}}',

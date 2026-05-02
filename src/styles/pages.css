@@ -1455,6 +1455,22 @@
   white-space: nowrap;
 }
 
+.dash-panel-meta-stack {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+  max-width: min(100%, 100%);
+  text-align: right;
+}
+
+.dash-panel-meta-stack .dash-panel-meta-muted {
+  max-width: 100%;
+  white-space: normal;
+  overflow: visible;
+  text-overflow: unset;
+}
+
 .dash-panel-title {
   margin: 0 0 6px;
   font-family: var(--font-display);

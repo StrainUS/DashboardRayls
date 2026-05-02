@@ -1,11 +1,9 @@
 /**
- * Relaie des POST JSON-RPC vers TARGET_RPC_URL avec CORS * (GET non supporté par le RPC).
- * Déployer une 2ᵉ instance avec TARGET_RPC_URL=https://testnet-rpc.rayls.com pour la testnet.
+ * Relaie POST JSON-RPC avec CORS * vers le RPC Rayls.
+ * Racine du worker → mainnet ; chemin /testnet → testnet.
  */
 export default {
   async fetch(request, env) {
-    const base = String(env.TARGET_RPC_URL || 'https://mainnet-rpc.rayls.com').replace(/\/$/, '')
-    const target = `${base}/`
     const cors = {
       'Access-Control-Allow-Origin': '*',
       'Access-Control-Allow-Methods': 'POST, OPTIONS',
@@ -19,6 +17,14 @@ export default {
     if (request.method !== 'POST') {
       return new Response('POST only', { status: 405, headers: cors })
     }
+
+    const pathname = new URL(request.url).pathname.replace(/\/$/, '') || '/'
+    const isTestnet = pathname === '/testnet' || pathname.startsWith('/testnet/')
+
+    const mainnetBase = String(env.TARGET_RPC_URL || 'https://mainnet-rpc.rayls.com').replace(/\/$/, '')
+    const testnetBase = String(env.TARGET_TESTNET_RPC_URL || 'https://testnet-rpc.rayls.com').replace(/\/$/, '')
+    const base = isTestnet ? testnetBase : mainnetBase
+    const target = `${base}/`
 
     const body = await request.arrayBuffer()
     const res = await fetch(target, {
