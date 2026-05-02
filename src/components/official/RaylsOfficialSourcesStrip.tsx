@@ -1,34 +1,40 @@
+import { useMemo } from 'react'
+import { useI18n } from '../../i18n'
 import { RAYLS_MAINNET, RAYLS_COINGECKO_PAGE, RAYLS_OFFICIAL, RAYLS_TESTNET } from '../../raylsConfig'
 
-const items: { label: string; href: string; detail: string }[] = [
-  { label: 'RPC mainnet', href: RAYLS_MAINNET.rpcUrl, detail: 'JSON-RPC POST · latence mesurée dans l’app' },
-  { label: 'RPC testnet', href: RAYLS_TESTNET.rpcUrl, detail: `Chain ID ${RAYLS_TESTNET.expectedChainIdDecimal}` },
-  { label: 'Explorateur mainnet', href: RAYLS_MAINNET.explorerUrl, detail: 'Blockscout · blocs & transactions' },
-  { label: 'Explorateur testnet', href: RAYLS_TESTNET.explorerUrl, detail: 'Réseau de test public' },
-  { label: 'Bridge / seeding', href: RAYLS_OFFICIAL.bridge, detail: 'Service documenté par Rayls' },
-  { label: 'Docs chain', href: RAYLS_MAINNET.docsUrl, detail: 'Référence réseau public' },
-  { label: 'Site', href: RAYLS_OFFICIAL.site, detail: 'rayls.com' },
-  { label: 'Documentation', href: RAYLS_OFFICIAL.docs, detail: 'Guides produit' },
-  { label: 'PoU', href: RAYLS_OFFICIAL.pouDashboard, detail: 'Tableau de bord' },
-  { label: 'Circulating (API)', href: RAYLS_OFFICIAL.circulatingSupplyApi, detail: 'Endpoint public CMC' },
-  { label: 'Total supply (API)', href: RAYLS_OFFICIAL.totalSupplyApi, detail: 'Endpoint public CMC' },
-  { label: 'CoinGecko RLS', href: RAYLS_COINGECKO_PAGE, detail: 'Spot & market_chart (agrégé)' },
-  { label: 'CoinMarketCap', href: RAYLS_OFFICIAL.coinMarketCap, detail: 'Marché agrégé' },
-  { label: 'Linktree', href: RAYLS_OFFICIAL.linktree, detail: 'Liens communiqués par Rayls' },
-]
-
 export function RaylsOfficialSourcesStrip() {
+  const { t } = useI18n()
+
+  const items = useMemo(
+    () => [
+      { label: t('sources.rpcMainnet'), href: RAYLS_MAINNET.rpcUrl, detail: t('sources.rpcMainnetD') },
+      {
+        label: t('sources.rpcTestnet'),
+        href: RAYLS_TESTNET.rpcUrl,
+        detail: t('sources.rpcTestnetD', { id: RAYLS_TESTNET.expectedChainIdDecimal }),
+      },
+      { label: t('sources.explorerMainnet'), href: RAYLS_MAINNET.explorerUrl, detail: t('sources.explorerMainnetD') },
+      { label: t('sources.explorerTestnet'), href: RAYLS_TESTNET.explorerUrl, detail: t('sources.explorerTestnetD') },
+      { label: t('sources.bridge'), href: RAYLS_OFFICIAL.bridge, detail: t('sources.bridgeD') },
+      { label: t('sources.docsChain'), href: RAYLS_MAINNET.docsUrl, detail: t('sources.docsChainD') },
+      { label: t('sources.site'), href: RAYLS_OFFICIAL.site, detail: t('sources.siteD') },
+      { label: t('sources.documentation'), href: RAYLS_OFFICIAL.docs, detail: t('sources.documentationD') },
+      { label: t('sources.pou'), href: RAYLS_OFFICIAL.pouDashboard, detail: t('sources.pouD') },
+      { label: t('sources.circApi'), href: RAYLS_OFFICIAL.circulatingSupplyApi, detail: t('sources.circApiD') },
+      { label: t('sources.totalApi'), href: RAYLS_OFFICIAL.totalSupplyApi, detail: t('sources.totalApiD') },
+      { label: t('sources.cgRls'), href: RAYLS_COINGECKO_PAGE, detail: t('sources.cgRlsD') },
+      { label: t('sources.cmc'), href: RAYLS_OFFICIAL.coinMarketCap, detail: t('sources.cmcD') },
+      { label: t('sources.linktree'), href: RAYLS_OFFICIAL.linktree, detail: t('sources.linktreeD') },
+    ],
+    [t],
+  )
+
   return (
     <section className="dash-sources" aria-labelledby="sources-heading">
       <h2 id="sources-heading" className="dash-sources-title">
-        Sources & mécaniques live
+        {t('sources.title')}
       </h2>
-      <p className="dash-sources-lead">
-        Ce tableau assemble uniquement des points d’accès publics : RPC Rayls (mesures batch dans l’app),
-        API CoinGecko (<code>simple/price</code>, <code>market_chart</code>, <code>coins/…</code>), endpoints
-        texte <code>api.rayls.com</code>. Aucune donnée n’est présentée comme « certifiée » par l’éditeur de
-        cet outil ; en cas de divergence, prévaloir la source primaire (doc Rayls, explorateur, endpoint).
-      </p>
+      <p className="dash-sources-lead">{t('sources.lead')}</p>
       <ul className="dash-sources-grid">
         {items.map((it) => (
           <li key={it.href} className="dash-sources-item">

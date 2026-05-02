@@ -1,4 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { RPC_DEADLINE_CHECK_MS, RPC_POLL_INTERVAL_MS } from '../../constants/dashboard'
+import { useI18n } from '../../i18n'
+import { localeTag } from '../../i18n/translate'
 import { RAYLS_MAINNET, RAYLS_MAINNET_PROTOCOL, RAYLS_MAINNET_WS_URL, hexToBigInt } from '../../raylsConfig'
 import { weiToGweiDisplay } from '../../raylsRpc'
 import {
@@ -7,22 +10,23 @@ import {
   type RaylsSyncingState,
 } from '../../raylsRpcTelemetry'
 import { subscribeRaylsNewHeads, type RaylsWsStatus } from '../../raylsRpcWs'
-import { RPC_DEADLINE_CHECK_MS, RPC_POLL_INTERVAL_MS } from '../../constants/dashboard'
 import { LatencyChartCanvas } from './LatencyChartCanvas'
 
 type RealtimePush = { block: bigint; gas: bigint | null; at: number; seq: number }
 
 const LAT_HISTORY_MAX = 40
 
-function fmtLatencyMs(n: number): string {
+type TFn = (key: string, vars?: Record<string, string | number>) => string
+
+function fmtLatencyMs(n: number, loc: string): string {
   const a = Math.abs(n)
   const frac = a < 100 ? 2 : 1
-  return `${n.toLocaleString('fr-FR', { minimumFractionDigits: frac, maximumFractionDigits: frac })} ms`
+  return `${n.toLocaleString(loc, { minimumFractionDigits: frac, maximumFractionDigits: frac })} ms`
 }
 
-function fmtPollInterval(ms: number): string {
+function fmtPollInterval(ms: number, loc: string): string {
   if (ms >= 1000 && ms % 1000 === 0) return `${ms / 1000} s`
-  if (ms >= 1000) return `${(ms / 1000).toLocaleString('fr-FR', { minimumFractionDigits: 1, maximumFractionDigits: 1 })} s`
+  if (ms >= 1000) return `${(ms / 1000).toLocaleString(loc, { minimumFractionDigits: 1, maximumFractionDigits: 1 })} s`
   return `${ms} ms`
 }
 
@@ -31,23 +35,23 @@ function shortHash(h: string): string {
   return `${h.slice(0, 10)}…${h.slice(-8)}`
 }
 
-function fmtE18(wei: bigint | null): string {
+function fmtE18(wei: bigint | null, loc: string): string {
   if (wei == null) return '—'
   const x = Number(wei) / 1e18
   if (!Number.isFinite(x) || Math.abs(x) > 1e15) return `${wei.toString()} wei`
-  return x.toLocaleString('fr-FR', { maximumFractionDigits: 8 })
+  return x.toLocaleString(loc, { maximumFractionDigits: 8 })
 }
 
-function gasUtilPct(used: bigint, limit: bigint): string {
+function gasUtilPct(used: bigint, limit: bigint, loc: string): string {
   if (limit <= 0n) return '—'
   const pct = Number((used * 10000n) / limit) / 100
-  return `${pct.toLocaleString('fr-FR', { maximumFractionDigits: 2 })} %`
+  return `${pct.toLocaleString(loc, { maximumFractionDigits: 2 })} %`
 }
 
-function syncLabel(s: RaylsSyncingState): string {
-  if (!s.ok) return 'inconnu'
-  if (!s.syncing) return 'synchronisé'
-  return `en cours · ${shortHash(s.currentBlockHex)} → ${shortHash(s.highestBlockHex)}`
+function syncLabelRpc(s: RaylsSyncingState, t: TFn): string {
+  if (!s.ok) return t('rpc.syncUnknown')
+  if (!s.syncing) return t('rpc.syncSynced')
+  return t('rpc.syncProgress', { from: shortHash(s.currentBlockHex), to: shortHash(s.highestBlockHex) })
 }
 
 function statsFromHistory(samples: number[]): { min: number; avg: number; max: number } | null {
@@ -102,6 +106,8 @@ const empty: Snapshot = {
 }
 
 export function RpcLiveBlock() {
+  const { t, locale } = useI18n()
+  const loc = localeTag(locale)
   const [rpcCopied, setRpcCopied] = useState(false)
   const [snap, setSnap] = useState<Snapshot>(empty)
   const [walletChain, setWalletChain] = useState<string | null>(null)
@@ -135,12 +141,12 @@ export function RpcLiveBlock() {
       return s
     })
     try {
-      const t = await raylsRpcTelemetryBatch(RAYLS_MAINNET.rpcUrl, RAYLS_MAINNET_PROTOCOL)
+      const batch = await raylsRpcTelemetryBatch(RAYLS_MAINNET.rpcUrl, RAYLS_MAINNET_PROTOCOL)
       if (seq !== refreshSeq.current) return
-      const chainIdDec = Number(hexToBigInt(t.chainIdHex))
-      const blockNum = t.latestBlock?.number ?? hexToBigInt(t.blockHex)
-      if (t.latestBlock) {
-        const lb = t.latestBlock
+      const chainIdDec = Number(hexToBigInt(batch.chainIdHex))
+      const blockNum = batch.latestBlock?.number ?? hexToBigInt(batch.blockHex)
+      if (batch.latestBlock) {
+        const lb = batch.latestBlock
         const prev = blockPaceRef.current
         if (prev && lb.number === prev.n + 1n && lb.timestampUnix > prev.ts) {
           setInterBlockSec(lb.timestampUnix - prev.ts)
@@ -148,26 +154,26 @@ export function RpcLiveBlock() {
         blockPaceRef.current = { n: lb.number, ts: lb.timestampUnix }
       }
       setLatencySamples((prev) => {
-        const next = [...prev, { t: Date.now(), ms: t.latencyMs }]
+        const next = [...prev, { t: Date.now(), ms: batch.latencyMs }]
         return next.length > LAT_HISTORY_MAX ? next.slice(-LAT_HISTORY_MAX) : next
       })
 
       setSnap({
         status: 'ok',
-        latencyMs: t.latencyMs,
-        chainIdHex: t.chainIdHex,
+        latencyMs: batch.latencyMs,
+        chainIdHex: batch.chainIdHex,
         chainIdDecimal: chainIdDec,
         blockNumber: blockNum,
-        gasPriceWei: hexToBigInt(t.gasPriceHex),
+        gasPriceWei: hexToBigInt(batch.gasPriceHex),
         error: null,
         updatedAt: Date.now(),
-        syncing: t.syncing,
-        clientVersion: t.clientVersion,
-        netVersion: t.netVersion,
-        latestBlock: t.latestBlock,
-        feeNextBase: t.feeNextBase,
-        usdrTotalSupplyWei: t.usdrTotalSupplyWei,
-        rlsTotalSupplyWei: t.rlsTotalSupplyWei,
+        syncing: batch.syncing,
+        clientVersion: batch.clientVersion,
+        netVersion: batch.netVersion,
+        latestBlock: batch.latestBlock,
+        feeNextBase: batch.feeNextBase,
+        usdrTotalSupplyWei: batch.usdrTotalSupplyWei,
+        rlsTotalSupplyWei: batch.rlsTotalSupplyWei,
       })
     } catch (e) {
       if (seq !== refreshSeq.current) return
@@ -183,8 +189,8 @@ export function RpcLiveBlock() {
 
   useEffect(() => {
     if (rpcIntervalRef.current) return
-    const t = Date.now()
-    const d = t + RPC_POLL_INTERVAL_MS
+    const t0 = Date.now()
+    const d = t0 + RPC_POLL_INTERVAL_MS
     deadlineRef.current = d
     queueMicrotask(() => {
       setRpcDeadline(d)
@@ -260,26 +266,26 @@ export function RpcLiveBlock() {
   const wsPill = !RAYLS_MAINNET_WS_URL
     ? ''
     : wsStatus === 'open'
-      ? ' · WS'
+      ? t('rpc.wsSuffix')
       : wsStatus === 'connecting'
-        ? ' · WS…'
+        ? t('rpc.wsConnecting')
         : ''
 
   return (
     <section className="dash-reseau-board" aria-labelledby="rpc-heading">
       <h2 id="rpc-heading" className="visually-hidden">
-        Surveillance RPC mainnet
+        {t('rpc.heading')}
       </h2>
 
       <div className="dash-reseau-control">
         <div className="dash-reseau-control__status">
           <span className="dash-pill dash-pill--live">
             <span className="dash-pulse" aria-hidden />
-            Live · {fmtPollInterval(RPC_POLL_INTERVAL_MS)}
+            {t('rpc.live')} · {fmtPollInterval(RPC_POLL_INTERVAL_MS, loc)}
             {wsPill}
           </span>
           <span className="dash-reseau-control__tick mono">
-            Prochain batch <RpcNextBatchCountdown deadlineMs={rpcDeadline} />
+            {t('rpc.nextBatch')} <RpcNextBatchCountdown deadlineMs={rpcDeadline} localeTag={loc} />
           </span>
         </div>
         <button
@@ -294,67 +300,67 @@ export function RpcLiveBlock() {
           }}
           disabled={snap.status === 'loading'}
         >
-          {snap.status === 'loading' ? 'Mesure…' : 'Mesurer maintenant'}
+          {snap.status === 'loading' ? t('rpc.measuring') : t('rpc.measureNow')}
         </button>
       </div>
 
-      <div className="dash-reseau-live" aria-label="État du réseau">
-        <p className="dash-reseau-live__eyebrow">Indicateurs live</p>
+      <div className="dash-reseau-live" aria-label={t('rpc.liveStateAria')}>
+        <p className="dash-reseau-live__eyebrow">{t('rpc.liveEyebrow')}</p>
         <div className="dash-reseau-live-metrics">
           <article
             className={`dash-reseau-kpi dash-reseau-kpi--latency dash-reseau-kpi--${latencyClass}`}
           >
-            <h3 className="dash-reseau-kpi__label">Latence · dernier batch</h3>
+            <h3 className="dash-reseau-kpi__label">{t('rpc.latency')}</h3>
             <p className={`dash-reseau-kpi__value dash-reseau-kpi__value--xl ${latencyClass}`}>
-              {snap.latencyMs !== null ? fmtLatencyMs(snap.latencyMs) : '—'}
+              {snap.latencyMs !== null ? fmtLatencyMs(snap.latencyMs, loc) : '—'}
             </p>
             {histStats ? (
               <p className="dash-reseau-kpi__meta">
-                min {fmtLatencyMs(histStats.min)} · moy {fmtLatencyMs(histStats.avg)} · max{' '}
-                {fmtLatencyMs(histStats.max)}
+                {t('rpc.min')} {fmtLatencyMs(histStats.min, loc)} · {t('rpc.avg')}{' '}
+                {fmtLatencyMs(histStats.avg, loc)} · {t('rpc.max')} {fmtLatencyMs(histStats.max, loc)}
               </p>
             ) : (
-              <p className="dash-reseau-kpi__meta">Échantillons en cours…</p>
+              <p className="dash-reseau-kpi__meta">{t('rpc.samplesPending')}</p>
             )}
           </article>
           <article className="dash-reseau-kpi">
-            <h3 className="dash-reseau-kpi__label">Bloc</h3>
+            <h3 className="dash-reseau-kpi__label">{t('rpc.block')}</h3>
             <p className="dash-reseau-kpi__value">{blockDisplay !== null ? blockDisplay.toString() : '—'}</p>
-            <p className="dash-reseau-kpi__meta">{useWsPush ? 'Temps réel · WebSocket' : 'Batch HTTP'}</p>
+            <p className="dash-reseau-kpi__meta">{useWsPush ? t('rpc.realtimeWs') : t('rpc.batchHttp')}</p>
           </article>
           <article className="dash-reseau-kpi">
-            <h3 className="dash-reseau-kpi__label">Gas price</h3>
+            <h3 className="dash-reseau-kpi__label">{t('rpc.gasPrice')}</h3>
             <p className="dash-reseau-kpi__value">{gasDisplay !== null ? weiToGweiDisplay(gasDisplay) : '—'}</p>
             <p className="dash-reseau-kpi__meta">eth_gasPrice</p>
           </article>
         </div>
-        <div className="dash-reseau-live-context" aria-label="Chaîne mesurée et portefeuille">
+        <div className="dash-reseau-live-context" aria-label={t('rpc.chainWalletAria')}>
           <div className="dash-reseau-context-rail">
             <div
               className={`dash-reseau-chain-pill ${snap.status === 'ok' ? (chainMatch ? 'dash-reseau-chain-pill--ok' : 'dash-reseau-chain-pill--warn') : ''}`}
             >
-              <span className="dash-reseau-chain-pill__k">Chain ID (mesuré)</span>
+              <span className="dash-reseau-chain-pill__k">{t('rpc.chainMeasured')}</span>
               <span className="dash-reseau-chain-pill__v mono">
                 {snap.chainIdDecimal ?? '—'}
                 {snap.status === 'ok' ? (
                   <span className="dash-reseau-chain-pill__hint">
-                    {chainMatch ? ' · conforme doc' : ' · écart vs doc'}
+                    {chainMatch ? t('rpc.conformDoc') : t('rpc.driftDoc')}
                   </span>
                 ) : null}
               </span>
             </div>
             <span className="dash-reseau-context-rail__rule" aria-hidden />
             <div className="dash-reseau-wallet-strip">
-              <span className="dash-reseau-wallet-strip__k">Wallet</span>
+              <span className="dash-reseau-wallet-strip__k">{t('rpc.wallet')}</span>
               <span className="dash-reseau-wallet-strip__v mono">
-                {!window.ethereum ? 'Aucun provider' : (walletChain ?? '—')}
+                {!window.ethereum ? t('rpc.noProvider') : (walletChain ?? '—')}
               </span>
               <span className="dash-reseau-wallet-strip__hint">
                 {walletChain && snap.chainIdHex
                   ? walletMatch
-                    ? 'Aligné RPC'
-                    : '≠ RPC mesuré'
-                  : 'ex. MetaMask'}
+                    ? t('rpc.alignedRpc')
+                    : t('rpc.notAligned')
+                  : t('rpc.walletHint')}
               </span>
             </div>
           </div>
@@ -364,131 +370,134 @@ export function RpcLiveBlock() {
       <div className="dash-reseau-split">
         <div className="dash-reseau-split__connect">
           <div className="dash-reseau-connect-head">
-            <h3 className="dash-reseau-connect-title">Connexion RPC</h3>
-            <p className="dash-reseau-connect-lead">
-              POST JSON-RPC 2.0 — même URL que dans la référence chaîne publique Rayls (docs).
-            </p>
+            <h3 className="dash-reseau-connect-title">{t('rpc.connectionTitle')}</h3>
+            <p className="dash-reseau-connect-lead">{t('rpc.connectionLead')}</p>
           </div>
           <p className="dash-reseau-endpoint-url mono u-break-anywhere">{RAYLS_MAINNET.rpcUrl}</p>
           <div className="dash-rpc-actions">
             <button type="button" className="dash-copy-btn" onClick={() => void copyRpcUrl()}>
-              {rpcCopied ? 'Copié' : 'Copier l’URL'}
+              {rpcCopied ? t('rpc.copied') : t('rpc.copyUrl')}
             </button>
             <a className="link-quiet" href={RAYLS_MAINNET.explorerUrl} target="_blank" rel="noopener noreferrer">
-              Explorateur →
+              {t('rpc.explorerLink')}
             </a>
             <a className="link-quiet" href={RAYLS_MAINNET.docsUrl} target="_blank" rel="noopener noreferrer">
-              Référence chaîne →
+              {t('rpc.chainRefLink')}
             </a>
           </div>
         </div>
         <div className="dash-reseau-split__chart">
           <div className="dash-live-chart-head dash-live-chart-head--latency">
             <span className="dash-kicker">
-              Historique latence <span className="dash-kicker-unit">(ms)</span>
+              {t('rpc.chartKicker')} <span className="dash-kicker-unit">{t('rpc.chartUnit')}</span>
             </span>
-            <span className="dash-hint">{LAT_HISTORY_MAX} mesures</span>
+            <span className="dash-hint">{t('rpc.chartHint', { n: LAT_HISTORY_MAX })}</span>
           </div>
-          <LatencyChartCanvas samples={latencySamples} />
-          <p className="dash-caption">Allers-retours HTTP récents (même intervalle que le live).</p>
+          <LatencyChartCanvas
+            samples={latencySamples}
+            localeTag={loc}
+            emptyLabel={t('rpc.latencyChartEmpty')}
+            ariaLabel={t('rpc.latencyChartAria')}
+          />
+          <p className="dash-caption">{t('rpc.chartCaption')}</p>
         </div>
       </div>
 
       {snap.status === 'ok' && (
         <div className="dash-reseau-tech">
-          <h3 className="dash-reseau-tech__heading">Lecture nœud & bloc</h3>
+          <h3 className="dash-reseau-tech__heading">{t('rpc.techHeading')}</h3>
           <div className="dash-reseau-detail-stack">
-          <section className="dash-reseau-detail-card" aria-labelledby="reseau-node">
-            <h3 id="reseau-node" className="dash-reseau-detail-card__title">
-              Nœud & synchronisation
-            </h3>
-            <dl className="dash-reseau-dl">
-              <div className="dash-reseau-dl-row">
-                <dt>Client</dt>
-                <dd className="mono">{snap.clientVersion ?? '—'}</dd>
-              </div>
-              <div className="dash-reseau-dl-row">
-                <dt>net_version</dt>
-                <dd>{snap.netVersion ?? '—'}</dd>
-              </div>
-              <div className="dash-reseau-dl-row">
-                <dt>eth_syncing</dt>
-                <dd>{syncLabel(snap.syncing)}</dd>
-              </div>
-            </dl>
-          </section>
+            <section className="dash-reseau-detail-card" aria-labelledby="reseau-node">
+              <h3 id="reseau-node" className="dash-reseau-detail-card__title">
+                {t('rpc.nodeSync')}
+              </h3>
+              <dl className="dash-reseau-dl">
+                <div className="dash-reseau-dl-row">
+                  <dt>{t('rpc.client')}</dt>
+                  <dd className="mono">{snap.clientVersion ?? '—'}</dd>
+                </div>
+                <div className="dash-reseau-dl-row">
+                  <dt>net_version</dt>
+                  <dd>{snap.netVersion ?? '—'}</dd>
+                </div>
+                <div className="dash-reseau-dl-row">
+                  <dt>eth_syncing</dt>
+                  <dd>{syncLabelRpc(snap.syncing, t)}</dd>
+                </div>
+              </dl>
+            </section>
 
-          <section className="dash-reseau-detail-card" aria-labelledby="reseau-block">
-            <h3 id="reseau-block" className="dash-reseau-detail-card__title">
-              Dernier bloc
-            </h3>
-            <dl className="dash-reseau-dl">
-              <div className="dash-reseau-dl-row">
-                <dt>Hash</dt>
-                <dd className="mono">{snap.latestBlock ? shortHash(snap.latestBlock.hash) : '—'}</dd>
-              </div>
-              <div className="dash-reseau-dl-row">
-                <dt>Horodatage (UTC)</dt>
-                <dd>
-                  {snap.latestBlock
-                    ? new Date(snap.latestBlock.timestampUnix * 1000).toLocaleString('fr-FR', { hour12: false })
-                    : '—'}
-                </dd>
-              </div>
-              <div className="dash-reseau-dl-row">
-                <dt>Transactions</dt>
-                <dd>{snap.latestBlock?.txCount ?? '—'}</dd>
-              </div>
-              <div className="dash-reseau-dl-row">
-                <dt>Gas utilisé / limite</dt>
-                <dd className="mono">
-                  {snap.latestBlock
-                    ? `${gasUtilPct(snap.latestBlock.gasUsed, snap.latestBlock.gasLimit)} · ${snap.latestBlock.gasUsed.toString()} / ${snap.latestBlock.gasLimit.toString()}`
-                    : '—'}
-                </dd>
-              </div>
-              <div className="dash-reseau-dl-row">
-                <dt>Base fee (bloc)</dt>
-                <dd>
-                  {snap.latestBlock?.baseFeePerGas != null
-                    ? weiToGweiDisplay(snap.latestBlock.baseFeePerGas)
-                    : '—'}
-                </dd>
-              </div>
-              <div className="dash-reseau-dl-row">
-                <dt>Base fee (feeHistory)</dt>
-                <dd>{snap.feeNextBase != null ? weiToGweiDisplay(snap.feeNextBase) : '—'}</dd>
-              </div>
-              <div className="dash-reseau-dl-row">
-                <dt>Écart bloc → bloc</dt>
-                <dd>{interBlockSec != null ? `${interBlockSec.toLocaleString('fr-FR')} s` : '—'}</dd>
-              </div>
-            </dl>
-          </section>
+            <section className="dash-reseau-detail-card" aria-labelledby="reseau-block">
+              <h3 id="reseau-block" className="dash-reseau-detail-card__title">
+                {t('rpc.lastBlock')}
+              </h3>
+              <dl className="dash-reseau-dl">
+                <div className="dash-reseau-dl-row">
+                  <dt>{t('rpc.hash')}</dt>
+                  <dd className="mono">{snap.latestBlock ? shortHash(snap.latestBlock.hash) : '—'}</dd>
+                </div>
+                <div className="dash-reseau-dl-row">
+                  <dt>{t('rpc.tsUtc')}</dt>
+                  <dd>
+                    {snap.latestBlock
+                      ? new Date(snap.latestBlock.timestampUnix * 1000).toLocaleString(loc, { hour12: false })
+                      : '—'}
+                  </dd>
+                </div>
+                <div className="dash-reseau-dl-row">
+                  <dt>{t('rpc.txs')}</dt>
+                  <dd>{snap.latestBlock?.txCount ?? '—'}</dd>
+                </div>
+                <div className="dash-reseau-dl-row">
+                  <dt>{t('rpc.gasUsedLimit')}</dt>
+                  <dd className="mono">
+                    {snap.latestBlock
+                      ? `${gasUtilPct(snap.latestBlock.gasUsed, snap.latestBlock.gasLimit, loc)} · ${snap.latestBlock.gasUsed.toString()} / ${snap.latestBlock.gasLimit.toString()}`
+                      : '—'}
+                  </dd>
+                </div>
+                <div className="dash-reseau-dl-row">
+                  <dt>{t('rpc.baseFeeBlock')}</dt>
+                  <dd>
+                    {snap.latestBlock?.baseFeePerGas != null
+                      ? weiToGweiDisplay(snap.latestBlock.baseFeePerGas)
+                      : '—'}
+                  </dd>
+                </div>
+                <div className="dash-reseau-dl-row">
+                  <dt>{t('rpc.baseFeeHistory')}</dt>
+                  <dd>{snap.feeNextBase != null ? weiToGweiDisplay(snap.feeNextBase) : '—'}</dd>
+                </div>
+                <div className="dash-reseau-dl-row">
+                  <dt>{t('rpc.interBlock')}</dt>
+                  <dd>{interBlockSec != null ? `${interBlockSec.toLocaleString(loc)} s` : '—'}</dd>
+                </div>
+              </dl>
+            </section>
 
-          <section className="dash-reseau-detail-card" aria-labelledby="reseau-supply">
-            <h3 id="reseau-supply" className="dash-reseau-detail-card__title">
-              totalSupply (eth_call)
-            </h3>
-            <dl className="dash-reseau-dl">
-              <div className="dash-reseau-dl-row">
-                <dt>USDr</dt>
-                <dd className="mono">{fmtE18(snap.usdrTotalSupplyWei)}</dd>
-              </div>
-              <div className="dash-reseau-dl-row">
-                <dt>RLS</dt>
-                <dd className="mono">{fmtE18(snap.rlsTotalSupplyWei)}</dd>
-              </div>
-            </dl>
-          </section>
+            <section className="dash-reseau-detail-card" aria-labelledby="reseau-supply">
+              <h3 id="reseau-supply" className="dash-reseau-detail-card__title">
+                {t('rpc.totalSupply')}
+              </h3>
+              <dl className="dash-reseau-dl">
+                <div className="dash-reseau-dl-row">
+                  <dt>USDr</dt>
+                  <dd className="mono">{fmtE18(snap.usdrTotalSupplyWei, loc)}</dd>
+                </div>
+                <div className="dash-reseau-dl-row">
+                  <dt>RLS</dt>
+                  <dd className="mono">{fmtE18(snap.rlsTotalSupplyWei, loc)}</dd>
+                </div>
+              </dl>
+            </section>
           </div>
         </div>
       )}
 
       {snap.status === 'error' && (
         <div className="dash-alert dash-alert--err" role="alert">
-          <strong>Erreur RPC</strong> — {snap.error}
-          <p className="dash-alert-sub">Si CORS bloque le navigateur, servez l’app derrière un proxy same-origin.</p>
+          <strong>{t('rpc.rpcError')}</strong> — {snap.error}
+          <p className="dash-alert-sub">{t('rpc.rpcErrorSub')}</p>
         </div>
       )}
     </section>
@@ -496,7 +505,7 @@ export function RpcLiveBlock() {
 }
 
 /** Compte à rebours : intervalle 100 ms ; resync différé quand le batch est replanifié (évite setState synchrone dans l’effet). */
-function RpcNextBatchCountdown({ deadlineMs }: { deadlineMs: number }) {
+function RpcNextBatchCountdown({ deadlineMs, localeTag: loc }: { deadlineMs: number; localeTag: string }) {
   const [now, setNow] = useState(() => Date.now())
   useEffect(() => {
     const tick = () => setNow(Date.now())
@@ -517,7 +526,6 @@ function RpcNextBatchCountdown({ deadlineMs }: { deadlineMs: number }) {
   const label =
     msLeft < 1000
       ? `${Math.ceil(msLeft)} ms`
-      : `${(msLeft / 1000).toLocaleString('fr-FR', { minimumFractionDigits: 1, maximumFractionDigits: 1 })} s`
+      : `${(msLeft / 1000).toLocaleString(loc, { minimumFractionDigits: 1, maximumFractionDigits: 1 })} s`
   return <strong>{label}</strong>
 }
-

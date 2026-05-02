@@ -1,19 +1,22 @@
-import { LIVE_SPOT_INTERVAL_MS, formatPollIntervalFr } from '../constants/dashboard'
+import { LIVE_SPOT_INTERVAL_MS, formatPollInterval } from '../constants/dashboard'
+import type { Locale } from '../i18n/types'
 import { mexcSpotStreamEnabled } from './mexcSpotStream'
 
+type TFn = (key: string, vars?: Record<string, string | number>) => string
+
 /** Texte de la barre de cadence « marché » (Spot, vue d’ensemble). */
-export function marketCadenceBarMessage(): string {
-  const cg = formatPollIntervalFr(LIVE_SPOT_INTERVAL_MS)
+export function marketCadenceBarMessage(t: TFn, locale: Locale): string {
+  const cg = formatPollInterval(LIVE_SPOT_INTERVAL_MS, locale)
   if (mexcSpotStreamEnabled()) {
-    return `Temps réel marché · spot USD MEXC (WebSocket) + CoinGecko ${cg} pour EUR, historique et agrégats (quota API)`
+    return t('cadence.market.withMexc', { interval: cg })
   }
-  return `Temps réel marché · spot CoinGecko ${cg} (ajustable, sous quota API)`
+  return t('cadence.market.cgOnly', { interval: cg })
 }
 
 /** Sous-titre court page Spot. */
-export function spotPageLeadText(): string {
+export function spotPageLeadText(t: TFn): string {
   if (mexcSpotStreamEnabled()) {
-    return 'Courbe principale, spot USD (MEXC) complété par CoinGecko (EUR, historique, agrégats).'
+    return t('spot.lead.mexc')
   }
-  return 'Courbe principale, puis spot, indicateurs et agrégats CoinGecko.'
+  return t('spot.lead.cg')
 }

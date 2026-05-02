@@ -1,21 +1,24 @@
 import { PageHero, RefreshCadenceBar } from '../components/layout'
 import { RpcLiveBlock } from '../components/rpc'
+import { useI18n } from '../i18n'
 import { RAYLS_MAINNET } from '../raylsConfig'
 
 export function ReseauPage() {
+  const { t } = useI18n()
+
   return (
     <div className="dash-page dash-reseau-page">
       <PageHero
-        title="Réseau public Rayls"
-        lead="Mesure live depuis le navigateur vers le RPC documenté : latence batch, bloc, gas — sans serveur relais."
+        title={t('reseau.title')}
+        lead={t('reseau.lead')}
         meta={
-          <dl className="dash-page-hero-facts" aria-label="Identifiants documentés">
+          <dl className="dash-page-hero-facts" aria-label={t('reseau.factsAria')}>
             <div className="dash-page-hero-fact">
-              <dt>Chain ID</dt>
+              <dt>{t('common.chainId')}</dt>
               <dd className="mono">{RAYLS_MAINNET.expectedChainIdDecimal}</dd>
             </div>
             <div className="dash-page-hero-fact">
-              <dt>Réseau</dt>
+              <dt>{t('reseau.network')}</dt>
               <dd>{RAYLS_MAINNET.name}</dd>
             </div>
           </dl>

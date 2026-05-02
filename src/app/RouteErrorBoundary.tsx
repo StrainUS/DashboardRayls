@@ -1,6 +1,6 @@
 import { Component, type ErrorInfo, type ReactNode } from 'react'
 
-type Props = { children: ReactNode }
+type Props = { children: ReactNode; message: string; reloadLabel: string }
 
 type State = { hasError: boolean }
 
@@ -25,9 +25,9 @@ export class RouteErrorBoundary extends Component<Props, State> {
     if (this.state.hasError) {
       return (
         <div className="dash-route-fallback dash-route-fallback--error" role="alert">
-          <p>Cette vue n’a pas pu être chargée (réseau ou mise à jour en cours).</p>
+          <p>{this.props.message}</p>
           <button type="button" className="dash-btn" onClick={() => window.location.reload()}>
-            Recharger la page
+            {this.props.reloadLabel}
           </button>
         </div>
       )

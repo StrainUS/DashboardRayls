@@ -362,6 +362,52 @@
   color: var(--muted);
 }
 
+.site-header__lang {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-right: 10px;
+  padding: 4px 6px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--border-subtle, rgba(255, 255, 255, 0.08));
+}
+
+.site-header__lang-label {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.site-header__lang-btn {
+  font: inherit;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  padding: 4px 8px;
+  border: none;
+  border-radius: 999px;
+  cursor: pointer;
+  background: transparent;
+  color: var(--dim, rgba(255, 255, 255, 0.55));
+  transition: background 0.15s, color 0.15s;
+}
+
+.site-header__lang-btn:hover {
+  color: var(--text, #fff);
+}
+
+.site-header__lang-btn--active {
+  background: rgba(255, 255, 255, 0.12);
+  color: var(--text, #fff);
+}
+
 .site-header__toolbar {
   max-width: var(--dash-max-width);
   margin: 0 auto;

@@ -1,10 +1,16 @@
-import { memo, useEffect, useRef } from 'react'
+import { memo, useEffect, useLayoutEffect, useRef } from 'react'
 
 export type LatencySample = { t: number; ms: number }
 
 type Props = {
   /** Une entrée par mesure RPC (timestamp + latence brute). */
   samples: LatencySample[]
+  /** `fr-FR` / `en-US` — format des graduations. */
+  localeTag?: string
+  /** Canvas vide (aucun échantillon). */
+  emptyLabel?: string
+  /** Accessibilité du canvas. */
+  ariaLabel?: string
   className?: string
 }
 
@@ -24,9 +30,9 @@ function yBounds(minV: number, maxV: number): { lo: number; hi: number } {
   return { lo: lo - pad, hi: hi + pad }
 }
 
-function fmtMsAxis(n: number, span: number): string {
+function fmtMsAxis(n: number, span: number, loc: string): string {
   const maxFrac = span >= 180 ? 0 : span >= 40 ? 0 : 1
-  return n.toLocaleString('fr-FR', {
+  return n.toLocaleString(loc, {
     maximumFractionDigits: maxFrac,
     minimumFractionDigits: 0,
   })
@@ -57,15 +63,29 @@ function sortedByT(samples: LatencySample[]): LatencySample[] {
 /**
  * Graphique latence **réelle** : pas de lissage ni rAF continu — une mesure = un point, segments droits, axes lisibles.
  */
-function LatencyChartCanvasInner({ samples, className }: Props) {
+function LatencyChartCanvasInner({
+  samples,
+  localeTag = 'fr-FR',
+  emptyLabel = '…',
+  ariaLabel = 'Latency',
+  className,
+}: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const samplesRef = useRef(samples)
+  const localeRef = useRef(localeTag)
+  const emptyRef = useRef(emptyLabel)
   const drawRef = useRef<() => void>(() => {})
 
   useEffect(() => {
     samplesRef.current = samples
     drawRef.current()
   }, [samples])
+
+  useLayoutEffect(() => {
+    localeRef.current = localeTag
+    emptyRef.current = emptyLabel
+    drawRef.current()
+  }, [localeTag, emptyLabel])
 
   useEffect(() => {
     const canvas = canvasRef.current
@@ -105,7 +125,7 @@ function LatencyChartCanvasInner({ samples, className }: Props) {
         ctx.textBaseline = 'middle'
         ctx.fillStyle = 'rgba(161, 161, 170, 0.65)'
         ctx.font = '12px system-ui, sans-serif'
-        ctx.fillText('En attente de mesures RPC…', w / 2, h / 2)
+        ctx.fillText(emptyRef.current, w / 2, h / 2)
         return
       }
 
@@ -122,7 +142,7 @@ function LatencyChartCanvasInner({ samples, className }: Props) {
       let maxLabelW = 34
       for (let i = 0; i <= Y_TICKS; i++) {
         const v = lo + (i / Y_TICKS) * (hi - lo)
-        maxLabelW = Math.max(maxLabelW, ctx.measureText(fmtMsAxis(v, ySpan)).width)
+        maxLabelW = Math.max(maxLabelW, ctx.measureText(fmtMsAxis(v, ySpan, localeRef.current)).width)
       }
       const minPlotW = 64
       const desiredLeft = Math.max(40, Math.ceil(maxLabelW + AXIS_LABEL_GAP))
@@ -155,7 +175,7 @@ function LatencyChartCanvasInner({ samples, className }: Props) {
         ctx.font = AXIS_FONT
         ctx.textAlign = 'right'
         ctx.textBaseline = 'middle'
-        ctx.fillText(fmtMsAxis(v, ySpan), chartL - 4, y)
+        ctx.fillText(fmtMsAxis(v, ySpan, localeRef.current), chartL - 4, y)
       }
 
       const step = timeTickStep(tSpan)
@@ -173,10 +193,11 @@ function LatencyChartCanvasInner({ samples, className }: Props) {
         ctx.lineTo(x, chartB)
         ctx.stroke()
         const d = new Date(tx)
+        const loc = localeRef.current
         const lab =
           tSpan <= 120_000
-            ? d.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit', second: '2-digit' })
-            : d.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })
+            ? d.toLocaleTimeString(loc, { hour: '2-digit', minute: '2-digit', second: '2-digit' })
+            : d.toLocaleTimeString(loc, { hour: '2-digit', minute: '2-digit' })
         ctx.fillText(lab, x, chartB + 6)
       }
 
@@ -245,7 +266,7 @@ function LatencyChartCanvasInner({ samples, className }: Props) {
       ref={canvasRef}
       className={className ?? 'latency-canvas'}
       role="img"
-      aria-label="Graphique de latence RPC, une mesure par point"
+      aria-label={ariaLabel}
     />
   )
 }

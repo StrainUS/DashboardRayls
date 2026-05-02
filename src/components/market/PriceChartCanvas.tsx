@@ -5,6 +5,9 @@ type Props = {
   prices: [number, number][]
   /** Devise des valeurs `prices` (libellés axe / infobulle). */
   vsCurrency?: ChartVsCurrency
+  /** `fr-FR` / `en-US`. */
+  localeTag?: string
+  ariaLabel?: string
   className?: string
 }
 
@@ -27,8 +30,8 @@ function decimatePrices(pts: [number, number][], max: number): [number, number][
   return out
 }
 
-function formatPriceFiat(n: number) {
-  return n.toLocaleString('fr-FR', { minimumFractionDigits: 6, maximumFractionDigits: 8 })
+function formatPriceFiat(n: number, loc: string) {
+  return n.toLocaleString(loc, { minimumFractionDigits: 6, maximumFractionDigits: 8 })
 }
 
 function fiatSymbol(vs: ChartVsCurrency): string {
@@ -36,24 +39,24 @@ function fiatSymbol(vs: ChartVsCurrency): string {
 }
 
 /** Libellés axe Y proches CoinGecko (€ / $ avec décimales adaptées). */
-function formatAxisPrice(n: number): string {
+function formatAxisPrice(n: number, loc: string): string {
   const a = Math.abs(n)
   if (a >= 1)
-    return n.toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+    return n.toLocaleString(loc, { minimumFractionDigits: 2, maximumFractionDigits: 2 })
   if (a >= 0.01)
-    return n.toLocaleString('fr-FR', { minimumFractionDigits: 4, maximumFractionDigits: 4 })
-  return n.toLocaleString('fr-FR', { minimumFractionDigits: 6, maximumFractionDigits: 6 })
+    return n.toLocaleString(loc, { minimumFractionDigits: 4, maximumFractionDigits: 4 })
+  return n.toLocaleString(loc, { minimumFractionDigits: 6, maximumFractionDigits: 6 })
 }
 
-function formatAxisTime(ts: number, rangeMs: number): string {
+function formatAxisTime(ts: number, rangeMs: number, loc: string): string {
   const d = new Date(ts)
   if (rangeMs <= 48 * 60 * 60 * 1000) {
-    return d.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit', hour12: false })
+    return d.toLocaleTimeString(loc, { hour: '2-digit', minute: '2-digit', hour12: false })
   }
   if (rangeMs <= 14 * 24 * 60 * 60 * 1000) {
-    return d.toLocaleString('fr-FR', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })
+    return d.toLocaleString(loc, { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })
   }
-  return d.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })
+  return d.toLocaleDateString(loc, { day: 'numeric', month: 'short' })
 }
 
 function yAxisBounds(loRaw: number, hiRaw: number): { lo: number; hi: number } {
@@ -165,10 +168,17 @@ function addSmoothCurvePath(ctx: CanvasRenderingContext2D, points: Pt[], closeBo
 /**
  * Courbe prix style CoinGecko : axes, temps, lissage, dégradé, point live en bout de courbe.
  */
-export function PriceChartCanvas({ prices, vsCurrency = 'usd', className }: Props) {
+export function PriceChartCanvas({
+  prices,
+  vsCurrency = 'usd',
+  localeTag = 'fr-FR',
+  ariaLabel,
+  className,
+}: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const pricesRef = useRef(prices)
   const vsRef = useRef(vsCurrency)
+  const localeRef = useRef(localeTag)
   /** Index série pour la ligne hover — ref pour ne pas relancer l’effet canvas à chaque pixel. */
   const hoverIdxRef = useRef<number | null>(null)
   const drawRef = useRef<() => void>(() => {})
@@ -285,7 +295,7 @@ export function PriceChartCanvas({ prices, vsCurrency = 'usd', className }: Prop
       for (const v of yTicks) {
         const yg = ny(v)
         if (yg >= chartTop - 2 && yg <= chartBottom + 2) {
-          ctx.fillText(formatAxisPrice(v), chartLeft - 8, yg)
+          ctx.fillText(formatAxisPrice(v, localeRef.current), chartLeft - 8, yg)
         }
       }
 
@@ -295,7 +305,7 @@ export function PriceChartCanvas({ prices, vsCurrency = 'usd', className }: Prop
       for (const ts of xTicks) {
         const xg = nxTime(ts)
         if (xg >= chartLeft - 1 && xg <= chartRight + 1) {
-          ctx.fillText(formatAxisTime(ts, tSpanMs), xg, chartBottom + 6)
+          ctx.fillText(formatAxisTime(ts, tSpanMs, localeRef.current), xg, chartBottom + 6)
         }
       }
 
@@ -323,10 +333,11 @@ export function PriceChartCanvas({ prices, vsCurrency = 'usd', className }: Prop
       const lx = nxTime(last[0])
       const ly = ny(last[1])
       const sym = fiatSymbol(vsRef.current)
+      const loc = localeRef.current
       const label =
         vsRef.current === 'eur'
-          ? `${formatAxisPrice(last[1])} ${sym}`
-          : `${sym}${formatAxisPrice(last[1])}`
+          ? `${formatAxisPrice(last[1], loc)} ${sym}`
+          : `${sym}${formatAxisPrice(last[1], loc)}`
 
       ctx.save()
       ctx.fillStyle = 'rgba(74, 222, 128, 0.45)'
@@ -421,6 +432,11 @@ export function PriceChartCanvas({ prices, vsCurrency = 'usd', className }: Prop
     drawRef.current()
   }, [vsCurrency])
 
+  useLayoutEffect(() => {
+    localeRef.current = localeTag
+    drawRef.current()
+  }, [localeTag])
+
   const onPointerMove = (e: React.PointerEvent<HTMLCanvasElement>) => {
     cancelAnimationFrame(pointerRafRef.current)
     pointerRafRef.current = requestAnimationFrame(() => {
@@ -476,7 +492,7 @@ export function PriceChartCanvas({ prices, vsCurrency = 'usd', className }: Prop
         ref={canvasRef}
         className={className ?? 'price-canvas'}
         role="img"
-        aria-label={vsCurrency === 'eur' ? 'Courbe de prix en euros' : 'Courbe de prix en dollars'}
+        aria-label={ariaLabel ?? (vsCurrency === 'eur' ? 'Courbe de prix en euros' : 'Courbe de prix en dollars')}
         onPointerMove={onPointerMove}
         onPointerLeave={onPointerLeave}
         style={{ cursor: 'crosshair', touchAction: 'none' }}
@@ -491,11 +507,11 @@ export function PriceChartCanvas({ prices, vsCurrency = 'usd', className }: Prop
         >
           <div className="price-chart-tooltip-price">
             {vsCurrency === 'eur'
-              ? `${formatPriceFiat(hoverPoint[1])} €`
-              : `$${formatPriceFiat(hoverPoint[1])}`}
+              ? `${formatPriceFiat(hoverPoint[1], localeTag)} €`
+              : `$${formatPriceFiat(hoverPoint[1], localeTag)}`}
           </div>
           <div className="price-chart-tooltip-time">
-            {new Date(hoverPoint[0]).toLocaleString('fr-FR', {
+            {new Date(hoverPoint[0]).toLocaleString(localeTag, {
               day: '2-digit',
               month: 'short',
               hour: '2-digit',

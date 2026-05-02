@@ -1,9 +1,11 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { OFFICIAL_HUB_REFRESH_MS } from '../../constants/dashboard'
+import { useI18n } from '../../i18n'
+import { localeTag } from '../../i18n/translate'
 import { isSafeHttpOrHttpsUrl } from '../../lib/safeUrl'
 import { RAYLS_MAINNET, RAYLS_OFFICIAL } from '../../raylsConfig'
 import { fetchRaylsCirculatingSupply, fetchRaylsTotalSupply } from '../../raylsOfficial'
 import { fetchCgCoinDetailLite, type CoinDetailLite } from '../../raylsMarket'
-import { OFFICIAL_HUB_REFRESH_MS } from '../../constants/dashboard'
 
 type SupplyState = {
   circulating: string | null
@@ -20,6 +22,8 @@ const emptySupply: SupplyState = {
 }
 
 export function OfficialRaylsHub() {
+  const { t, locale } = useI18n()
+  const loc = localeTag(locale)
   const [supply, setSupply] = useState<SupplyState>(emptySupply)
   const [coin, setCoin] = useState<CoinDetailLite | null>(null)
   const [coinErr, setCoinErr] = useState<string | null>(null)
@@ -87,18 +91,18 @@ export function OfficialRaylsHub() {
   }, [loadHub])
 
   const baseLinks: { label: string; href: string }[] = [
-    { label: 'Site', href: RAYLS_OFFICIAL.site },
-    { label: 'Bridge / seeding', href: RAYLS_OFFICIAL.bridge },
-    { label: 'Documentation', href: RAYLS_OFFICIAL.docs },
-    { label: 'Blog', href: RAYLS_OFFICIAL.blog },
-    { label: 'Litepaper', href: RAYLS_OFFICIAL.litepaper },
-    { label: 'PoU dashboard', href: RAYLS_OFFICIAL.pouDashboard },
-    { label: 'Linktree', href: RAYLS_OFFICIAL.linktree },
-    { label: 'Token Ethereum (Etherscan)', href: RAYLS_OFFICIAL.etherscanToken },
-    { label: 'Token BSC (BscScan)', href: RAYLS_OFFICIAL.bscscanToken },
-    { label: 'CoinMarketCap', href: RAYLS_OFFICIAL.coinMarketCap },
-    { label: 'Explorateur mainnet (Blockscout)', href: RAYLS_MAINNET.explorerUrl },
-    { label: 'RPC mainnet (référence doc)', href: RAYLS_MAINNET.docsUrl },
+    { label: t('officialHub.site'), href: RAYLS_OFFICIAL.site },
+    { label: t('officialHub.bridge'), href: RAYLS_OFFICIAL.bridge },
+    { label: t('officialHub.docs'), href: RAYLS_OFFICIAL.docs },
+    { label: t('officialHub.blog'), href: RAYLS_OFFICIAL.blog },
+    { label: t('officialHub.litepaper'), href: RAYLS_OFFICIAL.litepaper },
+    { label: t('officialHub.pou'), href: RAYLS_OFFICIAL.pouDashboard },
+    { label: t('officialHub.linktree'), href: RAYLS_OFFICIAL.linktree },
+    { label: t('officialHub.ethToken'), href: RAYLS_OFFICIAL.etherscanToken },
+    { label: t('officialHub.bscToken'), href: RAYLS_OFFICIAL.bscscanToken },
+    { label: t('officialHub.cmc'), href: RAYLS_OFFICIAL.coinMarketCap },
+    { label: t('officialHub.explorer'), href: RAYLS_MAINNET.explorerUrl },
+    { label: t('officialHub.rpcDoc'), href: RAYLS_MAINNET.docsUrl },
   ]
   const seen = new Set(baseLinks.map((l) => l.href.toLowerCase()))
   const extra =
@@ -121,11 +125,11 @@ export function OfficialRaylsHub() {
     <section className="dash-panel dash-panel--official" aria-labelledby="official-heading">
       <div className="dash-panel-head dash-panel-head--tight">
         <h2 id="official-heading" className="dash-panel-title">
-          API & liens
+          {t('officialHub.title')}
         </h2>
         {hubUpdatedAt != null ? (
-          <span className="dash-panel-meta-muted" title="Dernier rafraîchissement">
-            {new Date(hubUpdatedAt).toLocaleTimeString('fr-FR', { hour12: false })}
+          <span className="dash-panel-meta-muted" title={t('officialHub.refreshed')}>
+            {new Date(hubUpdatedAt).toLocaleTimeString(loc, { hour12: false })}
           </span>
         ) : null}
       </div>
@@ -134,7 +138,7 @@ export function OfficialRaylsHub() {
 
       <div className="official-grid">
         <div className="card card--inset">
-          <div className="label">Circulating supply</div>
+          <div className="label">{t('officialHub.circulating')}</div>
           <div className="value value-sm mono">
             {loading && !supply.circulating && !supply.circulatingErr
               ? '…'
@@ -142,17 +146,17 @@ export function OfficialRaylsHub() {
           </div>
           {supply.circulatingErr && <div className="sub err-inline">{supply.circulatingErr}</div>}
           <a className="link-quiet" href={RAYLS_OFFICIAL.circulatingSupplyApi} target="_blank" rel="noopener noreferrer">
-            Endpoint →
+            {t('officialHub.endpoint')}
           </a>
         </div>
         <div className="card card--inset">
-          <div className="label">Total supply</div>
+          <div className="label">{t('officialHub.total')}</div>
           <div className="value value-sm mono">
             {loading && !supply.total && !supply.totalErr ? '…' : supply.total ?? '—'}
           </div>
           {supply.totalErr && <div className="sub err-inline">{supply.totalErr}</div>}
           <a className="link-quiet" href={RAYLS_OFFICIAL.totalSupplyApi} target="_blank" rel="noopener noreferrer">
-            Endpoint →
+            {t('officialHub.endpoint')}
           </a>
         </div>
       </div>

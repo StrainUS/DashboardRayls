@@ -3,30 +3,14 @@ import {
   OFFICIAL_HUB_REFRESH_MS,
   RPC_POLL_INTERVAL_MS,
   TESTNET_TELEMETRY_POLL_MS,
-  formatPollIntervalFr,
+  formatPollInterval,
 } from '../../constants/dashboard'
+import { useI18n } from '../../i18n'
 import { marketCadenceBarMessage } from '../../lib/marketCadenceCopy'
 
 type Props =
   | { kind: 'rpc' | 'market' | 'hub' | 'news' | 'testnet' }
   | { kind: 'custom'; label: string }
-
-function messageFor(props: Props): string {
-  if (props.kind === 'custom') return props.label
-  if (props.kind === 'rpc') {
-    return `Temps réel · batch HTTP ${formatPollIntervalFr(RPC_POLL_INTERVAL_MS)} · blocs poussés en WebSocket si le endpoint l’expose`
-  }
-  if (props.kind === 'market') {
-    return marketCadenceBarMessage()
-  }
-  if (props.kind === 'hub') {
-    return `Rythme modéré · endpoints api.rayls.com ${formatPollIntervalFr(OFFICIAL_HUB_REFRESH_MS)}`
-  }
-  if (props.kind === 'news') {
-    return `Actualités · re-fetch ${formatPollIntervalFr(NEWS_AND_DOCS_REFRESH_MS)} si un flux JSON est configuré`
-  }
-  return `Testnet · télémétrie ${formatPollIntervalFr(TESTNET_TELEMETRY_POLL_MS)}`
-}
 
 const VARIANT = {
   rpc: 'live',
@@ -37,6 +21,21 @@ const VARIANT = {
 } as const
 
 export function RefreshCadenceBar(props: Props) {
+  const { locale, t } = useI18n()
+
+  const text =
+    props.kind === 'custom'
+      ? props.label
+      : props.kind === 'rpc'
+        ? t('cadence.rpc', { interval: formatPollInterval(RPC_POLL_INTERVAL_MS, locale) })
+        : props.kind === 'market'
+          ? marketCadenceBarMessage(t, locale)
+          : props.kind === 'hub'
+            ? t('cadence.hub', { interval: formatPollInterval(OFFICIAL_HUB_REFRESH_MS, locale) })
+            : props.kind === 'news'
+              ? t('cadence.news', { interval: formatPollInterval(NEWS_AND_DOCS_REFRESH_MS, locale) })
+              : t('cadence.testnet', { interval: formatPollInterval(TESTNET_TELEMETRY_POLL_MS, locale) })
+
   const variant = props.kind === 'custom' ? 'custom' : VARIANT[props.kind]
   const isLive = variant === 'live'
   return (
@@ -46,7 +45,7 @@ export function RefreshCadenceBar(props: Props) {
       aria-live="polite"
     >
       <span className={`dash-cadence-bar__dot${isLive ? ' dash-cadence-bar__dot--pulse' : ''}`} aria-hidden />
-      <span className="dash-cadence-bar__text">{messageFor(props)}</span>
+      <span className="dash-cadence-bar__text">{text}</span>
     </p>
   )
 }

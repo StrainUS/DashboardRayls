@@ -1,14 +1,19 @@
 import { PageHero, RefreshCadenceBar } from '../components/layout'
 import { OfficialRaylsHub } from '../components/official'
+import { useI18n } from '../i18n'
 
 export function ReferentielPage() {
+  const { t } = useI18n()
+
   return (
     <div className="dash-page">
       <PageHero
-        title="Référentiel Rayls"
-        lead="Supplies via api.rayls.com, liens vers les canaux documentés par Rayls, et métadonnées CoinGecko — chaque donnée reste attribuée à sa source."
+        title={t('referentiel.title')}
+        lead={t('referentiel.lead')}
         meta={
-          <span className="dash-page-badge dash-page-badge--chip dash-page-badge--chip-accent">Hub public</span>
+          <span className="dash-page-badge dash-page-badge--chip dash-page-badge--chip-accent">
+            {t('referentiel.hubBadge')}
+          </span>
         }
       />
       <div className="dash-page-body">

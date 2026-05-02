@@ -2,13 +2,31 @@ import { Link, NavLink } from 'react-router-dom'
 import { prefetchDashboardRoute } from '../../app/prefetchRoutes'
 import { APP_PAGES } from '../../constants/appRoutes'
 import { BRANDING } from '../../constants/branding'
+import { useI18n, type Locale } from '../../i18n'
 import { RAYLS_MAINNET, RAYLS_OFFICIAL } from '../../raylsConfig'
 
 function appNavClass({ isActive }: { isActive: boolean }) {
   return `site-pill-link${isActive ? ' site-pill-link--active' : ''}`
 }
 
+function navLabelKey(path: (typeof APP_PAGES)[number]['path']): string {
+  const map: Record<(typeof APP_PAGES)[number]['path'], string> = {
+    overview: 'nav.overview',
+    reseau: 'nav.reseau',
+    spot: 'nav.spot',
+    chaine: 'nav.chaine',
+    referentiel: 'nav.referentiel',
+  }
+  return map[path]
+}
+
 export function DashboardHeader() {
+  const { locale, setLocale, t } = useI18n()
+
+  const setLang = (next: Locale) => {
+    setLocale(next)
+  }
+
   return (
     <header className="site-header">
       <div className="site-header__inner">
@@ -16,7 +34,7 @@ export function DashboardHeader() {
           <Link
             to="/"
             className="site-header__logo-link"
-            aria-label={`${BRANDING.appNameShort} — accueil`}
+            aria-label={t('branding.homeAria', { short: t('branding.appNameShort') })}
           >
             <img
               className="site-header__logo site-header__logo--official"
@@ -31,10 +49,10 @@ export function DashboardHeader() {
             <p className="site-header__kicker">Rayls</p>
             <p className="site-header__title">
               <Link to="/" className="site-header__title-link">
-                {BRANDING.appName}
+                {t('branding.appName')}
               </Link>
             </p>
-            <p className="site-header__subtitle">{BRANDING.appNameShort}</p>
+            <p className="site-header__subtitle">{t('branding.appNameShort')}</p>
           </div>
         </div>
       </div>
@@ -42,10 +60,33 @@ export function DashboardHeader() {
       <div className="site-header__toolbar">
         <nav
           className="site-header__toolbar-nav"
-          aria-label="Vues du tableau de bord et ressources Rayls"
+          aria-label={t('nav.toolbarAria')}
         >
           <div className="site-header__nav-rail">
-            {APP_PAGES.map(({ path, href, label }) => (
+            <div className="site-header__lang" role="group" aria-label={t('lang.switch')}>
+              <span className="site-header__lang-label" id="lang-label">
+                {t('lang.switch')}
+              </span>
+              <button
+                type="button"
+                className={`site-header__lang-btn${locale === 'fr' ? ' site-header__lang-btn--active' : ''}`}
+                aria-pressed={locale === 'fr'}
+                aria-labelledby="lang-label"
+                onClick={() => setLang('fr')}
+              >
+                {t('lang.fr')}
+              </button>
+              <button
+                type="button"
+                className={`site-header__lang-btn${locale === 'en' ? ' site-header__lang-btn--active' : ''}`}
+                aria-pressed={locale === 'en'}
+                aria-labelledby="lang-label"
+                onClick={() => setLang('en')}
+              >
+                {t('lang.en')}
+              </button>
+            </div>
+            {APP_PAGES.map(({ path, href }) => (
               <NavLink
                 key={path}
                 to={href}
@@ -54,7 +95,7 @@ export function DashboardHeader() {
                 onMouseEnter={() => prefetchDashboardRoute(href)}
                 onFocus={() => prefetchDashboardRoute(href)}
               >
-                {label}
+                {t(navLabelKey(path))}
               </NavLink>
             ))}
             <span className="site-header__nav-rail-split" aria-hidden />
@@ -64,7 +105,7 @@ export function DashboardHeader() {
               target="_blank"
               rel="noopener noreferrer"
             >
-              Site
+              {t('nav.site')}
             </a>
             <a
               className="site-pill-link site-pill-link--external"
@@ -72,7 +113,7 @@ export function DashboardHeader() {
               target="_blank"
               rel="noopener noreferrer"
             >
-              Documentation
+              {t('nav.docs')}
             </a>
             <a
               className="site-pill-link site-pill-link--external"
@@ -80,16 +121,16 @@ export function DashboardHeader() {
               target="_blank"
               rel="noopener noreferrer"
             >
-              Explorateur
+              {t('nav.explorer')}
             </a>
             <a
               className="site-pill-link site-pill-link--external"
               href={RAYLS_MAINNET.docsUrl}
               target="_blank"
               rel="noopener noreferrer"
-              title="Chain ID, RPC et paramètres réseau publics"
+              title={t('nav.chainParamsTitle')}
             >
-              Paramètres chaîne
+              {t('nav.chainParams')}
             </a>
           </div>
         </nav>

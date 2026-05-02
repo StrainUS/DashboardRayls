@@ -1,5 +1,6 @@
 import { lazy, Suspense, type ReactNode } from 'react'
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
+import { useI18n } from '../i18n'
 import { AppLayout } from './AppLayout'
 import { RouteErrorBoundary } from './RouteErrorBoundary'
 import { OverviewPage } from '../pages/OverviewPage'
@@ -12,24 +13,32 @@ const ReferentielPage = lazy(() =>
 )
 
 function RouteFallback() {
+  const { t } = useI18n()
   return (
     <div className="dash-route-fallback" aria-busy="true" aria-live="polite">
-      Chargement de la vue…
+      {t('common.loadingRoute')}
     </div>
   )
 }
 
 function LazyShell({ children }: { children: ReactNode }) {
+  const { t } = useI18n()
   return (
-    <RouteErrorBoundary>
+    <RouteErrorBoundary message={t('common.routeError')} reloadLabel={t('common.reload')}>
       <Suspense fallback={<RouteFallback />}>{children}</Suspense>
     </RouteErrorBoundary>
   )
 }
 
+function RouterBasename() {
+  const raw = import.meta.env.BASE_URL ?? '/'
+  const basename = raw === '/' ? '' : raw.replace(/\/$/, '')
+  return basename
+}
+
 export default function App() {
   return (
-    <BrowserRouter>
+    <BrowserRouter basename={RouterBasename()}>
       <Routes>
         <Route path="/" element={<AppLayout />}>
           <Route index element={<OverviewPage />} />

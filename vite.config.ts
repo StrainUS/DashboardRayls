@@ -9,7 +9,11 @@ export default defineConfig(({ mode }) => {
   const usePro = proKey.length > 0
   const target = usePro ? 'https://pro-api.coingecko.com' : 'https://api.coingecko.com'
 
+  const baseRaw = (env.VITE_BASE_PATH || '/').trim()
+  const base = baseRaw.endsWith('/') ? baseRaw : `${baseRaw}/`
+
   return {
+    base,
     plugins: [react()],
     build: {
       sourcemap: false,

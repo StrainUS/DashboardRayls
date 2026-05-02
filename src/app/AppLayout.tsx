@@ -2,15 +2,18 @@ import { Outlet } from 'react-router-dom'
 import { RouteDocumentTitle } from './RouteDocumentTitle'
 import { DashboardHeader } from '../components/layout'
 import { BRANDING } from '../constants/branding'
+import { useI18n } from '../i18n'
 import { RAYLS_MAINNET } from '../raylsConfig'
 
 /** Layout global : en-tête unifié, contenu de route, mentions et pied de page. */
 export function AppLayout() {
+  const { t } = useI18n()
+
   return (
     <div className="dash-root">
       <RouteDocumentTitle />
       <a className="skip-link" href="#contenu-principal">
-        Aller au contenu
+        {t('common.skipContent')}
       </a>
       <div className="dash-sticky-top">
         <DashboardHeader />
@@ -19,7 +22,7 @@ export function AppLayout() {
         <div className="dash-main__container">
           <Outlet />
           <p className="dash-disclaimer" role="note">
-            {BRANDING.disclaimer} Chaîne cible : Rayls mainnet (chain ID {RAYLS_MAINNET.expectedChainIdDecimal}).
+            {t('branding.disclaimer')} {t('common.targetChain', { id: RAYLS_MAINNET.expectedChainIdDecimal })}
           </p>
         </div>
       </main>
@@ -35,7 +38,7 @@ export function AppLayout() {
           />
           <div className="site-footer__text">
             <span className="site-footer__brand">Rayls</span>
-            <span className="site-footer__meta">{BRANDING.footerLine}</span>
+            <span className="site-footer__meta">{t('branding.footerLine')}</span>
           </div>
         </div>
       </footer>

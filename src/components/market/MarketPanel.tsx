@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
-  TIMEFRAME_BY_ID,
   type TimeframeId,
   type ChartVsCurrency,
+  type MarketTrend,
   fetchCgSimpleQuote,
   fetchCgMarketChart,
   marketChartDaysForTimeframe,
@@ -23,13 +23,18 @@ import {
   type MexcSpotStreamStatus,
 } from '../../lib/mexcSpotStream'
 import { mergeCgQuoteWithMexc, mexcTickToQuote, quoteShallowEqual } from '../../lib/marketQuoteMerge'
+import { useI18n } from '../../i18n'
+import type { Locale } from '../../i18n/types'
+import { localeTag } from '../../i18n/translate'
 import { PriceChartCanvas } from './PriceChartCanvas'
+
+type TFn = (key: string, vars?: Record<string, string | number>) => string
 
 /** Buffer spot : rétention max + plafond de points + fusion si deux cotations très proches. */
 function mergeLiveSample(series: [number, number][], ts: number, usd: number): [number, number][] {
   const now = Date.now()
   const cut = now - LIVE_BUFFER_MAX_MS
-  let next = series.filter(([t]) => t >= cut)
+  let next = series.filter(([t0]) => t0 >= cut)
   const last = next[next.length - 1]
   if (last && Math.abs(last[0] - ts) < 1500) {
     next = [...next.slice(0, -1), [ts, usd]]
@@ -48,14 +53,13 @@ function mergeLiveSample(series: [number, number][], ts: number, usd: number): [
   return next
 }
 
-/** Libellé lisible pour la fenêtre d’affichage (évite 525600 min sur 1 an). */
-function liveWindowLabel(tf: TimeframeId): string {
+function liveWindowLabelTf(tf: TimeframeId, t: TFn): string {
   const ms = timeframeLiveDisplayWindowMs(tf)
   const mins = Math.round(ms / 60_000)
-  if (mins < 240) return `${mins} min`
+  if (mins < 240) return t('market.liveWindowMin', { n: mins })
   const days = ms / (24 * 60 * 60 * 1000)
-  if (days < 14) return `${Math.round(days * 10) / 10} j`
-  return `${Math.round(days)} j`
+  if (days < 14) return t('market.liveWindowDaysShort', { n: Math.round(days * 10) / 10 })
+  return t('market.liveWindowDays', { n: Math.round(days) })
 }
 
 /** Dernier point de la série CG recollé sur le spot live (simple/price). */
@@ -93,10 +97,10 @@ const TIMEFRAMES_BY_SCALE: Record<TimeframeScale, TimeframeId[]> = {
 
 const TF_SCALE_ORDER: TimeframeScale[] = ['min', 'h', 'd']
 
-const TF_SCALE_UI: Record<TimeframeScale, { label: string; title: string }> = {
-  min: { label: 'Minutes', title: 'Courtes périodes (minutes)' },
-  h: { label: 'Heures', title: 'Vue heures' },
-  d: { label: 'Jours', title: 'Historique sur plusieurs jours' },
+const TF_SCALE_I18N: Record<TimeframeScale, { labelKey: string; titleKey: string }> = {
+  min: { labelKey: 'market.scaleMin', titleKey: 'market.scaleMinTitle' },
+  h: { labelKey: 'market.scaleH', titleKey: 'market.scaleHTitle' },
+  d: { labelKey: 'market.scaleD', titleKey: 'market.scaleDTitle' },
 }
 
 function timeframeScale(tf: TimeframeId): TimeframeScale {
@@ -108,34 +112,28 @@ function timeframeScale(tf: TimeframeId): TimeframeScale {
 /** Valeur sentinelle : l’UI affiche un encart structuré plutôt qu’un long paragraphe. */
 const MARKET_ERR_CG429 = '\u200BCG429\u200B'
 
+const RATE_LIMIT_RGX = /429|limite de débit|rate limit|too many requests/i
+
 function formatCoinGeckoErrors(messages: string[]): string | null {
   if (messages.length === 0) return null
   const uniq = [...new Set(messages)]
-  const allRateLimited = uniq.every((m) => /429|limite de débit/i.test(m))
+  const allRateLimited = uniq.every((m) => RATE_LIMIT_RGX.test(m))
   if (allRateLimited) return MARKET_ERR_CG429
   return uniq.join(' · ')
 }
 
 function CoinGecko429Callout() {
+  const { t } = useI18n()
   return (
     <div
       className="dash-alert dash-alert--warn dash-alert--inline dash-alert--cg429"
       role="status"
     >
-      <p className="dash-alert__title">CoinGecko · quota dépassé (429)</p>
-      <p className="dash-alert__text">
-        L’app s’appuie sur le cache quand il est encore utilisable. Sans clé API, les appels sont déjà
-        espacés (~18&nbsp;s).
-      </p>
+      <p className="dash-alert__title">{t('market.cg429Title')}</p>
+      <p className="dash-alert__text">{t('market.cg429Text')}</p>
       <ul className="dash-alert__list">
-        <li>
-          <strong>Local</strong> : <code>VITE_COINGECKO_DEMO_API_KEY</code> dans <code>.env</code> — le proxy
-          Vite envoie la clé, elle n’est pas dans le JS du navigateur.
-        </li>
-        <li>
-          <strong>Production</strong> : <code>VITE_COINGECKO_API_ROOT</code> (recommandé) ou clé pro —{' '}
-          <code>.env.example</code>.
-        </li>
+        <li>{t('market.cg429Local')}</li>
+        <li>{t('market.cg429Prod')}</li>
       </ul>
     </div>
   )
@@ -145,19 +143,19 @@ const SPOT_SYNC_TICK_MS = 1000
 
 /** Horloge locale pour faire défiler l’âge « maj il y a … » en quasi temps réel (pause si onglet masqué). */
 function useSpotSyncLiveClock(active: boolean): number {
-  const [t, setT] = useState(() => Date.now())
+  const [tick, setTick] = useState(() => Date.now())
   useEffect(() => {
     if (!active) return
     let id: number | undefined
     const start = () => {
-      id = window.setInterval(() => setT(Date.now()), SPOT_SYNC_TICK_MS)
+      id = window.setInterval(() => setTick(Date.now()), SPOT_SYNC_TICK_MS)
     }
     const stop = () => {
       if (id !== undefined) window.clearInterval(id)
       id = undefined
     }
     const onVis = () => {
-      setT(Date.now())
+      setTick(Date.now())
       if (document.hidden) stop()
       else if (id === undefined) start()
     }
@@ -168,11 +166,11 @@ function useSpotSyncLiveClock(active: boolean): number {
       document.removeEventListener('visibilitychange', onVis)
     }
   }, [active])
-  return t
+  return tick
 }
 
-function formatSpotWallTimeMs(ts: number): string {
-  return new Date(ts).toLocaleTimeString('fr-FR', {
+function formatSpotWallTimeMs(ts: number, loc: string): string {
+  return new Date(ts).toLocaleTimeString(loc, {
     hour: '2-digit',
     minute: '2-digit',
     second: '2-digit',
@@ -181,13 +179,20 @@ function formatSpotWallTimeMs(ts: number): string {
   })
 }
 
-/** Âge écoulé depuis la cotation, format FR (décimales pour le côté « millimétrique »). */
-function formatSpotAgeFr(nowMs: number, fetchedAt: number): string {
+function formatSpotAge(nowMs: number, fetchedAt: number, locale: Locale): string {
   const ms = Math.max(0, nowMs - fetchedAt)
   const sec = ms / 1000
-  if (sec < 60) return `${sec.toFixed(2).replace('.', ',')} s`
-  if (sec < 3600) return `${(sec / 60).toFixed(1).replace('.', ',')} min`
-  return `${(sec / 3600).toFixed(2).replace('.', ',')} h`
+  const dec = locale === 'fr' ? ',' : '.'
+  const fmt = (n: string) => n.replace('.', dec)
+  if (sec < 60) return `${fmt(sec.toFixed(2))} s`
+  if (sec < 3600) return `${fmt((sec / 60).toFixed(1))} min`
+  return `${fmt((sec / 3600).toFixed(2))} h`
+}
+
+function trendLabel(tr: MarketTrend, t: TFn): string {
+  if (tr === 'hausse') return t('market.trendUp')
+  if (tr === 'baisse') return t('market.trendDown')
+  return t('market.trendFlat')
 }
 
 /**
@@ -259,6 +264,8 @@ function MarketSpotViz({
   err,
   histErr,
 }: MarketSpotVizProps) {
+  const { t, locale } = useI18n()
+  const loc = localeTag(locale)
   const chartNowMs = useChartRafClock()
 
   const displayPrices = useMemo(() => {
@@ -271,7 +278,7 @@ function MarketSpotViz({
 
     let base: [number, number][]
     if (histLoadedKey === histKey && histSeries.length > 0) {
-      const filtered = histSeries.filter(([t]) => t >= cut)
+      const filtered = histSeries.filter(([t0]) => t0 >= cut)
       base =
         filtered.length >= 2
           ? filtered
@@ -279,7 +286,7 @@ function MarketSpotViz({
     } else {
       if (liveBuf.length === 0) return []
       const lastT = liveBuf[liveBuf.length - 1]![0]
-      base = liveBuf.filter(([t]) => t >= Math.max(cut, lastT - w))
+      base = liveBuf.filter(([t0]) => t0 >= Math.max(cut, lastT - w))
     }
 
     const liveSpot =
@@ -302,10 +309,10 @@ function MarketSpotViz({
         [now, liveSpot],
       ]
     } else if (merged.length === 1) {
-      const [t, y] = merged[0]!
-      const dt = Math.max(1_000, Math.min(120_000, (now - t) * 0.02 + 5_000))
+      const [t0, y] = merged[0]!
+      const dt = Math.max(1_000, Math.min(120_000, (now - t0) * 0.02 + 5_000))
       merged = ensureTimeSorted([
-        [Math.min(t, now) - dt, y],
+        [Math.min(t0, now) - dt, y],
         [now, y],
       ])
     }
@@ -326,7 +333,7 @@ function MarketSpotViz({
       : null
 
   const analysis = displaySnap ? analyzeTrend(displaySnap.prices) : null
-  const tfLabel = TIMEFRAME_BY_ID.get(tf)?.label ?? tf
+  const tfLabel = t(`market.tf.${tf}.label`)
   const liveBufLen = (chartCurrency === 'eur' ? liveSeriesEur : liveSeries).length
   const errBlocksChart = err != null && err !== MARKET_ERR_CG429
   const chartLoading =
@@ -336,57 +343,56 @@ function MarketSpotViz({
     !histErr &&
     quote == null &&
     liveBufLen === 0
-  const windowLbl = liveWindowLabel(tf)
+  const windowLbl = liveWindowLabelTf(tf, t)
+  const secSpot = Math.ceil(LIVE_SPOT_INTERVAL_MS / 1000)
 
   return (
     <>
-      <div className="market-spot-strip" aria-label="Indicateurs spot et tendance">
+      <div className="market-spot-strip" aria-label={t('market.spotStripAria')}>
         <div className="stat-block stat-block--strip">
-          <div className="label">Prix spot (USD)</div>
+          <div className="label">{t('market.priceUsd')}</div>
           <div className="value price-val price-val--strip">
             {quote
-              ? `$${quote.usd.toLocaleString('fr-FR', { minimumFractionDigits: 8, maximumFractionDigits: 10 })}`
+              ? `$${quote.usd.toLocaleString(loc, { minimumFractionDigits: 8, maximumFractionDigits: 10 })}`
               : loading
                 ? '…'
                 : '—'}
           </div>
           {quote?.usd24hChange != null && (
             <div className={`delta delta--strip ${quote.usd24hChange >= 0 ? 'delta--up' : 'delta--down'}`}>
-              24 h {quote.usd24hChange >= 0 ? '+' : ''}
+              {t('market.h24')} {quote.usd24hChange >= 0 ? '+' : ''}
               {quote.usd24hChange.toFixed(2)} %
             </div>
           )}
         </div>
         <div className="stat-block stat-block--strip">
-          <div className="label">Prix spot (EUR)</div>
+          <div className="label">{t('market.priceEur')}</div>
           <div className="value price-val price-val--strip">
             {quote?.eur != null && Number.isFinite(quote.eur)
-              ? `${quote.eur.toLocaleString('fr-FR', { minimumFractionDigits: 8, maximumFractionDigits: 10 })} €`
+              ? `${quote.eur.toLocaleString(loc, { minimumFractionDigits: 8, maximumFractionDigits: 10 })} €`
               : loading
                 ? '…'
                 : '—'}
           </div>
           {quote?.eur24hChange != null && (
             <div className={`delta delta--strip ${quote.eur24hChange >= 0 ? 'delta--up' : 'delta--down'}`}>
-              24 h {quote.eur24hChange >= 0 ? '+' : ''}
+              {t('market.h24')} {quote.eur24hChange >= 0 ? '+' : ''}
               {quote.eur24hChange.toFixed(2)} %
             </div>
           )}
         </div>
         <div className="stat-block stat-block--strip trend-block">
           <div className="label">
-            Tendance ({tfLabel}) · {chartCurrency.toUpperCase()}
+            {t('market.trend', { tf: tfLabel, ccy: chartCurrency.toUpperCase() })}
           </div>
           {analysis ? (
             <>
               <div className={`trend-badge trend-badge--strip trend--${analysis.trend}`}>
-                {analysis.trend === 'hausse' && 'Hausse'}
-                {analysis.trend === 'baisse' && 'Baisse'}
-                {analysis.trend === 'stable' && 'Stable'}
+                {trendLabel(analysis.trend, t)}
               </div>
               <div className="sub sub--strip">
                 {analysis.changePct >= 0 ? '+' : ''}
-                {analysis.changePct.toFixed(2)} % · {analysis.points} pts
+                {analysis.changePct.toFixed(2)} % · {analysis.points} {t('market.pts')}
               </div>
             </>
           ) : (
@@ -396,20 +402,26 @@ function MarketSpotViz({
       </div>
       <div className="chart-wrap chart-wrap--tall chart-wrap--hero chart-wrap--in-stack">
         {displaySnap && displaySnap.prices.length > 1 ? (
-          <PriceChartCanvas key={`${tf}-${chartCurrency}`} vsCurrency={chartCurrency} prices={displaySnap.prices} />
+          <PriceChartCanvas
+            key={`${tf}-${chartCurrency}`}
+            vsCurrency={chartCurrency}
+            prices={displaySnap.prices}
+            localeTag={loc}
+            ariaLabel={chartCurrency === 'eur' ? t('market.chartAriaEur') : t('market.chartAriaUsd')}
+          />
         ) : (
           <div className="chart-placeholder">
             {chartLoading
-              ? 'Chargement courbe…'
+              ? t('market.loadingChart')
               : displayPrices.length < 2
                 ? histErr && (chartCurrency === 'eur' ? liveSeriesEur : liveSeries).length < 2
-                  ? 'Pas de données — vérifiez le réseau ou le quota CoinGecko.'
+                  ? t('market.noData')
                   : (chartCurrency === 'eur' ? liveSeriesEur : liveSeries).length < 2 && !histLoading
-                    ? `En attente de données (historique + spot ~${Math.ceil(LIVE_SPOT_INTERVAL_MS / 1000)} s).`
-                    : `Pas assez de points pour la fenêtre (~${windowLbl}).`
+                    ? t('market.waitingData', { sec: secSpot })
+                    : t('market.notEnoughWindow', { window: windowLbl })
                 : err && !quote
                   ? '—'
-                  : 'Pas assez de points'}
+                  : t('market.notEnoughPts')}
           </div>
         )}
       </div>
@@ -418,6 +430,8 @@ function MarketSpotViz({
 }
 
 export function MarketPanel() {
+  const { t, locale } = useI18n()
+  const loc = localeTag(locale)
   const [tf, setTf] = useState<TimeframeId>('15m')
   const [chartCurrency, setChartCurrency] = useState<ChartVsCurrency>('usd')
   const [quote, setQuote] = useState<SimpleQuote | null>(null)
@@ -479,11 +493,11 @@ export function MarketPanel() {
         const merged = mergeCgQuoteWithMexc(q, prev, mexcLiveRef.current)
         return quoteShallowEqual(prev, merged) ? prev : merged
       })
-      const t = Date.now()
+      const t0 = Date.now()
       if (!mexcLiveRef.current) {
-        setLiveSeries((prev) => mergeLiveSample(prev, t, q.usd))
+        setLiveSeries((prev) => mergeLiveSample(prev, t0, q.usd))
         if (chartCcyRef.current === 'eur' && q.eur != null && Number.isFinite(q.eur)) {
-          setLiveSeriesEur((prev) => mergeLiveSample(prev, t, q.eur!))
+          setLiveSeriesEur((prev) => mergeLiveSample(prev, t0, q.eur!))
         }
       }
     } catch (e) {
@@ -552,11 +566,11 @@ export function MarketPanel() {
             const merged = mergeCgQuoteWithMexc(q, prev, mexcLiveRef.current)
             return quoteShallowEqual(prev, merged) ? prev : merged
           })
-          const t = Date.now()
+          const t0 = Date.now()
           if (!mexcLiveRef.current) {
-            setLiveSeries((prev) => mergeLiveSample(prev, t, q.usd))
+            setLiveSeries((prev) => mergeLiveSample(prev, t0, q.usd))
             if (chartCcyRef.current === 'eur' && q.eur != null && Number.isFinite(q.eur)) {
-              setLiveSeriesEur((prev) => mergeLiveSample(prev, t, q.eur!))
+              setLiveSeriesEur((prev) => mergeLiveSample(prev, t0, q.eur!))
             }
           }
           setLiveErr(null)
@@ -596,18 +610,18 @@ export function MarketPanel() {
             const merged = mergeCgQuoteWithMexc(q, prev, mexcLiveRef.current)
             return quoteShallowEqual(prev, merged) ? prev : merged
           })
-          const t = Date.now()
+          const t0 = Date.now()
           if (!mexcLiveRef.current) {
-            setLiveSeries((prev) => mergeLiveSample(prev, t, q.usd))
+            setLiveSeries((prev) => mergeLiveSample(prev, t0, q.usd))
             if (chartCcyRef.current === 'eur' && q.eur != null && Number.isFinite(q.eur)) {
-              setLiveSeriesEur((prev) => mergeLiveSample(prev, t, q.eur!))
+              setLiveSeriesEur((prev) => mergeLiveSample(prev, t0, q.eur!))
             }
           }
           setLiveErr(null)
         } catch (e) {
           if (cancelled || seq !== liveSeq.current) return
           const m = e instanceof Error ? e.message : String(e)
-          const rateLimited = /429|limite de débit/i.test(m)
+          const rateLimited = RATE_LIMIT_RGX.test(m)
           const next = Math.min(Math.round(liveBackoffMsRef.current * 1.85), 120_000)
           liveBackoffMsRef.current = rateLimited ? Math.max(next, 45_000) : next
           setLiveErr(rateLimited ? null : m)
@@ -640,54 +654,54 @@ export function MarketPanel() {
       <div className="chart-stack">
         <div className="chart-toolbar">
           <h2 id="market-heading" className="chart-toolbar__title">
-            Prix RLS
+            {t('market.title')}
           </h2>
-          <div className="chart-toolbar__tf-rail" role="group" aria-label="Fenêtre d’affichage sur la série">
-            <div className="chart-tf-segtrack" role="radiogroup" aria-label="Échelle du graphique">
-              {TF_SCALE_ORDER.map((s) => (
-                <button
-                  key={s}
-                  type="button"
-                  role="radio"
-                  aria-checked={tfScale === s}
-                  title={TF_SCALE_UI[s].title}
-                  className={`chart-tf-seg ${tfScale === s ? 'chart-tf-seg--on' : ''}`}
-                  onClick={() => {
-                    if (tfScale === s) return
-                    setTf(TIMEFRAMES_BY_SCALE[s][0]!)
-                  }}
-                >
-                  {TF_SCALE_UI[s].label}
-                </button>
-              ))}
-            </div>
-            <div className="chart-toolbar__tf-chips" role="radiogroup" aria-label="Durée affichée">
-              {tfOptions.map((id) => {
-                const meta = TIMEFRAME_BY_ID.get(id)!
+          <div className="chart-toolbar__tf-rail" role="group" aria-label={t('market.windowAria')}>
+            <div className="chart-tf-segtrack" role="radiogroup" aria-label={t('market.scaleAria')}>
+              {TF_SCALE_ORDER.map((s) => {
+                const keys = TF_SCALE_I18N[s]
                 return (
                   <button
-                    key={id}
+                    key={s}
                     type="button"
                     role="radio"
-                    aria-checked={tf === id}
-                    title={meta.hint}
-                    className={`chart-tf-chip ${tf === id ? 'chart-tf-chip--on' : ''}`}
-                    onClick={() => setTf(id)}
+                    aria-checked={tfScale === s}
+                    title={t(keys.titleKey)}
+                    className={`chart-tf-seg ${tfScale === s ? 'chart-tf-seg--on' : ''}`}
+                    onClick={() => {
+                      if (tfScale === s) return
+                      setTf(TIMEFRAMES_BY_SCALE[s][0]!)
+                    }}
                   >
-                    {meta.label}
+                    {t(keys.labelKey)}
                   </button>
                 )
               })}
+            </div>
+            <div className="chart-toolbar__tf-chips" role="radiogroup" aria-label={t('market.durationAria')}>
+              {tfOptions.map((id) => (
+                <button
+                  key={id}
+                  type="button"
+                  role="radio"
+                  aria-checked={tf === id}
+                  title={t(`market.tf.${id}.hint`)}
+                  className={`chart-tf-chip ${tf === id ? 'chart-tf-chip--on' : ''}`}
+                  onClick={() => setTf(id)}
+                >
+                  {t(`market.tf.${id}.label`)}
+                </button>
+              ))}
             </div>
           </div>
           <span className="chart-toolbar__rule" aria-hidden />
           <div
             className="chart-toolbar__ccy"
             role="radiogroup"
-            aria-label="Devise du graphique"
+            aria-label={t('market.ccyAria')}
           >
             <span className="chart-toolbar__ccy-key" id="ccy-label">
-              Devise
+              {t('market.ccyLabel')}
             </span>
             {(['usd', 'eur'] as const).map((c) => (
               <button
@@ -715,36 +729,34 @@ export function MarketPanel() {
               className="chart-toolbar__sync"
               title={
                 (quote.usdSource ?? 'coingecko') === 'mexc'
-                  ? `Flux spot MEXC (WebSocket, non affilié) — ${new Date(quote.fetchedAt).toISOString()}`
-                  : `Réception CoinGecko simple/price — ${new Date(quote.fetchedAt).toISOString()} (âge mis à jour en direct)`
+                  ? t('market.titleMexcStream', { iso: new Date(quote.fetchedAt).toISOString() })
+                  : t('market.titleCgStream', { iso: new Date(quote.fetchedAt).toISOString() })
               }
             >
-              <span className="chart-toolbar__sync-k">Dernière cotation spot</span>
+              <span className="chart-toolbar__sync-k">{t('market.lastQuote')}</span>
               {(quote.usdSource ?? 'coingecko') === 'mexc' && (
-                <span className="chart-toolbar__sync-src" title="Prix USD : carnet / trades publics MEXC">
-                  {' '}
-                  · MEXC
+                <span className="chart-toolbar__sync-src" title={t('market.srcMexcTitle')}>
+                  {t('market.mexcSuffix')}
                 </span>
               )}
-              <span className="chart-toolbar__sync-time"> · {formatSpotWallTimeMs(quote.fetchedAt)}</span>
+              <span className="chart-toolbar__sync-time"> · {formatSpotWallTimeMs(quote.fetchedAt, loc)}</span>
               <span className="chart-toolbar__sync-age">
-                {' '}
-                · maj il y a{' '}
-                <span className="chart-toolbar__sync-age-val">{formatSpotAgeFr(spotSyncNow, quote.fetchedAt)}</span>
+                {t('market.updatedAgo')}{' '}
+                <span className="chart-toolbar__sync-age-val">{formatSpotAge(spotSyncNow, quote.fetchedAt, locale)}</span>
               </span>
               {mexcSpotStreamEnabled() && mexcStreamStatus !== 'open' && mexcStreamStatus !== 'idle' && (
                 <span
                   className="chart-toolbar__sync-mexc"
-                  title="État du flux WebSocket MEXC (spot public)"
+                  title={t('market.titleMexcWs')}
                 >
                   {' '}
                   ·{' '}
                   {mexcStreamStatus === 'connecting'
-                    ? 'MEXC…'
+                    ? t('market.mexcConnecting')
                     : mexcStreamStatus === 'reconnecting'
-                      ? 'MEXC reconnexion'
+                      ? t('market.mexcReconnect')
                       : mexcStreamStatus === 'error'
-                        ? 'MEXC indisponible'
+                        ? t('market.mexcErr')
                         : ''}
                 </span>
               )}
@@ -761,13 +773,12 @@ export function MarketPanel() {
             )}
             {histErr && (
               <div className="dash-alert dash-alert--warn dash-alert--inline" role="status">
-                Historique CoinGecko : {histErr} — repli sur le buffer live si présent. Vérifiez une clé demo (
-                <code>VITE_COINGECKO_DEMO_API_KEY</code>) ou un proxy (<code>VITE_COINGECKO_API_ROOT</code>).
+                {t('market.histErr', { msg: histErr })}
               </div>
             )}
             {liveErr && (
               <div className="dash-alert dash-alert--warn dash-alert--inline" role="status">
-                Rafraîchissement spot : {liveErr}
+                {t('market.liveErr', { msg: liveErr })}
               </div>
             )}
           </div>

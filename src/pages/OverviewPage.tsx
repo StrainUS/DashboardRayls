@@ -2,15 +2,15 @@ import { Link } from 'react-router-dom'
 import { RaylsOfficialSourcesStrip } from '../components/official'
 import { PageHero, RefreshCadenceBar } from '../components/layout'
 import { RaylsNewsPanel } from '../components/overview'
-import { BRANDING } from '../constants/branding'
 import { getDeploymentConfigHints } from '../lib/buildConfigHints'
+import { useI18n } from '../i18n'
 import { mexcSpotStreamEnabled } from '../lib/mexcSpotStream'
 import {
   LIVE_SPOT_INTERVAL_MS,
   NEWS_AND_DOCS_REFRESH_MS,
   OFFICIAL_HUB_REFRESH_MS,
   RPC_POLL_INTERVAL_MS,
-  formatPollIntervalFr,
+  formatPollInterval,
 } from '../constants/dashboard'
 import { RAYLS_MAINNET } from '../raylsConfig'
 
@@ -35,37 +35,38 @@ function NavTile({ to, classSuffix, eyebrow, title, description, cta }: NavTileP
 }
 
 export function OverviewPage() {
-  const deploymentHints = getDeploymentConfigHints()
+  const { locale, t } = useI18n()
+  const deploymentHints = getDeploymentConfigHints(t)
 
   const cadenceRows: { label: string; value: string; note: string | null }[] = [
     {
-      label: 'RPC mainnet',
-      value: formatPollIntervalFr(RPC_POLL_INTERVAL_MS),
-      note: 'Batch HTTP ; blocs en push si le fournisseur expose le WebSocket.',
+      label: t('overview.cadence.rpcMainnet'),
+      value: formatPollInterval(RPC_POLL_INTERVAL_MS, locale),
+      note: t('overview.cadence.rpcMainnetNote'),
     },
     ...(mexcSpotStreamEnabled()
       ? [
           {
-            label: 'Spot USD (bourse)',
-            value: 'Flux WebSocket',
-            note: 'MEXC — paire configurée ; complété par CoinGecko pour EUR et historique.',
+            label: t('overview.cadence.spotMexc'),
+            value: t('overview.cadence.spotMexcValue'),
+            note: t('overview.cadence.spotMexcNote'),
           },
         ]
       : []),
     {
-      label: 'Marché CoinGecko',
-      value: formatPollIntervalFr(LIVE_SPOT_INTERVAL_MS),
-      note: 'Spot agrégé, courbes et panneaux marché (sous quota API).',
+      label: t('overview.cadence.marketCg'),
+      value: formatPollInterval(LIVE_SPOT_INTERVAL_MS, locale),
+      note: t('overview.cadence.marketCgNote'),
     },
     {
-      label: 'Hub Rayls',
-      value: formatPollIntervalFr(OFFICIAL_HUB_REFRESH_MS),
-      note: 'Données publiques api.rayls.com (supplies, etc.).',
+      label: t('overview.cadence.hub'),
+      value: formatPollInterval(OFFICIAL_HUB_REFRESH_MS, locale),
+      note: t('overview.cadence.hubNote'),
     },
     {
-      label: 'Flux épinglé',
-      value: formatPollIntervalFr(NEWS_AND_DOCS_REFRESH_MS),
-      note: 'Fichier JSON ou URL — voir README.',
+      label: t('overview.cadence.feed'),
+      value: formatPollInterval(NEWS_AND_DOCS_REFRESH_MS, locale),
+      note: t('overview.cadence.feedNote'),
     },
   ]
 
@@ -73,15 +74,15 @@ export function OverviewPage() {
     <div className="dash-page dash-overview">
       <PageHero
         titleId="overview-title"
-        title="Vue d’ensemble"
-        lead={BRANDING.taglineShort}
+        title={t('overview.title')}
+        lead={t('branding.taglineShort')}
         meta={
-          <div className="dash-page-hero__badges" aria-label="Contexte réseau">
+          <div className="dash-page-hero__badges" aria-label={t('reseau.factsAria')}>
             <span className="dash-page-badge dash-page-badge--chain">
-              <span className="dash-page-badge-k">Chain ID</span>
+              <span className="dash-page-badge-k">{t('common.chainId')}</span>
               <span className="dash-page-badge-v mono">{RAYLS_MAINNET.expectedChainIdDecimal}</span>
             </span>
-            <span className="dash-page-badge dash-page-badge--neutral">Outil tiers · non officiel</span>
+            <span className="dash-page-badge dash-page-badge--neutral">{t('common.toolThirdParty')}</span>
           </div>
         }
       />
@@ -89,44 +90,42 @@ export function OverviewPage() {
       <section className="dash-overview__block" aria-labelledby="overview-nav-heading">
         <div className="dash-overview__block-head dash-overview__block-head--inline">
           <h2 id="overview-nav-heading" className="dash-overview__h2">
-            Où aller
+            {t('overview.navHeading')}
           </h2>
-          <p className="dash-overview__block-lede">
-            Quatre vues : exploitation RPC, marché, références on-chain, puis le référentiel documentaire.
-          </p>
+          <p className="dash-overview__block-lede">{t('overview.navLede')}</p>
         </div>
         <div className="dash-overview__nav-grid">
           <NavTile
             to="/reseau"
             classSuffix="reseau"
-            eyebrow="Exploitation"
-            title="Réseau & RPC"
-            description="Latence du batch JSON-RPC, gas, tête de chaîne, graphiques — et blocs en direct si le WS est ouvert."
-            cta="Ouvrir Réseau"
+            eyebrow={t('overview.tiles.reseauEyebrow')}
+            title={t('overview.tiles.reseauTitle')}
+            description={t('overview.tiles.reseauDesc')}
+            cta={t('overview.tiles.reseauCta')}
           />
           <NavTile
             to="/spot"
             classSuffix="spot"
-            eyebrow="Marché"
-            title="Spot & courbes"
-            description="Prix et historiques CoinGecko ; en option, spot USD plus réactif via WebSocket public MEXC (build)."
-            cta="Ouvrir Spot"
+            eyebrow={t('overview.tiles.spotEyebrow')}
+            title={t('overview.tiles.spotTitle')}
+            description={t('overview.tiles.spotDesc')}
+            cta={t('overview.tiles.spotCta')}
           />
           <NavTile
             to="/chaine"
             classSuffix="chaine"
-            eyebrow="On-chain"
-            title="Chaîne & testnet"
-            description="Contrats documentés mainnet, lien explorateur, télémétrie testnet."
-            cta="Ouvrir Chaîne"
+            eyebrow={t('overview.tiles.chainEyebrow')}
+            title={t('overview.tiles.chainTitle')}
+            description={t('overview.tiles.chainDesc')}
+            cta={t('overview.tiles.chainCta')}
           />
           <NavTile
             to="/referentiel"
             classSuffix="referentiel"
-            eyebrow="Documentation"
-            title="Référentiel"
-            description="Supplies, endpoints publics et liens utiles — chaque valeur cite sa source."
-            cta="Ouvrir Référentiel"
+            eyebrow={t('overview.tiles.refEyebrow')}
+            title={t('overview.tiles.refTitle')}
+            description={t('overview.tiles.refDesc')}
+            cta={t('overview.tiles.refCta')}
           />
         </div>
       </section>
@@ -134,11 +133,9 @@ export function OverviewPage() {
       <section className="dash-overview__block" aria-labelledby="overview-cadence-heading">
         <div className="dash-overview__block-head">
           <h2 id="overview-cadence-heading" className="dash-overview__h2">
-            Cadence des données
+            {t('overview.cadenceHeading')}
           </h2>
-          <p className="dash-overview__block-lede">
-            Rappel des intervalles côté navigateur (pas la latence réseau vers le RPC ou les bourses).
-          </p>
+          <p className="dash-overview__block-lede">{t('overview.cadenceLede')}</p>
         </div>
         <ul className="dash-overview__cadence-list">
           {cadenceRows.map((row) => (
@@ -160,20 +157,18 @@ export function OverviewPage() {
         >
           <div className="dash-overview__block-head">
             <h2 id="overview-news-heading" className="dash-overview__h2">
-              Actualités & canaux
+              {t('overview.newsHeading')}
             </h2>
-            <p className="dash-overview__block-lede">
-              Liens mis en avant et rafraîchissement du flux JSON configuré pour ce déploiement.
-            </p>
+            <p className="dash-overview__block-lede">{t('overview.newsLede')}</p>
           </div>
           <RefreshCadenceBar kind="news" />
           <RaylsNewsPanel />
         </section>
 
-        <aside className="dash-overview__split-aside" aria-label="Déploiement et sources">
+        <aside className="dash-overview__split-aside" aria-label={t('sources.title')}>
           <div className="dash-overview__aside-card">
-            <h2 className="dash-overview__aside-title">Ce déploiement</h2>
-            <p className="dash-overview__aside-lede">Déduit des variables au build — aucun secret affiché.</p>
+            <h2 className="dash-overview__aside-title">{t('overview.deployTitle')}</h2>
+            <p className="dash-overview__aside-lede">{t('overview.deployLede')}</p>
             <ul className="dash-overview__config-list dash-overview__config-list--compact">
               {deploymentHints.map((h) => (
                 <li key={h.id} className="dash-overview__config-item">

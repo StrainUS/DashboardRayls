@@ -1,5 +1,7 @@
 import { useEffect, useReducer, useState } from 'react'
 import { NEWS_AND_DOCS_REFRESH_MS } from '../../constants/dashboard'
+import { useI18n } from '../../i18n'
+import { localeTag } from '../../i18n/translate'
 import {
   bootstrapSeenIfEmpty,
   feedItemKey,
@@ -15,29 +17,6 @@ import {
 } from '../../lib/raylsPublicFeed'
 import { RAYLS_OFFICIAL } from '../../raylsConfig'
 
-const CURATED: { title: string; description: string; href: string }[] = [
-  {
-    title: 'Blog',
-    description: 'Articles et annonces publiés sur rayls.com',
-    href: RAYLS_OFFICIAL.blog,
-  },
-  {
-    title: 'Documentation',
-    description: 'Guides produit et référence réseau public',
-    href: RAYLS_OFFICIAL.docs,
-  },
-  {
-    title: 'Litepaper',
-    description: 'Synthèse du projet',
-    href: RAYLS_OFFICIAL.litepaper,
-  },
-  {
-    title: 'Linktree',
-    description: 'Liens communiqués par l’équipe Rayls',
-    href: RAYLS_OFFICIAL.linktree,
-  },
-]
-
 /**
  * - Variable non définie : défaut `/rayls-feed.json` (fichier dans `public/`).
  * - `''`, `0`, `off`, `false` : désactive le flux automatique.
@@ -45,16 +24,18 @@ const CURATED: { title: string; description: string; href: string }[] = [
 function getFeedUrlConfig(): string {
   const raw = (import.meta.env as Record<string, string | undefined>).VITE_RAYLS_PUBLIC_FEED_URL
   if (raw !== undefined) {
-    const t = String(raw).trim()
-    const low = t.toLowerCase()
-    if (t === '' || low === '0' || low === 'off' || low === 'false') return ''
-    return t
+    const s = String(raw).trim()
+    const low = s.toLowerCase()
+    if (s === '' || low === '0' || low === 'off' || low === 'false') return ''
+    return s
   }
   return '/rayls-feed.json'
 }
 
 /** Flux JSON optionnel : monté seulement si la résolution d’URL réussit. */
 function RaylsOptionalFeed({ fetchUrl }: { fetchUrl: string }) {
+  const { t, locale } = useI18n()
+  const loc = localeTag(locale)
   const [items, setItems] = useState<RaylsPublicFeedItem[] | null>(null)
   const [fetchedAt, setFetchedAt] = useState<number | null>(null)
   const [err, setErr] = useState<string | null>(null)
@@ -77,7 +58,7 @@ function RaylsOptionalFeed({ fetchUrl }: { fetchUrl: string }) {
         const json: unknown = await res.json()
         const parsed = parseRaylsPublicFeed(json)
         if (!parsed) {
-          throw new Error('Format JSON inattendu (attendu : tableau { title, href }).')
+          throw new Error('FORMAT')
         }
         if (!cancelled) {
           bootstrapSeenIfEmpty(parsed)
@@ -87,7 +68,9 @@ function RaylsOptionalFeed({ fetchUrl }: { fetchUrl: string }) {
         }
       } catch (e) {
         if (!cancelled) {
-          setErr(e instanceof Error ? e.message : 'Échec du chargement du flux.')
+          const msg = e instanceof Error ? e.message : String(e)
+          if (msg === 'FORMAT') setErr(t('news.errFormat'))
+          else setErr(msg || t('news.errLoad'))
           setItems(null)
         }
       }
@@ -106,7 +89,7 @@ function RaylsOptionalFeed({ fetchUrl }: { fetchUrl: string }) {
       window.clearTimeout(startId)
       window.clearInterval(intervalId)
     }
-  }, [fetchUrl])
+  }, [fetchUrl, t])
 
   const markRead = () => {
     if (!items?.length) return
@@ -120,10 +103,12 @@ function RaylsOptionalFeed({ fetchUrl }: { fetchUrl: string }) {
         <div className="dash-news-panel__feed-toolbar">
           {fresh.size > 0 ? (
             <span className="dash-news-panel__fresh-count" aria-live="polite">
-              {fresh.size} nouvelle{fresh.size > 1 ? 's' : ''} entrée{fresh.size > 1 ? 's' : ''}
+              {t('news.fresh', { n: fresh.size })}
             </span>
           ) : (
-            <span className="dash-news-panel__fresh-count dash-news-panel__fresh-count--quiet">À jour</span>
+            <span className="dash-news-panel__fresh-count dash-news-panel__fresh-count--quiet">
+              {t('news.upToDate')}
+            </span>
           )}
           <button
             type="button"
@@ -131,14 +116,14 @@ function RaylsOptionalFeed({ fetchUrl }: { fetchUrl: string }) {
             onClick={markRead}
             disabled={fresh.size === 0}
           >
-            Marquer comme lu
+            {t('news.markRead')}
           </button>
         </div>
       ) : null}
 
       {err ? <div className="dash-news-panel__alert">{err}</div> : null}
       {items && items.length > 0 ? (
-        <ul className="dash-news-panel__feed" aria-label="Entrées du flux">
+        <ul className="dash-news-panel__feed" aria-label={t('news.feedAria')}>
           {items.slice(0, 8).map((it) => {
             const k = feedItemKey(it)
             const isFresh = fresh.has(k)
@@ -151,8 +136,8 @@ function RaylsOptionalFeed({ fetchUrl }: { fetchUrl: string }) {
                   rel="noopener noreferrer"
                 >
                   {isFresh ? (
-                    <span className="dash-news-panel__new-pill" aria-label="Nouveau">
-                      Nouveau
+                    <span className="dash-news-panel__new-pill" aria-label={t('news.new')}>
+                      {t('news.new')}
                     </span>
                   ) : null}
                   <span className="dash-news-panel__feed-title">{it.title}</span>
@@ -165,19 +150,27 @@ function RaylsOptionalFeed({ fetchUrl }: { fetchUrl: string }) {
           })}
         </ul>
       ) : !err ? (
-        <p className="dash-news-panel__empty">Chargement du flux…</p>
+        <p className="dash-news-panel__empty">{t('news.loading')}</p>
       ) : null}
       {fetchedAt != null ? (
         <p className="dash-news-panel__meta">
-          Dernière récupération :{' '}
-          {new Date(fetchedAt).toLocaleString('fr-FR', { dateStyle: 'short', timeStyle: 'medium' })}
+          {t('news.lastFetch')}{' '}
+          {new Date(fetchedAt).toLocaleString(loc, { dateStyle: 'short', timeStyle: 'medium' })}
         </p>
       ) : null}
     </>
   )
 }
 
+const CURATED: { titleKey: string; descKey: string; href: string }[] = [
+  { titleKey: 'news.curatedBlog', descKey: 'news.curatedBlogD', href: RAYLS_OFFICIAL.blog },
+  { titleKey: 'news.curatedDocs', descKey: 'news.curatedDocsD', href: RAYLS_OFFICIAL.docs },
+  { titleKey: 'news.curatedLite', descKey: 'news.curatedLiteD', href: RAYLS_OFFICIAL.litepaper },
+  { titleKey: 'news.curatedLink', descKey: 'news.curatedLinkD', href: RAYLS_OFFICIAL.linktree },
+]
+
 export function RaylsNewsPanel() {
+  const { t } = useI18n()
   const config = getFeedUrlConfig()
   const fetchUrl = config ? resolveFeedFetchUrl(config) : null
   const feedActive = fetchUrl != null
@@ -186,12 +179,12 @@ export function RaylsNewsPanel() {
     <div className="dash-news-panel">
       {feedActive ? <RaylsOptionalFeed fetchUrl={fetchUrl} /> : null}
 
-      <ul className="dash-news-panel__curated" aria-label="Canaux de référence Rayls">
+      <ul className="dash-news-panel__curated" aria-label={t('news.curatedAria')}>
         {CURATED.map((c) => (
           <li key={c.href} className="dash-news-panel__curated-item">
             <a className="dash-news-panel__curated-link" href={c.href} target="_blank" rel="noopener noreferrer">
-              <span className="dash-news-panel__curated-title">{c.title}</span>
-              <span className="dash-news-panel__curated-desc">{c.description}</span>
+              <span className="dash-news-panel__curated-title">{t(c.titleKey)}</span>
+              <span className="dash-news-panel__curated-desc">{t(c.descKey)}</span>
             </a>
           </li>
         ))}
@@ -199,15 +192,10 @@ export function RaylsNewsPanel() {
 
       {feedActive ? (
         <p className="dash-news-panel__hint dash-news-panel__hint--subtle">
-          Entrées épinglées : modifiez <code className="dash-news-panel__code">public/rayls-feed.json</code> puis rebuild /
-          redéployez — ou pointez <code className="dash-news-panel__code">VITE_RAYLS_PUBLIC_FEED_URL</code> vers votre propre
-          JSON (CORS).
+          {t('news.hintActive')}
         </p>
       ) : (
-        <p className="dash-news-panel__hint">
-          Flux désactivé (<code className="dash-news-panel__code">VITE_RAYLS_PUBLIC_FEED_URL=off</code>). Sans variable, le
-          défaut est <code className="dash-news-panel__code">/rayls-feed.json</code>.
-        </p>
+        <p className="dash-news-panel__hint">{t('news.hintOff')}</p>
       )}
     </div>
   )

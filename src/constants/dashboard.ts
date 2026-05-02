@@ -1,3 +1,6 @@
+import type { Locale } from '../i18n/types'
+import { localeTag } from '../i18n/translate'
+
 /**
  * Cadences CoinGecko — sans clé demo/pro, l’API publique déclenche vite des 429 si on poll trop souvent.
  * Défaut 18 s (min 5 s). Temps réel serré : clé + `VITE_LIVE_SPOT_MS` (ex. 3000).
@@ -44,21 +47,30 @@ export const NEWS_AND_DOCS_REFRESH_MS =
 /** Télémétrie testnet (voir `TestnetTelemetryCard`). */
 export const TESTNET_TELEMETRY_POLL_MS = 12_000
 
-/** Libellé FR pour une période de polling (ex. ~1 s, ~18 s, 6 h). */
-export function formatPollIntervalFr(ms: number): string {
+/** Libellé localisé pour une période de polling (ex. ~1 s, ~18 s, 6 h). */
+export function formatPollInterval(ms: number, locale: Locale): string {
+  const loc = localeTag(locale)
   if (!Number.isFinite(ms) || ms <= 0) return '—'
   if (ms < 1000) return `${Math.round(ms)} ms`
   if (ms < 60_000) {
     const s = ms / 1000
     const rounded = s >= 10 ? Math.round(s) : Math.round(s * 10) / 10
-    return `~${rounded.toLocaleString('fr-FR', { maximumFractionDigits: 1 })} s`
+    const prefix = locale === 'fr' ? '~' : '~'
+    return `${prefix}${rounded.toLocaleString(loc, { maximumFractionDigits: 1 })} s`
   }
   if (ms < 3_600_000) {
     const m = Math.max(1, Math.round(ms / 60_000))
-    return `${m} min`
+    return locale === 'fr' ? `${m} min` : `${m} min`
   }
   const h = ms / 3_600_000
-  if (Math.abs(h - Math.round(h)) < 0.001) return `${Math.round(h)} h`
-  return `${h.toLocaleString('fr-FR', { maximumFractionDigits: 1 })} h`
+  if (Math.abs(h - Math.round(h)) < 0.001) {
+    return locale === 'fr' ? `${Math.round(h)} h` : `${Math.round(h)} h`
+  }
+  return `${h.toLocaleString(loc, { maximumFractionDigits: 1 })} h`
+}
+
+/** @deprecated Utiliser formatPollInterval(ms, locale) */
+export function formatPollIntervalFr(ms: number): string {
+  return formatPollInterval(ms, 'fr')
 }
 
