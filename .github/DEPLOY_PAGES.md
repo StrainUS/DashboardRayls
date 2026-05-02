@@ -68,7 +68,7 @@ Après ajout : relancer le workflow **Pages** (ou pousser sur `main`).
 
 ### Favicon (Safari / cache)
 
-Les icônes et le logo en-tête utilisent le même fichier `rayls-logo-official.png` sous le préfixe de l’app (ex. `/DashboardRayls/`). Si l’onglet montre encore une ancienne image : navigation privée ou supprimer les données du site pour `github.io` (Safari iOS met souvent le favicon en cache par domaine).
+Le logo marque (`rayls-logo-official.png`, fond transparent) sert à l’en-tête ; les favicons sont des dérivés `favicon-16/32.png` et `apple-touch-icon.png`. Si l’onglet montre encore une ancienne image : navigation privée ou supprimer les données du site pour `github.io`.
 
 ## 2. Vérifier le workflow
 
