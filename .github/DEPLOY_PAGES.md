@@ -57,6 +57,19 @@ Ouvrir le site avec le **chemin du dépôt** (ex. `https://strainus.github.io/Da
 
 Détails : [`workers/rpc-cors-proxy/README.md`](../workers/rpc-cors-proxy/README.md).
 
+### CoinGecko / onglet Spot sur `*.github.io`
+
+En production il n’y a **pas** de proxy Vite : les appels directs à l’API publique depuis le navigateur échouent souvent (prévol CORS / quotas). Le workflow **Pages** peut injecter :
+
+1. **Secret** `VITE_COINGECKO_DEMO_API_KEY` — même clé gratuite [CoinGecko Demo API](https://www.coingecko.com/en/api) qu’en local dans `.env` (elle sera présente dans le bundle JS ; pour limiter l’exposition, préférez un proxy).
+2. **Variable** `VITE_COINGECKO_API_ROOT` — URL de votre backend qui relaie `/api/v3` CoinGecko (recommandé si vous ne voulez pas publier de clé).
+
+Après ajout : relancer le workflow **Pages** (ou pousser sur `main`).
+
+### Favicon (Safari / cache)
+
+Les icônes et le logo en-tête utilisent le même fichier `rayls-logo-official.png` sous le préfixe de l’app (ex. `/DashboardRayls/`). Si l’onglet montre encore une ancienne image : navigation privée ou supprimer les données du site pour `github.io` (Safari iOS met souvent le favicon en cache par domaine).
+
 ## 2. Vérifier le workflow
 
 1. Onglet **Actions**

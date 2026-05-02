@@ -65,6 +65,11 @@ jobs:
           VITE_RAYLS_RPC_HTTP_URL: ${{ vars.VITE_RAYLS_RPC_HTTP_URL }}
           # WebSocket direct vers mainnet-rpc depuis *.github.io peut échouer ; le batch HTTP suffit.
           VITE_RPC_WS_URL: '0'
+          # Spot / marché : sans clé ni proxy, l’API publique CoinGecko échoue souvent depuis le navigateur (CORS / OPTIONS).
+          # Secret dépôt (optionnel) : même clé demo que en local — voir .github/DEPLOY_PAGES.md
+          VITE_COINGECKO_DEMO_API_KEY: ${{ secrets.VITE_COINGECKO_DEMO_API_KEY }}
+          # Alternative : URL d’un proxy /api/v3 (variable dépôt non secrète si vous préférez ne pas embarquer la clé)
+          VITE_COINGECKO_API_ROOT: ${{ vars.VITE_COINGECKO_API_ROOT }}
         run: npm run build
 
       - name: SPA fallback (404)

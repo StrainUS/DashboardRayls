@@ -1,0 +1,16 @@
+{
+  "name": "Rayls · Surveillance du réseau public",
+  "short_name": "Rayls",
+  "icons": [
+    {
+      "src": "rayls-logo-official.png",
+      "type": "image/png",
+      "sizes": "358x358",
+      "purpose": "any"
+    }
+  ],
+  "display": "standalone",
+  "start_url": "./",
+  "theme_color": "#0a0b0e",
+  "background_color": "#0a0b0e"
+}
