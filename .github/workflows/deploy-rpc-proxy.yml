@@ -10,12 +10,8 @@ name: Deploy RPC CORS proxy
 on:
   workflow_dispatch:
 
-# Le GITHUB_TOKEN doit pouvoir créer/mettre à jour les variables du dépôt :
-# Settings → Actions → General → Workflow permissions → **Read and write**.
-permissions:
-  contents: read
-  actions: write
-  variables: write
+# GITHUB_TOKEN : pas de `permissions` explicites (voir deploy-coingecko-proxy.yml).
+# Réglage dépôt : Settings → Actions → General → **Read and write permissions**.
 
 concurrency:
   group: deploy-rpc-proxy

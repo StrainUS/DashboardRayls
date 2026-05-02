@@ -6,10 +6,10 @@ name: Deploy CoinGecko CORS proxy
 on:
   workflow_dispatch:
 
-permissions:
-  contents: read
-  actions: write
-  variables: write
+# Ne pas ajouter de bloc `permissions` ici : avec des droits explicites, la permission
+# GitHub App « Variables » (API /actions/variables) reste à none → 403. Sans bloc,
+# le GITHUB_TOKEN hérite du réglage dépôt : Settings → Actions → General →
+# Workflow permissions → **Read and write**.
 
 concurrency:
   group: deploy-coingecko-proxy
