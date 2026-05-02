@@ -42,6 +42,12 @@ jobs:
       - name: SPA fallback (404)
         run: cp dist/index.html dist/404.html
 
+      - name: URL publique attendue (projet)
+        run: |
+          OWNER_LC=$(echo '${{ github.repository_owner }}' | tr '[:upper:]' '[:lower:]')
+          echo "Ouvrir après déploiement réussi : https://${OWNER_LC}.github.io/${{ github.event.repository.name }}/"
+          echo "(La racine https://${OWNER_LC}.github.io/ peut rester en 404 sans site user/org — c'est normal.)"
+
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
