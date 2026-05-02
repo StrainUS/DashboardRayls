@@ -64,7 +64,7 @@ body {
 }
 
 *::-webkit-scrollbar-thumb:hover {
-  background: rgba(186, 230, 253, 0.42);
+  background: rgba(179, 201, 223, 0.38);
   background-clip: padding-box;
 }
 
@@ -77,13 +77,13 @@ body {
 a {
   color: var(--accent);
   text-underline-offset: 3px;
-  text-decoration-color: rgba(126, 200, 235, 0.35);
+  text-decoration-color: rgba(138, 168, 196, 0.35);
   transition: color var(--dash-transition-fast), text-decoration-color var(--dash-transition-fast);
 }
 
 a:hover {
-  color: #b8e4f8;
-  text-decoration-color: rgba(126, 200, 235, 0.55);
+  color: var(--accent-strong);
+  text-decoration-color: rgba(179, 201, 223, 0.5);
 }
 
 :where(a):focus-visible {

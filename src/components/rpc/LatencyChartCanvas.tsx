@@ -26,23 +26,21 @@ const AXIS_LABEL_GAP = 10
 const Y_TICKS = 5
 const AXIS_FONT = '11px "IBM Plex Mono", ui-monospace, SF Mono, Menlo, monospace'
 
-/** Grille / axes — teintes alignées sur --halo-neon-live et le spectre institutionnel (cyan → indigo). */
-const LAT_GRID_Y = 'rgba(56, 189, 248, 0.085)'
-const LAT_GRID_X = 'rgba(129, 140, 248, 0.06)'
-const LAT_LABEL_Y = 'rgba(186, 230, 253, 0.9)'
-const LAT_LABEL_TIME = 'rgba(165, 243, 252, 0.82)'
+/** Grille / courbe — tons ardoise (lisibles, sans arc-en-ciel). */
+const LAT_GRID_Y = 'rgba(148, 163, 184, 0.09)'
+const LAT_GRID_X = 'rgba(148, 163, 184, 0.055)'
+const LAT_LABEL_Y = 'rgba(203, 213, 225, 0.9)'
+const LAT_LABEL_TIME = 'rgba(186, 198, 212, 0.82)'
 const LAT_EMPTY = 'rgba(148, 163, 184, 0.62)'
-/** Remplissage sous la ligne : menthe / cyan en bas, cyan clair en haut (néon dosé). */
-const LAT_FILL_BOTTOM = 'rgba(45, 212, 191, 0.05)'
-const LAT_FILL_MID = 'rgba(56, 189, 248, 0.08)'
-const LAT_FILL_TOP = 'rgba(125, 211, 252, 0.11)'
-/** Contour : halo large puis trait cœur (effet néon pro, sans shadowBlur coûteux). */
-const LAT_LINE_GLOW = 'rgba(34, 211, 238, 0.28)'
+const LAT_FILL_BOTTOM = 'rgba(51, 65, 85, 0.06)'
+const LAT_FILL_MID = 'rgba(100, 116, 139, 0.08)'
+const LAT_FILL_TOP = 'rgba(138, 168, 196, 0.1)'
+const LAT_LINE_GLOW = 'rgba(138, 168, 196, 0.22)'
 const LAT_LINE_GLOW_W = 3.25
-const LAT_LINE_CORE = 'rgba(224, 242, 254, 0.96)'
+const LAT_LINE_CORE = 'rgba(226, 232, 240, 0.96)'
 const LAT_LINE_CORE_W = 1.65
-const LAT_DOT_FILL = 'rgba(207, 250, 254, 0.98)'
-const LAT_DOT_RING = 'rgba(45, 212, 191, 0.55)'
+const LAT_DOT_FILL = 'rgba(241, 245, 249, 0.96)'
+const LAT_DOT_RING = 'rgba(100, 116, 139, 0.48)'
 
 /** Fenêtre Y minimale (~ms) pour éviter le « zoom » nerveux quand la série varie peu. */
 const Y_MIN_HALF_SPAN_MS = 28

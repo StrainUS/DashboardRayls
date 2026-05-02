@@ -1,240 +1,177 @@
 /**
- * Design tokens — interface institutionnelle sombre : surfaces calibrées,
- * contrastes WCAG-friendly, échelle d’ombres et accents cohérents (niveau « produit »).
+ * Design tokens — thème sombre professionnel : surfaces neutres, accent bleu‑ardoise,
+ * profondeur par ombre + halos atmosphériques très dosés (lisibilité sans « néon »).
  */
 :root {
-  --rayls-violet: #7c6cf0;
-  --rayls-purple: #8b7cff;
-  --rayls-cyan: #5ec8e8;
-  --rayls-mist: #c4c9d4;
+  /* Marque Rayls — teintes désaturées (cohérentes avec l’UI, pas « arc‑en‑ciel ») */
+  --rayls-violet: #6b7c90;
+  --rayls-purple: #758499;
+  --rayls-cyan: #6d8aa3;
+  --rayls-mist: #b4bcc8;
 
   --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
   --font-display: 'Plus Jakarta Sans', var(--font-sans);
 
-  /* Fonds bleu nuit + surfaces un cran plus lisibles (encadrés visibles sur noir) */
-  --bg: #0a0b10;
-  --bg-deep: #06070c;
-  --bg-elevated: #11131a;
-  --surface: #151821;
-  --surface-raised: #1a1d28;
-  --surface-hover: #222530;
-  --border: rgba(255, 255, 255, 0.1);
-  --border-subtle: rgba(255, 255, 255, 0.07);
-  --border-accent: rgba(94, 200, 232, 0.36);
-  --text: #f1f2f7;
-  --muted: #a8adb8;
-  --dim: #7a808c;
-  /* Libellés (eyebrows, surtitres) */
-  --text-label: #969dad;
-  --accent: #7fd4f3;
-  --accent-strong: #a8b8f8;
-  --accent-on-dark: #0a0c10;
-  --ok: #3ecf9a;
-  --warn: #e8b84d;
-  --err: #f08080;
+  --bg: #0b0c10;
+  --bg-deep: #07080c;
+  --bg-elevated: #111318;
+  --surface: #14161d;
+  --surface-raised: #191b24;
+  --surface-hover: #21232c;
+  --border: rgba(255, 255, 255, 0.09);
+  --border-subtle: rgba(255, 255, 255, 0.06);
+  --border-accent: rgba(122, 154, 184, 0.32);
+  --text: #f1f3f5;
+  --muted: #9ca3af;
+  --dim: #6b7280;
+  --text-label: #8b92a0;
+  --accent: #8aa8c4;
+  --accent-strong: #b3c9df;
+  --accent-on-dark: #0a0c0f;
+  --ok: #5a9d7c;
+  --warn: #c9a227;
+  --err: #c96b6b;
   --mono: 'IBM Plex Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
 
-  /* Zones d’information (bordures discrètes — pas de « arc-en-ciel ») */
-  --zone-live-border: rgba(62, 207, 154, 0.38);
-  --zone-live-glow: rgba(62, 207, 154, 0.06);
-  --zone-ref-border: rgba(126, 200, 235, 0.32);
-  --zone-ref-glow: rgba(126, 200, 235, 0.05);
-  --zone-news-border: rgba(155, 153, 184, 0.28);
-  --zone-news-glow: rgba(155, 153, 184, 0.045);
+  /* Zones : lisibilité par bordure discrète, tons proches du gris bleu */
+  --zone-live-border: rgba(90, 157, 124, 0.32);
+  --zone-live-glow: rgba(0, 0, 0, 0.2);
+  --zone-ref-border: rgba(122, 154, 184, 0.28);
+  --zone-ref-glow: rgba(0, 0, 0, 0.18);
+  --zone-news-border: rgba(120, 125, 138, 0.26);
+  --zone-news-glow: rgba(0, 0, 0, 0.16);
 
-  --panel-bg: linear-gradient(
-    165deg,
-    rgba(22, 24, 34, 0.96) 0%,
-    rgba(13, 15, 21, 0.99) 100%
-  );
-  --panel-bg-flat: #13151d;
-  --panel-border: rgba(255, 255, 255, 0.1);
-  --panel-inset-highlight: inset 0 1px 0 rgba(255, 255, 255, 0.052);
+  --panel-bg: linear-gradient(165deg, rgba(20, 22, 30, 0.97) 0%, rgba(12, 14, 20, 0.99) 100%);
+  --panel-bg-flat: #13151c;
+  --panel-border: rgba(255, 255, 255, 0.09);
+  --panel-inset-highlight: inset 0 1px 0 rgba(255, 255, 255, 0.045);
   --panel-shadow:
     var(--panel-inset-highlight),
-    0 1px 0 rgba(0, 0, 0, 0.5),
-    0 20px 56px rgba(0, 0, 0, 0.44);
+    0 1px 0 rgba(0, 0, 0, 0.45),
+    0 18px 48px rgba(0, 0, 0, 0.42);
   --panel-shadow-hover:
     var(--panel-inset-highlight),
-    0 1px 0 rgba(0, 0, 0, 0.45),
-    0 24px 64px rgba(0, 0, 0, 0.38);
-  --inset-fill: rgba(0, 0, 0, 0.26);
+    0 1px 0 rgba(0, 0, 0, 0.4),
+    0 22px 56px rgba(0, 0, 0, 0.36);
+  --inset-fill: rgba(0, 0, 0, 0.28);
 
-  /* Accent vertical hero */
-  --hero-accent-line: linear-gradient(
-    180deg,
-    rgba(14, 165, 233, 0.9) 0%,
-    rgba(59, 130, 246, 0.42) 65%,
-    rgba(99, 102, 241, 0.18) 100%
-  );
+  --hero-accent-line: linear-gradient(180deg, #94a3b8 0%, #475569 72%, #334155 100%);
 
-  /* Filet néon institutionnel : cyan profond → bleu → indigo (moins « arc-en-ciel ») */
-  --spectral-bar: linear-gradient(
-    90deg,
-    #06b6d4 0%,
-    #0ea5e9 28%,
-    #3b82f6 62%,
-    #6366f1 100%
-  );
+  /* Bandeau d’accent horizontal : tons ardoise (lisible, pro) */
+  --spectral-bar: linear-gradient(90deg, #475569 0%, #64748b 38%, #94a3b8 62%, #64748b 100%);
 
-  /* Bandeau en-tête : accent unique institutionnel (pas de spectre arc-en-ciel) */
   --header-accent-line: linear-gradient(180deg, #64748b 0%, #475569 100%);
-  --header-edge-glow: 0 0 10px rgba(100, 116, 139, 0.12);
+  --header-edge-glow: 0 0 12px rgba(0, 0, 0, 0.35);
 
-  /* ——— Liquid glass : filets plus lisibles (produit / fintech, pas arcade) ——— */
-  --glass-border: rgba(203, 213, 225, 0.17);
-  --glass-border-hover: rgba(226, 232, 240, 0.26);
-  /** Tuiles et rangées imbriquées (cadences, sous-cartes) */
-  --glass-tile-border: rgba(226, 232, 240, 0.12);
-  --glass-tile-border-hover: rgba(241, 245, 249, 0.2);
-  --glass-fill: rgba(18, 20, 28, 0.52);
-  --glass-fill-deep: rgba(12, 14, 20, 0.62);
-  /** Reflets bord haut : blanc + néon très contrôlé */
+  --glass-border: rgba(203, 213, 225, 0.14);
+  --glass-border-hover: rgba(226, 232, 240, 0.2);
+  --glass-tile-border: rgba(226, 232, 240, 0.1);
+  --glass-tile-border-hover: rgba(241, 245, 249, 0.16);
+  --glass-fill: rgba(16, 18, 24, 0.55);
+  --glass-fill-deep: rgba(10, 12, 18, 0.62);
   --glass-sheen-top:
-    inset 0 1px 0 rgba(255, 255, 255, 0.14),
-    inset 0 1px 0 rgba(125, 211, 252, 0.08);
+    inset 0 1px 0 rgba(255, 255, 255, 0.11),
+    inset 0 1px 0 rgba(125, 211, 252, 0.035);
   --glass-sheen-soft:
-    inset 0 1px 0 rgba(255, 255, 255, 0.085),
-    inset 0 1px 0 rgba(167, 139, 250, 0.055);
+    inset 0 1px 0 rgba(255, 255, 255, 0.07),
+    inset 0 1px 0 rgba(148, 163, 184, 0.04);
   --glass-blur: 18px;
   --glass-blur-panel: 14px;
 
-  /** Surfaces : nappe nuit + soupçon de cyan / indigo dans le verre */
-  --glass-gradient-panel: linear-gradient(
-    165deg,
-    rgba(26, 34, 48, 0.66) 0%,
-    rgba(18, 22, 36, 0.6) 42%,
-    rgba(14, 16, 28, 0.72) 100%
-  );
-  --glass-gradient-hero: linear-gradient(
-    165deg,
-    rgba(24, 32, 44, 0.58) 0%,
-    rgba(18, 22, 36, 0.56) 48%,
-    rgba(14, 18, 32, 0.64) 100%
-  );
-  --glass-gradient-inset: linear-gradient(
-    165deg,
-    rgba(22, 26, 38, 0.55) 0%,
-    rgba(12, 14, 22, 0.62) 100%
-  );
-  --glass-gradient-inset-hover: linear-gradient(
-    165deg,
-    rgba(26, 30, 42, 0.6) 0%,
-    rgba(14, 16, 24, 0.66) 100%
-  );
-  --glass-gradient-disclaimer: linear-gradient(
-    165deg,
-    rgba(20, 28, 40, 0.5) 0%,
-    rgba(12, 14, 26, 0.59) 100%
-  );
+  --glass-gradient-panel: linear-gradient(165deg, rgba(24, 26, 34, 0.62) 0%, rgba(14, 16, 22, 0.72) 100%);
+  --glass-gradient-hero: linear-gradient(165deg, rgba(22, 24, 32, 0.58) 0%, rgba(14, 16, 24, 0.66) 100%);
+  --glass-gradient-inset: linear-gradient(165deg, rgba(20, 22, 30, 0.52) 0%, rgba(12, 14, 20, 0.6) 100%);
+  --glass-gradient-inset-hover: linear-gradient(165deg, rgba(24, 26, 34, 0.55) 0%, rgba(14, 16, 22, 0.64) 100%);
+  --glass-gradient-disclaimer: linear-gradient(165deg, rgba(18, 20, 28, 0.48) 0%, rgba(12, 14, 22, 0.56) 100%);
 
-  /** Séparateurs : filet lumineux type néon doux (opacités plafonnées) */
   --glass-divider: linear-gradient(
     90deg,
     transparent 0%,
-    rgba(34, 211, 238, 0.11) 12%,
-    rgba(255, 255, 255, 0.18) 50%,
-    rgba(167, 139, 250, 0.11) 88%,
+    rgba(148, 163, 184, 0.07) 18%,
+    rgba(255, 255, 255, 0.11) 50%,
+    rgba(148, 163, 184, 0.07) 82%,
     transparent 100%
   );
-  /** Fine ligne haute type vitre */
   --glass-rail-top: linear-gradient(
     90deg,
     transparent 0%,
-    rgba(56, 189, 248, 0.18) 20%,
-    rgba(255, 255, 255, 0.24) 50%,
-    rgba(192, 132, 252, 0.15) 80%,
+    rgba(186, 210, 228, 0.12) 50%,
     transparent 100%
   );
   --glass-edge-left: linear-gradient(
     180deg,
-    rgba(56, 189, 248, 0.14) 0%,
-    rgba(255, 255, 255, 0.13) 38%,
-    rgba(192, 132, 252, 0.11) 70%,
-    rgba(255, 255, 255, 0.05) 100%
+    rgba(148, 163, 184, 0.32) 0%,
+    rgba(71, 85, 105, 0.22) 100%
   );
 
-  /** Halos extérieurs dosés (plafond ~0.06–0.09 en alpha sur les couches colorées) */
   --glass-halo-ambient:
-    0 0 48px rgba(14, 165, 233, 0.055),
-    0 0 88px rgba(99, 102, 241, 0.045),
-    0 0 120px rgba(45, 212, 191, 0.028);
+    0 32px 64px rgba(0, 0, 0, 0.36),
+    0 0 80px rgba(56, 189, 248, 0.02),
+    0 0 120px rgba(99, 102, 241, 0.018);
 
   /**
-   * Halos néon « produit » — même grammaire que Spot : plusieurs couches larges, alpha faible.
-   * À composer après --glass-panel-shadow ou --hero-glow-outer (jamais seul sur un écran complet).
+   * Halos d’ambiance — ~45 % de l’intensité d’origine : volume coloré léger par-dessus
+   * l’ombre noire (profondeur sans saturation excessive).
    */
   --halo-neon-chrome:
-    0 0 44px rgba(56, 189, 248, 0.055),
-    0 0 80px rgba(129, 140, 248, 0.042);
+    0 0 44px rgba(56, 189, 248, 0.032),
+    0 0 84px rgba(99, 102, 241, 0.024);
   --halo-neon-overview:
-    0 0 58px rgba(56, 189, 248, 0.085),
-    0 0 100px rgba(129, 140, 248, 0.065),
-    0 0 132px rgba(167, 139, 250, 0.045);
+    0 0 56px rgba(56, 189, 248, 0.042),
+    0 0 96px rgba(129, 140, 248, 0.03),
+    0 0 118px rgba(99, 102, 241, 0.02);
   --halo-neon-live:
-    0 0 58px rgba(45, 212, 191, 0.095),
-    0 0 100px rgba(34, 211, 238, 0.07),
-    0 0 124px rgba(56, 189, 248, 0.048);
+    0 0 56px rgba(45, 212, 191, 0.038),
+    0 0 94px rgba(34, 211, 238, 0.026),
+    0 0 112px rgba(56, 189, 248, 0.02);
   --halo-neon-spot:
-    0 0 62px rgba(74, 222, 128, 0.1),
-    0 0 104px rgba(250, 204, 21, 0.07),
-    0 0 128px rgba(56, 189, 248, 0.05);
+    0 0 58px rgba(74, 222, 128, 0.038),
+    0 0 98px rgba(250, 204, 21, 0.026),
+    0 0 118px rgba(56, 189, 248, 0.02);
   --halo-neon-chain:
-    0 0 58px rgba(110, 231, 183, 0.09),
-    0 0 96px rgba(56, 189, 248, 0.065),
-    0 0 118px rgba(129, 140, 248, 0.04);
+    0 0 56px rgba(52, 211, 153, 0.036),
+    0 0 92px rgba(56, 189, 248, 0.026),
+    0 0 108px rgba(99, 102, 241, 0.018);
   --halo-neon-official:
-    0 0 60px rgba(250, 204, 21, 0.075),
-    0 0 100px rgba(125, 211, 252, 0.065),
-    0 0 118px rgba(167, 139, 250, 0.045);
+    0 0 58px rgba(250, 204, 21, 0.032),
+    0 0 96px rgba(125, 211, 252, 0.024),
+    0 0 108px rgba(129, 140, 248, 0.018);
   --halo-neon-legal:
-    0 0 54px rgba(129, 140, 248, 0.075),
-    0 0 92px rgba(56, 189, 248, 0.055);
+    0 0 50px rgba(129, 140, 248, 0.034),
+    0 0 86px rgba(56, 189, 248, 0.024);
 
-  /* Profondeur hero : ombre + halo cyan / indigo modéré */
+  /* Base héros : volume noir + un seul voile bleu très léger (les routes ajoutent --halo-neon-*) */
   --hero-glow-outer:
     var(--glass-sheen-top),
-    0 0 0 1px rgba(0, 0, 0, 0.35),
-    0 20px 56px rgba(0, 0, 0, 0.42),
-    0 0 72px rgba(40, 55, 80, 0.14),
-    0 0 100px rgba(34, 211, 238, 0.055),
-    0 0 140px rgba(129, 140, 248, 0.04);
+    0 0 0 1px rgba(0, 0, 0, 0.34),
+    0 20px 52px rgba(0, 0, 0, 0.4),
+    0 0 88px rgba(45, 62, 88, 0.055);
 
-  /** Panneaux : volume + même famille de halos (moins fort que le hero) */
   --glass-panel-shadow:
     var(--glass-sheen-top),
-    0 0 0 1px rgba(0, 0, 0, 0.38),
-    0 2px 4px rgba(0, 0, 0, 0.18),
-    0 24px 56px rgba(0, 0, 0, 0.38),
-    0 0 72px rgba(30, 58, 90, 0.11),
-    0 0 96px rgba(34, 211, 238, 0.042),
-    0 0 110px rgba(129, 140, 248, 0.032),
-    inset 0 0 0 1px rgba(255, 255, 255, 0.065),
-    inset 0 26px 56px -28px rgba(0, 0, 0, 0.32);
-  --glass-well-bg: linear-gradient(
-    168deg,
-    rgba(6, 8, 14, 0.72) 0%,
-    rgba(8, 10, 16, 0.55) 50%,
-    rgba(4, 5, 10, 0.68) 100%
-  );
+    0 0 0 1px rgba(0, 0, 0, 0.34),
+    0 2px 4px rgba(0, 0, 0, 0.16),
+    0 22px 52px rgba(0, 0, 0, 0.36),
+    0 0 68px rgba(30, 58, 90, 0.06),
+    0 0 92px rgba(34, 211, 238, 0.022),
+    0 0 104px rgba(99, 102, 241, 0.017),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.05),
+    inset 0 24px 48px -26px rgba(0, 0, 0, 0.28);
+  --glass-well-bg: linear-gradient(168deg, rgba(6, 8, 12, 0.74) 0%, rgba(8, 10, 14, 0.56) 50%, rgba(4, 5, 10, 0.7) 100%);
   --glass-tile-bg: linear-gradient(
     155deg,
-    rgba(255, 255, 255, 0.08) 0%,
-    rgba(18, 22, 34, 0.56) 38%,
-    rgba(10, 14, 26, 0.66) 100%
+    rgba(255, 255, 255, 0.06) 0%,
+    rgba(18, 20, 28, 0.54) 40%,
+    rgba(10, 12, 18, 0.64) 100%
   );
   --glass-tile-bg-hover: linear-gradient(
     155deg,
-    rgba(224, 242, 254, 0.08) 0%,
-    rgba(22, 26, 38, 0.58) 40%,
-    rgba(12, 16, 28, 0.68) 100%
+    rgba(255, 255, 255, 0.07) 0%,
+    rgba(22, 24, 32, 0.56) 40%,
+    rgba(12, 14, 20, 0.66) 100%
   );
 
   --dash-max-width: 1180px;
-  /**
-   * Gouttière horizontale unique : sticky header, zone principale, pied de page.
-   * Même valeur partout pour cadrer et aligner les colonnes au-delà du max-width.
-   */
   --dash-gutter-x: clamp(16px, 2.75vw, 24px);
   --dash-gutter-y: clamp(16px, 2vw, 22px);
   --dash-main-pad-bottom: clamp(28px, 3vw, 36px);
@@ -250,15 +187,11 @@
   --dash-header-blur: 24px;
   --dash-transition-fast: 0.14s ease;
   --dash-transition-ui: 0.2s ease;
-  /** Anneau de focus partagé (WCAG) */
   --dash-focus-ring: 2px solid var(--accent-strong);
   --dash-focus-offset: 2px;
-  /** Défilement (Firefox) */
-  --dash-scrollbar-thumb: rgba(148, 163, 184, 0.35);
-  --dash-scrollbar-track: rgba(15, 17, 24, 0.6);
-  /** Espacement vertical sections (PageHero → corps) — toutes routes produit */
+  --dash-scrollbar-thumb: rgba(148, 163, 184, 0.32);
+  --dash-scrollbar-track: rgba(15, 17, 22, 0.58);
   --dash-page-section-gap: clamp(1.15rem, 2.4vw, 1.75rem);
-  /* Hauteur sticky : une ligne (mobile / tablette menu seul). */
   --dash-sticky-stack-height: clamp(4.25rem, 11vw, 5.75rem);
 
   font-family: var(--font-sans);
@@ -271,7 +204,7 @@
 }
 
 ::selection {
-  background: rgba(127, 212, 243, 0.2);
+  background: rgba(138, 168, 196, 0.22);
   color: var(--text);
 }
 
