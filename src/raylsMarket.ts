@@ -32,24 +32,25 @@ export function getCgV3Base(): string {
 /**
  * En dev avec proxy same-origin, les clés sont ajoutées par Vite (pas d’en-tête côté navigateur).
  * En prod, clés demo/pro passent ici (visibles dans le bundle — préférez un proxy pour la prod).
+ *
+ * Sans clé, vers l’API publique depuis le navigateur : ne pas envoyer `Accept: application/json`
+ * (en-tête « non simple ») sinon le navigateur envoie un prévol OPTIONS ; CoinGecko/Cloudflare
+ * répond souvent 429 sur OPTIONS → échec CORS masqué en « Failed to fetch » (ex. GitHub Pages).
  */
 function getCgAuthHeaders(): Record<string, string> {
   const customRoot = trimEnv('VITE_COINGECKO_API_ROOT')
-  const h: Record<string, string> = { Accept: 'application/json' }
-  if (import.meta.env.DEV && !customRoot) {
-    return h
-  }
   const pro = cgProKey()
   if (pro) {
-    h['x-cg-pro-api-key'] = pro
-    return h
+    return { 'x-cg-pro-api-key': pro, Accept: 'application/json' }
   }
   const demo = cgDemoKey()
   if (demo) {
-    h['x-cg-demo-api-key'] = demo
-    return h
+    return { 'x-cg-demo-api-key': demo, Accept: 'application/json' }
   }
-  return h
+  if (import.meta.env.DEV && !customRoot) {
+    return { Accept: 'application/json' }
+  }
+  return {}
 }
 
 /** TTL « frais » : au-delà, on refetch si besoin (limite les 429). */
