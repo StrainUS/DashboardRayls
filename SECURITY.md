@@ -20,3 +20,22 @@ Application **100 % frontale** (React / Vite) : pas de serveur applicatif ni de 
 ## Divulgation responsable
 
 Nous traitons les signalements en priorité et publions des correctifs ou mitigations dans la mesure du possible, sans garantie de SLA. Le dépôt est **propriétaire** (tous droits réservés à StrainUS) ; la divulgation responsable vise la sécurité des utilisateurs et de l’infrastructure, pas une licence d’usage du code.
+
+## Checklist GitHub (propriétaire du dépôt)
+
+À faire dans **Settings** du dépôt (et sur le **compte** GitHub) :
+
+1. **Compte** : activer l’**authentification à deux facteurs (2FA)** ; préférer une clé WebAuthn ou une app TOTP.
+2. **Settings → General** : désactiver **Wikis** si non utilisées (surface d’édition publique).
+3. **Settings → Code security and analysis** : laisser **Dependency graph** / **Dependabot alerts** actifs ; fusionner ou traiter les alertes Dependabot ; vérifier que **Code scanning** reçoit les résultats du workflow **CodeQL** (`.github/workflows/codeql.yml`).
+4. **Settings → Secrets and variables → Actions** : ne stocker que des **secrets** (Cloudflare, clés API) ici — jamais dans le code ; révoquer tout secret exposé par erreur et le recréer.
+5. **Settings → Actions → General** : *Fork pull request workflows* en **« Require approval for first-time contributors »** (ou plus strict) si tu acceptes des PR externes.
+6. **Settings → Branches** : règle de protection sur **`main`** : exiger **PR** avant merge, **status checks** (CI + CodeQL si requis), option **Require linear history** ; interdire **force push** et suppressions.
+7. **Collaborators** : n’ajouter que des comptes de confiance ; le minimum de droits (**Write** vs **Admin**).
+8. **Pages** : si le site est public, garder à l’esprit que tout fichier dans la branche / artefact **Pages** est public — pas de `.env` dans le dépôt.
+
+### Déjà en place dans ce dépôt
+
+- **Dependabot** : mises à jour npm et GitHub Actions (`.github/dependabot.yml`).
+- **CI** : `npm run ci` + `npm audit --audit-level=moderate` (`.github/workflows/ci.yml`).
+- **CodeQL** : analyse JS/TS planifiée (`.github/workflows/codeql.yml`).
