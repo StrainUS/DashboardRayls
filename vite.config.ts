@@ -3,12 +3,18 @@ import { defineConfig, loadEnv } from 'vite'
 import react from '@vitejs/plugin-react'
 
 /** Métadonnées partage / SEO : canonical, Open Graph, Twitter (désactivé si var absente). */
-function socialMetaPlugin(publicOrigin: string, basePath: string): Plugin {
+function socialMetaPlugin(publicOrigin: string): Plugin {
   const origin = publicOrigin.replace(/\/$/, '')
+  /** Base résolue par Vite (inclut `--base` CLI même si `VITE_BASE_PATH` est absent). */
+  let resolvedBase = '/'
   return {
     name: 'rayls-social-meta',
+    configResolved(config) {
+      resolvedBase = config.base
+    },
     transformIndexHtml(html) {
       if (!origin) return html
+      const basePath = resolvedBase.endsWith('/') ? resolvedBase : `${resolvedBase}/`
       const canonical = `${origin}${basePath}`
       const ogImage = `${origin}${basePath}og-image.png?v=19`
       const block = `
@@ -52,7 +58,7 @@ export default defineConfig(({ mode }) => {
 
   return {
     base,
-    plugins: [react(), socialMetaPlugin(publicOrigin, base)],
+    plugins: [react(), socialMetaPlugin(publicOrigin)],
     build: {
       sourcemap: false,
       rollupOptions: {
